@@ -1,8 +1,5 @@
-"use client"
-
 import { ChevronRight } from "lucide-react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { Link, useLocation } from "react-router-dom"
 
 const routeLabels: Record<string, string> = {
   dashboard: "Dashboard",
@@ -16,17 +13,14 @@ const routeLabels: Record<string, string> = {
 }
 
 export function Breadcrumbs() {
-  const pathname = usePathname()
+  const { pathname } = useLocation()
   const segments = pathname.split("/").filter(Boolean)
 
   return (
     <nav aria-label="Breadcrumb" className="ml-2">
       <ol role="list" className="flex items-center space-x-3 text-sm">
         <li className="flex">
-          <Link
-            href="/dashboard"
-            className="text-gray-500 transition hover:text-gray-700 dark:text-gray-400 hover:dark:text-gray-300"
-          >
+          <Link to="/dashboard" className="text-gray-500 transition hover:text-gray-700 dark:text-gray-400 hover:dark:text-gray-300">
             Home
           </Link>
         </li>
@@ -37,18 +31,11 @@ export function Breadcrumbs() {
 
           return (
             <li key={segment} className="flex items-center">
-              <ChevronRight
-                className="mr-3 size-4 shrink-0 text-gray-600 dark:text-gray-400"
-                aria-hidden="true"
-              />
+              <ChevronRight className="mr-3 size-4 shrink-0 text-gray-600 dark:text-gray-400" aria-hidden="true" />
               <Link
-                href={href}
+                to={href}
                 aria-current={isLast ? "page" : undefined}
-                className={
-                  isLast
-                    ? "text-gray-900 dark:text-gray-50"
-                    : "text-gray-500 transition hover:text-gray-700 dark:text-gray-400 hover:dark:text-gray-300"
-                }
+                className={isLast ? "text-gray-900 dark:text-gray-50" : "text-gray-500 transition hover:text-gray-700 dark:text-gray-400 hover:dark:text-gray-300"}
               >
                 {label}
               </Link>

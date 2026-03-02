@@ -1,8 +1,6 @@
-"use client"
-
 import { useEffect, useRef, useState } from "react"
 import { RiArrowRightLine, RiAddLine, RiBellLine, RiPieChartLine, RiCheckLine, RiTimeLine } from "@remixicon/react"
-import Link from "next/link"
+import { Link } from "react-router-dom"
 import { Button } from "@/components/Button"
 
 const steps = [
@@ -292,7 +290,7 @@ export function HowItWorks() {
           }`}
         >
           <Button size="lg" asChild className="px-6 sm:px-8 w-full sm:w-auto">
-            <Link href="/register">
+            <Link to="/register">
               Start Tracking Now
               <RiArrowRightLine className="size-4" />
             </Link>
@@ -300,7 +298,7 @@ export function HowItWorks() {
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes progress {
           from { width: 0%; }
           to { width: 100%; }
