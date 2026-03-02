@@ -1,5 +1,3 @@
-import { ISubscription } from "@/models/Subscription"
-
 export interface CSVSubscription {
   name: string
   description?: string
@@ -23,15 +21,6 @@ export function parseCSV(csvContent: string): CSVSubscription[] {
   }
 
   const headers = lines[0].split(",").map((h) => h.trim().toLowerCase())
-
-  const requiredHeaders = ["name", "amount", "billingcycle", "nextbillingdate"]
-  const missingHeaders = requiredHeaders.filter(
-    (h) => !headers.includes(h.replace(/([A-Z])/g, "").toLowerCase()),
-  )
-
-  if (missingHeaders.length > 0) {
-    throw new Error(`Missing required headers: ${missingHeaders.join(", ")}`)
-  }
 
   const subscriptions: CSVSubscription[] = []
 
@@ -93,39 +82,30 @@ function parseCSVLine(line: string): string[] {
 }
 
 export function generateCSV(
-  subscriptions: Partial<ISubscription>[],
+  subscriptions: Record<string, any>[],
 ): string {
   const headers = [
     "name",
     "description",
     "amount",
     "currency",
-    "billingCycle",
-    "nextBillingDate",
-    "startDate",
+    "billing_cycle",
+    "next_billing_date",
+    "start_date",
     "status",
     "category",
     "url",
     "notes",
-    "alertDays",
-    "alertEnabled",
+    "alert_days",
+    "alert_enabled",
   ]
 
   const rows = subscriptions.map((sub) => {
     return headers
       .map((header) => {
-        let value = sub[header as keyof typeof sub]
-
-        if (value instanceof Date) {
-          value = value.toISOString().split("T")[0]
-        }
-
-        if (value === undefined || value === null) {
-          return ""
-        }
-
+        const value = sub[header]
+        if (value === undefined || value === null) return ""
         const stringValue = String(value)
-        // Escape values with commas or quotes
         if (stringValue.includes(",") || stringValue.includes('"')) {
           return `"${stringValue.replace(/"/g, '""')}"`
         }
