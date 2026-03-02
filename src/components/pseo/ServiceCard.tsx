@@ -1,4 +1,4 @@
-import Link from "next/link"
+import { Link } from "react-router-dom"
 import { RiArrowRightUpLine, RiExternalLinkLine } from "@remixicon/react"
 import { type SubscriptionService, getStartingPrice } from "@/data/pseo/services"
 
@@ -19,7 +19,7 @@ export function ServiceCard({ service, showCategory = false }: ServiceCardProps)
         </div>
         {showCategory && (
           <Link
-            href={`/browse/${service.category}`}
+            to={`/browse/${service.category}`}
             className="shrink-0 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
           >
             {service.category}
@@ -69,7 +69,7 @@ export function ServiceCard({ service, showCategory = false }: ServiceCardProps)
           Visit site <RiExternalLinkLine className="size-3" />
         </a>
         <Link
-          href={`/browse/${service.category}`}
+          to={`/browse/${service.category}`}
           className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-blue-600 transition-colors hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
         >
           More in {service.category} <RiArrowRightUpLine className="size-3" />

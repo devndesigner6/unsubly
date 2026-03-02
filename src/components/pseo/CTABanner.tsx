@@ -1,4 +1,4 @@
-import Link from "next/link"
+import { Link } from "react-router-dom"
 import { RiArrowRightLine, RiCheckLine } from "@remixicon/react"
 
 interface CTABannerProps {
@@ -29,7 +29,7 @@ export function CTABanner({
         <p className="mt-3 text-base text-blue-100 sm:text-lg">{description}</p>
         <div className="mt-6 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
           <Link
-            href={ctaHref}
+            to={ctaHref}
             className="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 text-sm font-semibold text-blue-700 shadow-lg transition-all hover:bg-blue-50 hover:shadow-xl"
           >
             {ctaText}

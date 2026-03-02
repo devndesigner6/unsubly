@@ -21,11 +21,13 @@ export default function NewSubscription() {
     e.preventDefault()
     if (!user) return
     setSaving(true)
-    const { error } = await supabase.from("subscriptions").insert({
+    const { error } = await supabase.from("subscriptions").insert([{
       ...form,
       amount: parseFloat(form.amount),
+      billing_cycle: form.billing_cycle as "monthly" | "quarterly" | "weekly" | "yearly",
+      status: form.status as "active" | "cancelled" | "trial" | "paused",
       user_id: user.id,
-    })
+    }])
     setSaving(false)
     if (!error) navigate("/subscriptions")
   }

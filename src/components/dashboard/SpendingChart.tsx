@@ -3,7 +3,7 @@
 import { formatCurrency } from "@/lib/currency"
 import { cx } from "@/lib/utils"
 import { RiLoader4Line, RiArrowUpLine, RiArrowDownLine } from "@remixicon/react"
-import Link from "next/link"
+import { Link } from "react-router-dom"
 import { useEffect, useState, useMemo } from "react"
 
 interface MonthlyTrend {
@@ -164,7 +164,7 @@ export function SpendingChart() {
             </p>
           </div>
           <Link
-            href="/analytics"
+            to="/analytics"
             className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400"
           >
             View details →
