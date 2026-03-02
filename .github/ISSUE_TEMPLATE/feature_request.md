@@ -1,6 +1,6 @@
 ---
-name: "✨ Feature request"
-about: Suggest an idea for TrackMySubscriptions
+name: "âœ¨ Feature request"
+about: Suggest an idea for Unsubscribely
 labels: enhancement
 ---
 

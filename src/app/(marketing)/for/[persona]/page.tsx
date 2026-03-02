@@ -29,16 +29,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const year = new Date().getFullYear()
   return {
-    title: `Subscription Tracker for ${data.name} ${year} — Free | TrackMySubscriptions`,
+    title: `Subscription Tracker for ${data.name} ${year} â€” Free | Unsubscribely`,
     description: `${data.description.slice(0, 155)}...`,
     alternates: {
-      canonical: `https://trackmysubscriptions.com/for/${persona}`,
+      canonical: `https://unsubscribely.com/for/${persona}`,
     },
     openGraph: {
       title: `${data.headline}`,
       description: data.subheadline,
-      url: `https://trackmysubscriptions.com/for/${persona}`,
-      images: [{ url: "/og-image.png", width: 1200, height: 630, alt: `TrackMySubscriptions for ${data.name}` }],
+      url: `https://unsubscribely.com/for/${persona}`,
+      images: [{ url: "/og-image.png", width: 1200, height: 630, alt: `Unsubscribely for ${data.name}` }],
     },
   }
 }
@@ -55,16 +55,16 @@ export default async function PersonaPage({ params }: Props) {
 
   const faqQuestions = [
     {
-      question: `Is TrackMySubscriptions really free for ${persona.name.toLowerCase()}?`,
-      answer: `Yes! TrackMySubscriptions is 100% free with no premium tier, no credit card required, and no hidden costs. ${persona.name} can track unlimited subscriptions completely free.`,
+      question: `Is Unsubscribely really free for ${persona.name.toLowerCase()}?`,
+      answer: `Yes! Unsubscribely is 100% free with no premium tier, no credit card required, and no hidden costs. ${persona.name} can track unlimited subscriptions completely free.`,
     },
     {
-      question: `How does TrackMySubscriptions help ${persona.name.toLowerCase()}?`,
-      answer: `TrackMySubscriptions helps ${persona.name.toLowerCase()} by ${persona.keyFeatures.map((f) => f.description.toLowerCase()).slice(0, 2).join(" and ")}. It addresses key pain points like ${persona.painPoints[0].toLowerCase()}.`,
+      question: `How does Unsubscribely help ${persona.name.toLowerCase()}?`,
+      answer: `Unsubscribely helps ${persona.name.toLowerCase()} by ${persona.keyFeatures.map((f) => f.description.toLowerCase()).slice(0, 2).join(" and ")}. It addresses key pain points like ${persona.painPoints[0].toLowerCase()}.`,
     },
     {
       question: `How do I get started as ${persona.name.toLowerCase().startsWith("a") || persona.name.toLowerCase().startsWith("e") || persona.name.toLowerCase().startsWith("i") || persona.name.toLowerCase().startsWith("o") || persona.name.toLowerCase().startsWith("u") ? "an" : "a"} ${persona.name.toLowerCase().endsWith("s") ? persona.name.toLowerCase().slice(0, -1) : persona.name.toLowerCase()}?`,
-      answer: `Simply sign up for a free account at TrackMySubscriptions, add your subscriptions manually or import via CSV, and you are all set. It takes less than 2 minutes to get started.`,
+      answer: `Simply sign up for a free account at Unsubscribely, add your subscriptions manually or import via CSV, and you are all set. It takes less than 2 minutes to get started.`,
     },
   ]
 
@@ -74,7 +74,7 @@ export default async function PersonaPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: webApplicationJsonLd({
-            name: `TrackMySubscriptions for ${persona.name}`,
+            name: `Unsubscribely for ${persona.name}`,
             description: persona.description,
             url: `/for/${personaSlug}`,
           }),
@@ -159,7 +159,7 @@ export default async function PersonaPage({ params }: Props) {
       {/* Key Features */}
       <section className="mt-12">
         <h2 className="text-xl font-bold text-gray-900 dark:text-gray-50">
-          How TrackMySubscriptions Helps
+          How Unsubscribely Helps
         </h2>
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
           {persona.keyFeatures.map((feature) => (
@@ -236,7 +236,7 @@ export default async function PersonaPage({ params }: Props) {
 
       {/* Other Personas */}
       <RelatedLinks
-        title={`TrackMySubscriptions for Others`}
+        title={`Unsubscribely for Others`}
         links={otherPersonas.map((p) => ({
           title: `For ${p.name}`,
           href: `/for/${p.slug}`,

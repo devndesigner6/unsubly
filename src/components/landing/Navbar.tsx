@@ -36,7 +36,7 @@ export function Navbar() {
             <Logo className="size-4 sm:size-5 text-white dark:text-gray-900" />
           </div>
           <span className="text-sm sm:text-lg font-semibold text-gray-900 dark:text-white">
-            TrackMySubscriptions
+            Unsubscribely
           </span>
         </Link>
 

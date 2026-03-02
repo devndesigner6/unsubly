@@ -1,6 +1,6 @@
 import { siteConfig } from "@/app/siteConfig"
 
-// ── Organization ────────────────────────────────────────────────────
+// â”€â”€ Organization â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function organizationJsonLd(): string {
   const schema = {
@@ -12,7 +12,7 @@ export function organizationJsonLd(): string {
     description: siteConfig.description,
     sameAs: [
       "https://x.com/kalashbuilds",
-      "https://github.com/kalashvasaniya/trackmysubscriptions",
+      "https://github.com/kalashvasaniya/unsubscribely",
       "https://www.linkedin.com/in/kalashvasaniya/",
     ],
     contactPoint: {
@@ -24,7 +24,7 @@ export function organizationJsonLd(): string {
   return JSON.stringify(schema)
 }
 
-// ── WebSite (with SearchAction for sitelinks search) ────────────────
+// â”€â”€ WebSite (with SearchAction for sitelinks search) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function webSiteJsonLd(): string {
   const schema = {
@@ -50,7 +50,7 @@ export function webSiteJsonLd(): string {
   return JSON.stringify(schema)
 }
 
-// ── SoftwareApplication ─────────────────────────────────────────────
+// â”€â”€ SoftwareApplication â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function softwareApplicationJsonLd(): string {
   const schema = {
@@ -85,7 +85,7 @@ export function softwareApplicationJsonLd(): string {
   return JSON.stringify(schema)
 }
 
-// ── WebPage (for generic pages like Privacy, Terms) ─────────────────
+// â”€â”€ WebPage (for generic pages like Privacy, Terms) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function webPageJsonLd(page: {
   name: string
@@ -109,7 +109,7 @@ export function webPageJsonLd(page: {
   return JSON.stringify(schema)
 }
 
-// ── Breadcrumb List ──────────────────────────────────────────────────
+// â”€â”€ Breadcrumb List â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function breadcrumbJsonLd(
   items: { name: string; url: string }[]
@@ -127,7 +127,7 @@ export function breadcrumbJsonLd(
   return JSON.stringify(schema)
 }
 
-// ── Item List (for browse / directory pages) ─────────────────────────
+// â”€â”€ Item List (for browse / directory pages) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function itemListJsonLd(
   name: string,
@@ -151,7 +151,7 @@ export function itemListJsonLd(
   return JSON.stringify(schema)
 }
 
-// ── Product (for comparison / service pages) ─────────────────────────
+// â”€â”€ Product (for comparison / service pages) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function productJsonLd(service: {
   name: string
@@ -180,7 +180,7 @@ export function productJsonLd(service: {
   return JSON.stringify(schema)
 }
 
-// ── Defined Term (for glossary pages) ────────────────────────────────
+// â”€â”€ Defined Term (for glossary pages) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function definedTermJsonLd(term: {
   name: string
@@ -202,7 +202,7 @@ export function definedTermJsonLd(term: {
   return JSON.stringify(schema)
 }
 
-// ── Defined Term Set (for glossary hub) ──────────────────────────────
+// â”€â”€ Defined Term Set (for glossary hub) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function definedTermSetJsonLd(
   terms: { name: string; url: string }[]
@@ -223,7 +223,7 @@ export function definedTermSetJsonLd(
   return JSON.stringify(schema)
 }
 
-// ── Web Application (for tools pages) ────────────────────────────────
+// â”€â”€ Web Application (for tools pages) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function webApplicationJsonLd(tool: {
   name: string
@@ -248,7 +248,7 @@ export function webApplicationJsonLd(tool: {
   return JSON.stringify(schema)
 }
 
-// ── FAQ Page ─────────────────────────────────────────────────────────
+// â”€â”€ FAQ Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function faqPageJsonLd(
   questions: { question: string; answer: string }[]

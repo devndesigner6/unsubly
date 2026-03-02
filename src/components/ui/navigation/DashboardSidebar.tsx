@@ -103,7 +103,7 @@ export function DashboardSidebar({
           </div>
           <div className="min-w-0">
             <span className="block text-sm font-semibold text-gray-900 dark:text-gray-50 truncate">
-              TrackMySubscriptions
+              Unsubscribely
             </span>
             <span className="block text-xs text-gray-600 dark:text-gray-400 truncate">
               Subscription Manager

@@ -86,7 +86,7 @@ export function Hero() {
                 loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
               }`}
             >
-              TrackMySubscriptions is your personal subscription assistant. Track spending, get smart alerts before charges, and save money by identifying unused subscriptions.
+              Unsubscribely is your personal subscription assistant. Track spending, get smart alerts before charges, and save money by identifying unused subscriptions.
             </p>
 
             {/* CTA Buttons */}
@@ -156,7 +156,7 @@ export function Hero() {
                   <div className="size-2.5 sm:size-3 rounded-full bg-amber-400" />
                   <div className="size-2.5 sm:size-3 rounded-full bg-emerald-400" />
                 </div>
-                <span className="text-[10px] sm:text-xs font-medium text-gray-400 truncate">TrackMySubscriptions</span>
+                <span className="text-[10px] sm:text-xs font-medium text-gray-400 truncate">Unsubscribely</span>
               </div>
 
               <div className="p-4 sm:p-6 space-y-4 sm:space-y-5">
@@ -165,7 +165,7 @@ export function Hero() {
                   <div className="rounded-lg sm:rounded-xl bg-gray-50 p-3 sm:p-4 transition-colors hover:bg-gray-100 dark:bg-gray-800/50 dark:hover:bg-gray-800">
                     <p className="text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400">Monthly Spending</p>
                     <p className="mt-1 sm:mt-2 text-lg sm:text-2xl font-semibold text-gray-900 dark:text-white">$247.00</p>
-                    <p className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs font-medium text-emerald-600">↓ 12% vs last month</p>
+                    <p className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs font-medium text-emerald-600">â†“ 12% vs last month</p>
                   </div>
                   <div className="rounded-lg sm:rounded-xl bg-gray-50 p-3 sm:p-4 transition-colors hover:bg-gray-100 dark:bg-gray-800/50 dark:hover:bg-gray-800">
                     <p className="text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400">Active Subscriptions</p>
@@ -258,7 +258,7 @@ export function Hero() {
           }`}
         >
           <RiShieldCheckLine className="size-4 sm:size-5 text-emerald-500" />
-          <span className="text-center">Bank-level security • Your data is encrypted and never shared</span>
+          <span className="text-center">Bank-level security â€¢ Your data is encrypted and never shared</span>
         </div>
       </div>
     </section>

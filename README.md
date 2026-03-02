@@ -1,4 +1,4 @@
-# TrackMySubscriptions
+# Unsubscribely
 
 A free, open-source subscription management application built with Next.js 16, MongoDB, and Tremor UI. Track all your subscriptions in one place, get payment reminders, and visualize your spending with beautiful analytics. Includes a large-scale programmatic SEO system generating 100,000+ pages for service comparisons, alternatives, pricing, glossary, and more.
 
@@ -56,8 +56,8 @@ A free, open-source subscription management application built with Next.js 16, M
 1. **Clone the repository**
 
 ```bash
-git clone https://github.com/kalashvasaniya/trackmysubscriptions.git
-cd trackmysubscriptions
+git clone https://github.com/kalashvasaniya/unsubscribely.git
+cd unsubscribely
 ```
 
 2. **Install dependencies**
@@ -120,40 +120,40 @@ See [.env.example](.env.example) for more details on each variable.
 
 ```
 src/
-├── app/                    # Next.js App Router pages
-│   ├── (auth)/            # Authentication pages (login, register)
-│   ├── (dashboard)/       # Dashboard pages (protected routes)
-│   ├── (marketing)/       # Public marketing pages
-│   │   ├── browse/        # Service directory hub & category pages
-│   │   ├── services/      # Individual service pages
-│   │   ├── compare/       # Head-to-head comparison pages
-│   │   ├── alternatives/  # Alternatives pages
-│   │   ├── pricing/       # Pricing breakdown pages
-│   │   ├── glossary/      # Subscription glossary
-│   │   ├── for/           # Persona-targeted landing pages
-│   │   └── tools/         # Free interactive tools
-│   ├── api/               # API routes
-│   ├── sitemap.ts         # Main sitemap (~1,500 URLs)
-│   ├── sitemap-index.xml/ # Sitemap index for chunked sitemaps
-│   ├── sitemaps/          # Chunked sitemaps (~103k comparison URLs)
-│   └── robots.ts          # Robots.txt configuration
-├── components/            # React components
-│   ├── analytics/         # Analytics charts
-│   ├── dashboard/         # Dashboard components
-│   ├── landing/           # Landing page sections
-│   ├── pseo/              # pSEO components (breadcrumbs, CTAs, comparison tables)
-│   ├── subscriptions/     # Subscription forms
-│   └── ui/                # Reusable UI components
-├── data/
-│   └── pseo/              # Programmatic SEO data
-│       ├── services/      # 100+ subscription service definitions (13 categories)
-│       ├── comparisons.ts # Comparison pair generation (~103k combinations)
-│       ├── glossary.ts    # 50+ glossary terms
-│       └── personas.ts    # 8 persona definitions
-├── lib/                   # Utility functions and configurations
-│   └── jsonld.ts          # JSON-LD structured data generators
-├── models/                # Mongoose database models
-└── types/                 # TypeScript type definitions
+â”œâ”€â”€ app/                    # Next.js App Router pages
+â”‚   â”œâ”€â”€ (auth)/            # Authentication pages (login, register)
+â”‚   â”œâ”€â”€ (dashboard)/       # Dashboard pages (protected routes)
+â”‚   â”œâ”€â”€ (marketing)/       # Public marketing pages
+â”‚   â”‚   â”œâ”€â”€ browse/        # Service directory hub & category pages
+â”‚   â”‚   â”œâ”€â”€ services/      # Individual service pages
+â”‚   â”‚   â”œâ”€â”€ compare/       # Head-to-head comparison pages
+â”‚   â”‚   â”œâ”€â”€ alternatives/  # Alternatives pages
+â”‚   â”‚   â”œâ”€â”€ pricing/       # Pricing breakdown pages
+â”‚   â”‚   â”œâ”€â”€ glossary/      # Subscription glossary
+â”‚   â”‚   â”œâ”€â”€ for/           # Persona-targeted landing pages
+â”‚   â”‚   â””â”€â”€ tools/         # Free interactive tools
+â”‚   â”œâ”€â”€ api/               # API routes
+â”‚   â”œâ”€â”€ sitemap.ts         # Main sitemap (~1,500 URLs)
+â”‚   â”œâ”€â”€ sitemap-index.xml/ # Sitemap index for chunked sitemaps
+â”‚   â”œâ”€â”€ sitemaps/          # Chunked sitemaps (~103k comparison URLs)
+â”‚   â””â”€â”€ robots.ts          # Robots.txt configuration
+â”œâ”€â”€ components/            # React components
+â”‚   â”œâ”€â”€ analytics/         # Analytics charts
+â”‚   â”œâ”€â”€ dashboard/         # Dashboard components
+â”‚   â”œâ”€â”€ landing/           # Landing page sections
+â”‚   â”œâ”€â”€ pseo/              # pSEO components (breadcrumbs, CTAs, comparison tables)
+â”‚   â”œâ”€â”€ subscriptions/     # Subscription forms
+â”‚   â””â”€â”€ ui/                # Reusable UI components
+â”œâ”€â”€ data/
+â”‚   â””â”€â”€ pseo/              # Programmatic SEO data
+â”‚       â”œâ”€â”€ services/      # 100+ subscription service definitions (13 categories)
+â”‚       â”œâ”€â”€ comparisons.ts # Comparison pair generation (~103k combinations)
+â”‚       â”œâ”€â”€ glossary.ts    # 50+ glossary terms
+â”‚       â””â”€â”€ personas.ts    # 8 persona definitions
+â”œâ”€â”€ lib/                   # Utility functions and configurations
+â”‚   â””â”€â”€ jsonld.ts          # JSON-LD structured data generators
+â”œâ”€â”€ models/                # Mongoose database models
+â””â”€â”€ types/                 # TypeScript type definitions
 ```
 
 ## API Routes
@@ -191,20 +191,20 @@ The project includes a large-scale programmatic SEO system that generates **100,
 
 Every page includes relevant structured data for rich search results:
 
-- **Organization** & **WebSite** — site-wide identity and sitelinks search
-- **SoftwareApplication** — app-level schema with ratings and features
-- **Product** — service pages with pricing offers
-- **ItemList** — directory and category pages
-- **BreadcrumbList** — navigation hierarchy
-- **DefinedTerm** / **DefinedTermSet** — glossary entries
-- **WebApplication** — interactive tools
-- **FAQPage** — FAQ sections for featured snippets
+- **Organization** & **WebSite** â€” site-wide identity and sitelinks search
+- **SoftwareApplication** â€” app-level schema with ratings and features
+- **Product** â€” service pages with pricing offers
+- **ItemList** â€” directory and category pages
+- **BreadcrumbList** â€” navigation hierarchy
+- **DefinedTerm** / **DefinedTermSet** â€” glossary entries
+- **WebApplication** â€” interactive tools
+- **FAQPage** â€” FAQ sections for featured snippets
 
 ### Sitemap Architecture
 
-- **Sitemap Index** (`/sitemap-index.xml`) — references all sitemap chunks
-- **Main Sitemap** (`/sitemap.xml`) — ~1,500 core URLs with priorities and change frequencies
-- **Chunked Sitemaps** (`/sitemaps/[id]`) — 40,000 URLs per chunk for comparison pages
+- **Sitemap Index** (`/sitemap-index.xml`) â€” references all sitemap chunks
+- **Main Sitemap** (`/sitemap.xml`) â€” ~1,500 core URLs with priorities and change frequencies
+- **Chunked Sitemaps** (`/sitemaps/[id]`) â€” 40,000 URLs per chunk for comparison pages
 
 ### Adding New Services
 
@@ -218,7 +218,7 @@ To add a new subscription service to the pSEO system:
 
 ### Vercel (Recommended)
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/kalashvasaniya/trackmysubscriptions)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/kalashvasaniya/unsubscribely)
 
 1. Click the deploy button above
 2. Add your environment variables in the Vercel dashboard
@@ -242,10 +242,10 @@ npm start
 
 ```bash
 # Build the image
-docker build -t trackmysubscriptions .
+docker build -t unsubscribely .
 
 # Run the container
-docker run -p 3000:3000 --env-file .env.local trackmysubscriptions
+docker run -p 3000:3000 --env-file .env.local unsubscribely
 ```
 
 ## Contributing

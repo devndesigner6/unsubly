@@ -23,18 +23,18 @@ import { RelatedLinks } from "@/components/pseo/RelatedLinks"
 import { itemListJsonLd } from "@/lib/jsonld"
 
 export const metadata: Metadata = {
-  title: "Browse Subscription Services by Category | TrackMySubscriptions",
+  title: "Browse Subscription Services by Category | Unsubscribely",
   description:
     "Explore and compare popular subscription services across entertainment, music, development, design, cloud, productivity, finance, health, and education categories.",
   alternates: {
-    canonical: "https://trackmysubscriptions.com/browse",
+    canonical: "https://unsubscribely.com/browse",
   },
   openGraph: {
     title: "Browse Subscription Services by Category",
     description:
       "Explore and compare popular subscription services across 9 categories. Find the best services for your needs.",
-    url: "https://trackmysubscriptions.com/browse",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "TrackMySubscriptions — Browse Subscription Services" }],
+    url: "https://unsubscribely.com/browse",
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Unsubscribely â€” Browse Subscription Services" }],
   },
 }
 

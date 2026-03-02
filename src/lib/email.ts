@@ -14,9 +14,9 @@ function getResend(): Resend {
 
 // Email configuration
 const EMAIL_CONFIG = {
-  from: `TrackMySubscriptions <${process.env.RESEND_EMAIL_FROM || "hello@trackmysubscriptions.com"}>`,
-  replyTo: process.env.RESEND_EMAIL_REPLY_TO || "support@trackmysubscriptions.com",
-  baseUrl: process.env.NEXTAUTH_URL || "https://trackmysubscriptions.com",
+  from: `Unsubscribely <${process.env.RESEND_EMAIL_FROM || "hello@unsubscribely.com"}>`,
+  replyTo: process.env.RESEND_EMAIL_REPLY_TO || "support@unsubscribely.com",
+  baseUrl: process.env.NEXTAUTH_URL || "https://unsubscribely.com",
 }
 
 export interface SubscriptionAlertData {
@@ -57,7 +57,7 @@ View your subscription: ${EMAIL_CONFIG.baseUrl}/subscriptions
 You received this email because you enabled payment alerts.
 Manage your notification settings: ${EMAIL_CONFIG.baseUrl}/settings
 
-TrackMySubscriptions
+Unsubscribely
 `
 }
 
@@ -65,7 +65,7 @@ TrackMySubscriptions
 function getWelcomePlainText(userName: string): string {
   return `Hi ${userName || "there"},
 
-Welcome to TrackMySubscriptions!
+Welcome to Unsubscribely!
 
 You can now track and manage all your subscriptions in one place. Here's what you can do:
 
@@ -78,7 +78,7 @@ Get started: ${EMAIL_CONFIG.baseUrl}/dashboard
 If you have any questions, just reply to this email.
 
 ---
-TrackMySubscriptions
+Unsubscribely
 `
 }
 
@@ -127,7 +127,7 @@ View your dashboard: ${EMAIL_CONFIG.baseUrl}/dashboard
 ---
 Manage email preferences: ${EMAIL_CONFIG.baseUrl}/settings
 
-TrackMySubscriptions
+Unsubscribely
 `
   return text
 }
@@ -199,7 +199,7 @@ export async function sendSubscriptionAlert(
               <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                 <tr>
                   <td>
-                    <span style="font-size: 18px; font-weight: 600; color: #111827;">TrackMySubscriptions</span>
+                    <span style="font-size: 18px; font-weight: 600; color: #111827;">Unsubscribely</span>
                   </td>
                 </tr>
               </table>
@@ -296,7 +296,7 @@ export async function sendWelcomeEmail(to: string, data: WelcomeEmailData) {
       from: EMAIL_CONFIG.from,
       replyTo: EMAIL_CONFIG.replyTo,
       to: [to],
-      subject: "Welcome to TrackMySubscriptions",
+      subject: "Welcome to Unsubscribely",
       text: getWelcomePlainText(data.userName),
       headers: {
         "List-Unsubscribe": `<${getUnsubscribeUrl(to)}>`,
@@ -327,7 +327,7 @@ export async function sendWelcomeEmail(to: string, data: WelcomeEmailData) {
           <!-- Header -->
           <tr>
             <td style="padding: 32px 32px 24px; border-bottom: 1px solid #f3f4f6;">
-              <span style="font-size: 18px; font-weight: 600; color: #111827;">TrackMySubscriptions</span>
+              <span style="font-size: 18px; font-weight: 600; color: #111827;">Unsubscribely</span>
             </td>
           </tr>
           
@@ -338,7 +338,7 @@ export async function sendWelcomeEmail(to: string, data: WelcomeEmailData) {
                 Welcome, ${data.userName || "there"}!
               </h1>
               <p style="margin: 0 0 24px; color: #4b5563; font-size: 15px; line-height: 1.6;">
-                Thanks for joining TrackMySubscriptions. You can now track and manage all your subscriptions in one place.
+                Thanks for joining Unsubscribely. You can now track and manage all your subscriptions in one place.
               </p>
               
               <!-- Features -->
@@ -463,7 +463,7 @@ export async function sendWeeklySummary(
           <!-- Header -->
           <tr>
             <td style="padding: 32px 32px 24px; border-bottom: 1px solid #f3f4f6;">
-              <span style="font-size: 18px; font-weight: 600; color: #111827;">TrackMySubscriptions</span>
+              <span style="font-size: 18px; font-weight: 600; color: #111827;">Unsubscribely</span>
             </td>
           </tr>
           

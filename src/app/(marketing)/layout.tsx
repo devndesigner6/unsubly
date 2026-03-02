@@ -7,7 +7,7 @@ import { Analytics } from "@vercel/analytics/next"
 
 export const metadata: Metadata = {
   title: {
-    default: `${siteConfig.name} — Free Subscription Tracker & Billing Manager`,
+    default: `${siteConfig.name} Ã¢â‚¬â€ Free Subscription Tracker & Billing Manager`,
     template: `%s | ${siteConfig.name}`,
   },
   description: siteConfig.description,
@@ -27,12 +27,12 @@ export const metadata: Metadata = {
   ],
   authors: [
     {
-      name: "TrackMySubscriptions",
-      url: "https://trackmysubscriptions.com",
+      name: "Unsubscribely",
+      url: "https://unsubscribely.com",
     },
   ],
-  creator: "TrackMySubscriptions",
-  publisher: "TrackMySubscriptions",
+  creator: "Unsubscribely",
+  publisher: "Unsubscribely",
   category: "Finance",
   openGraph: {
     type: "website",
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "TrackMySubscriptions — Free Subscription Tracker & Billing Manager",
+        alt: "Unsubscribely Ã¢â‚¬â€ Free Subscription Tracker & Billing Manager",
       },
     ],
   },
@@ -54,7 +54,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: siteConfig.name,
     description: siteConfig.description,
-    creator: "@trackmysubs",
+    creator: "@unsubscribely",
     images: ["/og-image.png"],
   },
   manifest: "/manifest.json",

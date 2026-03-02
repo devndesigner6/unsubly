@@ -1,16 +1,16 @@
 {
-  "name": "trackmysubscriptions",
+  "name": "unsubscribely",
   "version": "1.0.0",
   "description": "A free, open-source subscription management app. Track all your subscriptions, get payment reminders, visualize spending analytics, and discover services through 100k+ programmatic SEO pages.",
   "author": "Kalash Vasaniya <kalashvasaniya@gmail.com>",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/kalashvasaniya/trackmysubscriptions.git"
+    "url": "https://github.com/kalashvasaniya/unsubscribely.git"
   },
-  "homepage": "https://trackmysubscriptions.com",
+  "homepage": "https://unsubscribely.com",
   "bugs": {
-    "url": "https://github.com/kalashvasaniya/trackmysubscriptions/issues"
+    "url": "https://github.com/kalashvasaniya/unsubscribely/issues"
   },
   "keywords": [
     "subscription",

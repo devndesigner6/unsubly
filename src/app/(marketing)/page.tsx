@@ -14,7 +14,7 @@ import type { Metadata } from "next"
 
 export const metadata: Metadata = {
   title:
-    "TrackMySubscriptions — Free Subscription Tracker & Billing Manager (2026)",
+    "Unsubscribely Ã¢â‚¬â€ Free Subscription Tracker & Billing Manager (2026)",
   description:
     "Track all your subscriptions in one place for free. Get payment alerts, spending analytics, calendar view, and smart insights. Never miss a charge or forget an unused subscription again.",
   keywords: [
@@ -32,48 +32,48 @@ export const metadata: Metadata = {
     "subscription calendar",
   ],
   alternates: {
-    canonical: "https://trackmysubscriptions.com",
+    canonical: "https://unsubscribely.com",
   },
   openGraph: {
-    title: "TrackMySubscriptions — Free Subscription Tracker & Billing Manager",
+    title: "Unsubscribely Ã¢â‚¬â€ Free Subscription Tracker & Billing Manager",
     description:
       "Track all subscriptions in one place. Get payment alerts, spending analytics, and insights to save money. 100% free.",
-    url: "https://trackmysubscriptions.com",
+    url: "https://unsubscribely.com",
     type: "website",
     images: [
       {
-        url: "https://trackmysubscriptions.com/og-image.png",
+        url: "https://unsubscribely.com/og-image.png",
         width: 1200,
         height: 630,
-        alt: "TrackMySubscriptions — Free Subscription Tracker & Billing Manager",
+        alt: "Unsubscribely Ã¢â‚¬â€ Free Subscription Tracker & Billing Manager",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "TrackMySubscriptions — Free Subscription Tracker",
+    title: "Unsubscribely Ã¢â‚¬â€ Free Subscription Tracker",
     description:
       "Track all subscriptions in one place. Payment alerts, spending analytics, and smart insights. 100% free.",
-    images: ["https://trackmysubscriptions.com/og-image.png"],
-    creator: "@trackmysubs",
+    images: ["https://unsubscribely.com/og-image.png"],
+    creator: "@unsubscribely",
   },
 }
 
 const homepageFaq = [
   {
-    question: "Is TrackMySubscriptions really free?",
+    question: "Is Unsubscribely really free?",
     answer:
-      "Yes, TrackMySubscriptions is 100% free to use. All features including subscription tracking, payment alerts, spending analytics, calendar view, and CSV export are included at no cost.",
+      "Yes, Unsubscribely is 100% free to use. All features including subscription tracking, payment alerts, spending analytics, calendar view, and CSV export are included at no cost.",
   },
   {
-    question: "How does TrackMySubscriptions help me save money?",
+    question: "How does Unsubscribely help me save money?",
     answer:
-      "TrackMySubscriptions helps you save money by giving you a clear overview of all your recurring charges, alerting you before payments, identifying unused subscriptions you can cancel, and providing spending analytics to find optimization opportunities.",
+      "Unsubscribely helps you save money by giving you a clear overview of all your recurring charges, alerting you before payments, identifying unused subscriptions you can cancel, and providing spending analytics to find optimization opportunities.",
   },
   {
     question: "What subscriptions can I track?",
     answer:
-      "You can track any recurring subscription or payment — streaming services like Netflix and Spotify, software tools, gym memberships, cloud services, news subscriptions, and more. If it has a recurring charge, you can track it.",
+      "You can track any recurring subscription or payment Ã¢â‚¬â€ streaming services like Netflix and Spotify, software tools, gym memberships, cloud services, news subscriptions, and more. If it has a recurring charge, you can track it.",
   },
   {
     question: "Is my subscription data secure?",
@@ -83,7 +83,7 @@ const homepageFaq = [
   {
     question: "Can I import my existing subscriptions?",
     answer:
-      "Yes, TrackMySubscriptions supports CSV import so you can quickly add all your existing subscriptions. You can also export your data anytime.",
+      "Yes, Unsubscribely supports CSV import so you can quickly add all your existing subscriptions. You can also export your data anytime.",
   },
 ]
 
@@ -110,11 +110,11 @@ export default function HomePage() {
       <Features />
       <HowItWorks />
       <Stats />
-      {/* Testimonials – Loved by thousands, Sarah/James/Emily quotes, 4.9 rating, 98% recommend */}
+      {/* Testimonials Ã¢â‚¬â€œ Loved by thousands, Sarah/James/Emily quotes, 4.9 rating, 98% recommend */}
       {/* <Testimonials /> */}
       <CTA />
 
-      {/* Hidden FAQ section for SEO — visible to crawlers */}
+      {/* Hidden FAQ section for SEO Ã¢â‚¬â€ visible to crawlers */}
       <section className="sr-only" aria-label="Frequently Asked Questions">
         <h2>Frequently Asked Questions</h2>
         {homepageFaq.map((faq) => (

@@ -8,18 +8,18 @@ import { definedTermSetJsonLd } from "@/lib/jsonld"
 import { RiArrowRightLine } from "@remixicon/react"
 
 export const metadata: Metadata = {
-  title: "Subscription & SaaS Glossary — Key Terms Defined | TrackMySubscriptions",
+  title: "Subscription & SaaS Glossary â€” Key Terms Defined | Unsubscribely",
   description:
     "Comprehensive glossary of subscription, SaaS, and recurring billing terminology. Learn what MRR, churn rate, ARR, and other key terms mean with clear definitions and examples.",
   alternates: {
-    canonical: "https://trackmysubscriptions.com/glossary",
+    canonical: "https://unsubscribely.com/glossary",
   },
   openGraph: {
     title: "Subscription & SaaS Glossary",
     description:
       "Learn key subscription and SaaS terms with clear definitions. From MRR to churn rate, understand the language of subscriptions.",
-    url: "https://trackmysubscriptions.com/glossary",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "TrackMySubscriptions — Subscription Glossary" }],
+    url: "https://unsubscribely.com/glossary",
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Unsubscribely â€” Subscription Glossary" }],
   },
 }
 

@@ -29,7 +29,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/"],
       },
     ],
-    sitemap: "https://trackmysubscriptions.com/sitemap-index.xml",
-    host: "https://trackmysubscriptions.com",
+    sitemap: "https://unsubscribely.com/sitemap-index.xml",
+    host: "https://unsubscribely.com",
   }
 }

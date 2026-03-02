@@ -19,10 +19,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!s) return {}
   const year = new Date().getFullYear()
   return {
-    title: `Best ${s.name} Alternatives ${year} — Compare & Switch | TrackMySubscriptions`,
+    title: `Best ${s.name} Alternatives ${year} â€” Compare & Switch | Unsubscribely`,
     description: `Looking for ${s.name} alternatives? Compare the best ${s.category} services with pricing, features, and honest reviews.`,
-    alternates: { canonical: `https://trackmysubscriptions.com/alternatives/${slug}` },
-    openGraph: { title: `Best ${s.name} Alternatives ${year}`, description: `Compare the best alternatives to ${s.name}`, url: `https://trackmysubscriptions.com/alternatives/${slug}`, images: [{ url: "/og-image.png", width: 1200, height: 630, alt: `Best ${s.name} Alternatives` }] },
+    alternates: { canonical: `https://unsubscribely.com/alternatives/${slug}` },
+    openGraph: { title: `Best ${s.name} Alternatives ${year}`, description: `Compare the best alternatives to ${s.name}`, url: `https://unsubscribely.com/alternatives/${slug}`, images: [{ url: "/og-image.png", width: 1200, height: 630, alt: `Best ${s.name} Alternatives` }] },
   }
 }
 
@@ -66,7 +66,7 @@ export default async function AlternativesPage({ params }: Props) {
         { title: "Compare Services", href: "/compare", description: "Head-to-head service comparisons" },
       ]} />
 
-      <CTABanner title="Track Your Subscription Switch" description={`Switching from ${service.name}? Track your new subscription alongside all others — get renewal alerts and spending insights.`} />
+      <CTABanner title="Track Your Subscription Switch" description={`Switching from ${service.name}? Track your new subscription alongside all others â€” get renewal alerts and spending insights.`} />
     </div>
   )
 }

@@ -11,14 +11,14 @@ export const metadata: Metadata = {
   description:
     "Free tools to help you manage your subscriptions better. Calculate subscription costs, compare billing cycles, and find savings opportunities.",
   alternates: {
-    canonical: "https://trackmysubscriptions.com/tools",
+    canonical: "https://unsubscribely.com/tools",
   },
   openGraph: {
     title: "Free Subscription Tools & Calculators",
     description:
       "Free tools to calculate subscription costs, compare billing cycles, and find savings.",
-    url: "https://trackmysubscriptions.com/tools",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "TrackMySubscriptions — Free Subscription Tools" }],
+    url: "https://unsubscribely.com/tools",
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Unsubscribely â€” Free Subscription Tools" }],
   },
 }
 
@@ -132,7 +132,7 @@ export default function ToolsPage() {
 
       <CTABanner
         title="Track Your Subscriptions Automatically"
-        description="Go beyond calculators — track all your subscriptions with alerts, analytics, and spending insights."
+        description="Go beyond calculators â€” track all your subscriptions with alerts, analytics, and spending insights."
       />
     </div>
   )

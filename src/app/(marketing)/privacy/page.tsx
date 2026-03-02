@@ -6,16 +6,16 @@ import { webPageJsonLd, breadcrumbJsonLd } from "@/lib/jsonld"
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description:
-    "Learn how TrackMySubscriptions collects, uses, and protects your personal information. We are committed to safeguarding your data with bank-level security.",
+    "Learn how Unsubscribely collects, uses, and protects your personal information. We are committed to safeguarding your data with bank-level security.",
   alternates: {
-    canonical: "https://trackmysubscriptions.com/privacy",
+    canonical: "https://unsubscribely.com/privacy",
   },
   openGraph: {
-    title: "Privacy Policy | TrackMySubscriptions",
+    title: "Privacy Policy | Unsubscribely",
     description:
-      "Learn how TrackMySubscriptions collects, uses, and protects your personal information.",
-    url: "https://trackmysubscriptions.com/privacy",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "TrackMySubscriptions — Privacy Policy" }],
+      "Learn how Unsubscribely collects, uses, and protects your personal information.",
+    url: "https://unsubscribely.com/privacy",
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Unsubscribely â€” Privacy Policy" }],
   },
 }
 
@@ -28,7 +28,7 @@ export default function PrivacyPage() {
           __html: webPageJsonLd({
             name: "Privacy Policy",
             description:
-              "Learn how TrackMySubscriptions collects, uses, and protects your personal information.",
+              "Learn how Unsubscribely collects, uses, and protects your personal information.",
             url: "/privacy",
             dateModified: "2026-02-01",
           }),

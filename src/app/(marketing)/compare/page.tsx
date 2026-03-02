@@ -9,18 +9,18 @@ import { RelatedLinks } from "@/components/pseo/RelatedLinks"
 import { itemListJsonLd } from "@/lib/jsonld"
 
 export const metadata: Metadata = {
-  title: "Compare Subscription Services — Side-by-Side | TrackMySubscriptions",
+  title: "Compare Subscription Services â€” Side-by-Side | Unsubscribely",
   description:
     "Compare popular subscription services side-by-side. Netflix vs Hulu, Spotify vs Apple Music, Figma vs Sketch, and 30+ more comparisons with pricing, features, and recommendations.",
   alternates: {
-    canonical: "https://trackmysubscriptions.com/compare",
+    canonical: "https://unsubscribely.com/compare",
   },
   openGraph: {
     title: "Compare Subscription Services Side-by-Side",
     description:
       "Head-to-head comparisons of popular subscription services with pricing, features, and recommendations.",
-    url: "https://trackmysubscriptions.com/compare",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "TrackMySubscriptions — Compare Subscription Services" }],
+    url: "https://unsubscribely.com/compare",
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Unsubscribely â€” Compare Subscription Services" }],
   },
 }
 
@@ -79,7 +79,7 @@ export default function ComparePage() {
                 href={`/browse/${category.slug}`}
                 className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
               >
-                Browse all →
+                Browse all â†’
               </Link>
             </div>
             <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

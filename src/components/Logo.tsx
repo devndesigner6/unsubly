@@ -20,7 +20,7 @@ export const LogoImage = ({
 }) => (
   <Image
     src={variant === "svg" ? "/logo.svg" : "/logo.png"}
-    alt="TrackMySubscriptions Logo"
+    alt="Unsubscribely Logo"
     width={size}
     height={size}
     className={className}

@@ -31,7 +31,7 @@ const navigation = {
 
 const social = [
   { name: "Twitter", href: "https://x.com/kalashbuilds", icon: RiTwitterXLine },
-  { name: "GitHub", href: "https://github.com/kalashvasaniya/trackmysubscriptions", icon: RiGithubLine },
+  { name: "GitHub", href: "https://github.com/kalashvasaniya/unsubscribely", icon: RiGithubLine },
   { name: "LinkedIn", href: "https://www.linkedin.com/in/kalashvasaniya/", icon: RiLinkedinLine },
 ]
 
@@ -48,7 +48,7 @@ export function Footer() {
                 <Logo className="size-4 sm:size-5 text-white dark:text-gray-900" />
               </div>
               <span className="text-base sm:text-xl font-semibold text-gray-900 dark:text-white">
-                TrackMySubscriptions
+                Unsubscribely
               </span>
             </Link>
             <p className="mt-3 sm:mt-4 max-w-xs text-xs sm:text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
@@ -140,7 +140,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="mt-8 sm:mt-12 lg:mt-16 flex flex-col items-center justify-between gap-3 sm:gap-4 border-t border-gray-200 pt-6 sm:pt-8 sm:flex-row dark:border-gray-800">
           <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-            &copy; {new Date().getFullYear()} TrackMySubscriptions. All rights reserved.
+            &copy; {new Date().getFullYear()} Unsubscribely. All rights reserved.
           </p>
           <p className="flex items-center gap-1.5 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
             Made with <RiHeartFill className="size-3.5 sm:size-4 text-red-500 animate-pulse" /> for subscription sanity

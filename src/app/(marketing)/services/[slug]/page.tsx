@@ -21,10 +21,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!s) return {}
   const year = new Date().getFullYear()
   return {
-    title: `${s.name} — Subscription Review & Pricing ${year} | TrackMySubscriptions`,
+    title: `${s.name} â€” Subscription Review & Pricing ${year} | Unsubscribely`,
     description: `${s.shortDescription}. See ${s.name} pricing plans, features, and alternatives. Track your ${s.name} subscription free.`,
-    alternates: { canonical: `https://trackmysubscriptions.com/services/${slug}` },
-    openGraph: { title: `${s.name} — Review & Pricing ${year}`, description: s.shortDescription, url: `https://trackmysubscriptions.com/services/${slug}`, images: [{ url: "/og-image.png", width: 1200, height: 630, alt: `${s.name} Review & Pricing` }] },
+    alternates: { canonical: `https://unsubscribely.com/services/${slug}` },
+    openGraph: { title: `${s.name} â€” Review & Pricing ${year}`, description: s.shortDescription, url: `https://unsubscribely.com/services/${slug}`, images: [{ url: "/og-image.png", width: 1200, height: 630, alt: `${s.name} Review & Pricing` }] },
   }
 }
 
@@ -44,7 +44,7 @@ export default async function ServicePage({ params }: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: productJsonLd({ name: service.name, description: service.description, url: service.website, category: service.category, price: startPrice, currency: "USD" }) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: faqPageJsonLd([
         { question: `How much does ${service.name} cost?`, answer: hasFree ? `${service.name} offers a free plan. Paid plans start from $${startPrice}/month.` : `${service.name} plans start from $${startPrice}/month with ${service.pricing.length} plan options available.` },
-        { question: `Is ${service.name} worth it in ${year}?`, answer: `${service.name} offers ${service.features.slice(0, 3).join(", ")}. It's a strong choice in the ${service.category} category. Track your subscription with TrackMySubscriptions to ensure you're getting value.` },
+        { question: `Is ${service.name} worth it in ${year}?`, answer: `${service.name} offers ${service.features.slice(0, 3).join(", ")}. It's a strong choice in the ${service.category} category. Track your subscription with Unsubscribely to ensure you're getting value.` },
       ]) }} />
 
       <PseoBreadcrumb items={[{ name: "Browse", href: "/browse" }, { name: service.category.charAt(0).toUpperCase() + service.category.slice(1), href: `/browse/${service.category}` }, { name: service.name, href: `/services/${slug}` }]} />
@@ -82,7 +82,7 @@ export default async function ServicePage({ params }: Props) {
             </div>
           ))}
         </div>
-        <p className="mt-3 text-center text-sm"><Link href={`/pricing/${slug}`} className="text-blue-600 hover:underline dark:text-blue-400">View detailed pricing breakdown →</Link></p>
+        <p className="mt-3 text-center text-sm"><Link href={`/pricing/${slug}`} className="text-blue-600 hover:underline dark:text-blue-400">View detailed pricing breakdown â†’</Link></p>
       </section>
 
       <section className="mt-8">
@@ -107,7 +107,7 @@ export default async function ServicePage({ params }: Props) {
 
       <RelatedLinks title={`Similar ${service.category.charAt(0).toUpperCase() + service.category.slice(1)} Services`} links={related.map((s) => ({ title: s.name, href: `/services/${s.slug}`, description: s.shortDescription }))} />
       <RelatedLinks title="More Resources" links={[{ title: `${service.name} Alternatives`, href: `/alternatives/${slug}`, description: `Explore alternatives to ${service.name}` }, { title: `${service.name} Pricing`, href: `/pricing/${slug}`, description: `Detailed pricing breakdown for ${service.name}` }, { title: `Browse ${service.category}`, href: `/browse/${service.category}`, description: `All ${service.category} services` }]} />
-      <CTABanner title={`Track Your ${service.name} Subscription`} description={`Never miss a ${service.name} renewal. Track it alongside all your other subscriptions — free.`} />
+      <CTABanner title={`Track Your ${service.name} Subscription`} description={`Never miss a ${service.name} renewal. Track it alongside all your other subscriptions â€” free.`} />
     </div>
   )
 }

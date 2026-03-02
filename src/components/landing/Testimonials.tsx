@@ -5,7 +5,7 @@ import { RiStarFill, RiDoubleQuotesL } from "@remixicon/react"
 
 const testimonials = [
   {
-    content: "TrackMySubscriptions has saved me over $200/month by helping me identify subscriptions I forgot I had.",
+    content: "Unsubscribely has saved me over $200/month by helping me identify subscriptions I forgot I had.",
     author: "Sarah Mitchell",
     role: "Freelance Designer",
     avatar: "SM",
@@ -19,7 +19,7 @@ const testimonials = [
     rating: 5,
   },
   {
-    content: "TrackMySubscriptions helped me cut my expenses significantly. I was paying for services I didn't use.",
+    content: "Unsubscribely helped me cut my expenses significantly. I was paying for services I didn't use.",
     author: "Emily Roberts",
     role: "Marketing Manager",
     avatar: "ER",
@@ -60,7 +60,7 @@ export function Testimonials() {
             <span className="text-gray-400 dark:text-gray-500"> thousands</span>
           </h2>
           <p className="mt-4 sm:mt-6 text-base sm:text-lg text-gray-500 dark:text-gray-400">
-            See what our users have to say about TrackMySubscriptions.
+            See what our users have to say about Unsubscribely.
           </p>
         </div>
 

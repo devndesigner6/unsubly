@@ -173,13 +173,13 @@ export function CostCalculator() {
           {/* Savings Tip */}
           <div className="rounded-xl border border-green-200 bg-green-50 p-5 dark:border-green-800/50 dark:bg-green-900/10">
             <p className="text-sm font-medium text-green-800 dark:text-green-200">
-              💡 Savings Tip
+              ðŸ’¡ Savings Tip
             </p>
             <p className="mt-1 text-sm text-green-700 dark:text-green-300">
               Switching from monthly to annual billing typically saves 15-20%. On
               this subscription, that could save you{" "}
               <strong>${(yearlyTotal * 0.175).toFixed(2)}/year</strong>.
-              Track all your subscriptions with TrackMySubscriptions to find more
+              Track all your subscriptions with Unsubscribely to find more
               savings opportunities.
             </p>
           </div>

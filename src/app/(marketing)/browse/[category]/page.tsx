@@ -31,15 +31,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const year = new Date().getFullYear()
   return {
-    title: `Best ${cat.name} Subscriptions ${year} — Compare & Track | TrackMySubscriptions`,
-    description: `Compare the best ${cat.name.toLowerCase()} subscription services in ${year}. ${cat.description} Track them all free with TrackMySubscriptions.`,
+    title: `Best ${cat.name} Subscriptions ${year} â€” Compare & Track | Unsubscribely`,
+    description: `Compare the best ${cat.name.toLowerCase()} subscription services in ${year}. ${cat.description} Track them all free with Unsubscribely.`,
     alternates: {
-      canonical: `https://trackmysubscriptions.com/browse/${category}`,
+      canonical: `https://unsubscribely.com/browse/${category}`,
     },
     openGraph: {
       title: `Best ${cat.name} Subscriptions ${year}`,
       description: cat.description,
-      url: `https://trackmysubscriptions.com/browse/${category}`,
+      url: `https://unsubscribely.com/browse/${category}`,
       images: [{ url: "/og-image.png", width: 1200, height: 630, alt: `Best ${cat.name} Subscriptions` }],
     },
   }
@@ -70,11 +70,11 @@ export default async function CategoryPage({ params }: Props) {
           .flatMap((s) => s.pricing)
           .filter((p) => p.monthlyPrice && p.monthlyPrice > 0)
           .map((p) => p.monthlyPrice!)
-      ).toFixed(2)}/month. Use TrackMySubscriptions to track and compare costs.`,
+      ).toFixed(2)}/month. Use Unsubscribely to track and compare costs.`,
     },
     {
       question: `How can I track my ${cat.name.toLowerCase()} subscriptions?`,
-      answer: `Use TrackMySubscriptions to track all your ${cat.name.toLowerCase()} subscriptions in one place. Get renewal alerts, spending analytics, and never miss a payment. It's 100% free.`,
+      answer: `Use Unsubscribely to track all your ${cat.name.toLowerCase()} subscriptions in one place. Get renewal alerts, spending analytics, and never miss a payment. It's 100% free.`,
     },
   ]
 
@@ -192,7 +192,7 @@ export default async function CategoryPage({ params }: Props) {
 
       <CTABanner
         title={`Track Your ${cat.name} Subscriptions`}
-        description={`Never lose track of your ${cat.name.toLowerCase()} subscriptions again. Get renewal alerts, spending analytics, and more — 100% free.`}
+        description={`Never lose track of your ${cat.name.toLowerCase()} subscriptions again. Get renewal alerts, spending analytics, and more â€” 100% free.`}
       />
     </div>
   )

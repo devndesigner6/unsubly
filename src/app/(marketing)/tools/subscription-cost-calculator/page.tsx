@@ -7,19 +7,19 @@ import { webApplicationJsonLd, faqPageJsonLd } from "@/lib/jsonld"
 
 export const metadata: Metadata = {
   title:
-    "Subscription Cost Calculator — Monthly to Yearly Converter | TrackMySubscriptions",
+    "Subscription Cost Calculator â€” Monthly to Yearly Converter | Unsubscribely",
   description:
     "Free subscription cost calculator. Convert monthly to yearly costs, see 5 and 10-year projections, and discover how much your subscriptions really cost over time.",
   alternates: {
     canonical:
-      "https://trackmysubscriptions.com/tools/subscription-cost-calculator",
+      "https://unsubscribely.com/tools/subscription-cost-calculator",
   },
   openGraph: {
     title: "Free Subscription Cost Calculator",
     description:
       "Calculate the true long-term cost of your subscriptions. Convert between billing cycles and see 5-10 year projections.",
-    url: "https://trackmysubscriptions.com/tools/subscription-cost-calculator",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "TrackMySubscriptions — Subscription Cost Calculator" }],
+    url: "https://unsubscribely.com/tools/subscription-cost-calculator",
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Unsubscribely â€” Subscription Cost Calculator" }],
   },
 }
 
@@ -42,7 +42,7 @@ const faqQuestions = [
   {
     question: "What is the best way to reduce subscription costs?",
     answer:
-      "Start with a subscription audit: list all subscriptions, cancel unused ones, downgrade underused plans, switch to annual billing for keepers, and look for bundle deals. TrackMySubscriptions makes this process easy and ongoing.",
+      "Start with a subscription audit: list all subscriptions, cancel unused ones, downgrade underused plans, switch to annual billing for keepers, and look for bundle deals. Unsubscribely makes this process easy and ongoing.",
   },
 ]
 
@@ -180,7 +180,7 @@ export default function SubscriptionCostCalculatorPage() {
 
       <CTABanner
         title="Track All Your Subscriptions Automatically"
-        description="Go beyond calculating — track every subscription with smart alerts, spending analytics, and renewal reminders."
+        description="Go beyond calculating â€” track every subscription with smart alerts, spending analytics, and renewal reminders."
       />
     </div>
   )

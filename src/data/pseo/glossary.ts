@@ -22,7 +22,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "SaaS",
     slug: "saas",
     definition:
-      "Software as a Service — a software distribution model where applications are hosted in the cloud and accessed via subscription rather than installed locally.",
+      "Software as a Service â€” a software distribution model where applications are hosted in the cloud and accessed via subscription rather than installed locally.",
     explanation:
       "SaaS has revolutionized how software is delivered and consumed. Instead of buying software outright and installing it on your computer, SaaS products are accessed through a web browser and paid for on a subscription basis. Examples include Google Workspace, Salesforce, Slack, and Notion. Benefits include automatic updates, accessibility from any device, lower upfront costs, and scalability. The global SaaS market is valued at over $195 billion.",
     relatedTerms: ["subscription", "cloud-computing", "recurring-billing", "freemium"],
@@ -34,7 +34,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     definition:
       "An automatic payment system that charges a customer at predetermined intervals for ongoing access to a product or service.",
     explanation:
-      "Recurring billing is the mechanism that powers subscription businesses. When you subscribe to a service, your payment method is charged automatically on a set schedule — typically monthly or yearly. This eliminates the need to manually pay each billing period. While convenient, it can lead to forgotten subscriptions and unexpected charges. Tools like TrackMySubscriptions help you monitor all recurring charges in one place and alert you before payments are processed.",
+      "Recurring billing is the mechanism that powers subscription businesses. When you subscribe to a service, your payment method is charged automatically on a set schedule â€” typically monthly or yearly. This eliminates the need to manually pay each billing period. While convenient, it can lead to forgotten subscriptions and unexpected charges. Tools like Unsubscribely help you monitor all recurring charges in one place and alert you before payments are processed.",
     relatedTerms: ["subscription", "billing-cycle", "auto-renewal", "payment-method"],
     category: "billing",
   },
@@ -44,7 +44,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     definition:
       "The recurring time period between billing dates for a subscription service, such as monthly, quarterly, or yearly.",
     explanation:
-      "A billing cycle defines how frequently you are charged for a subscription. The most common billing cycles are monthly and yearly (annual), though some services offer weekly or quarterly options. Yearly billing often comes with a discount of 15-20% compared to monthly pricing. Understanding your billing cycles is essential for budgeting — knowing when payments are due helps you plan finances and avoid overdraft fees. Tracking billing cycles across all subscriptions helps identify the best time to consolidate or cancel services.",
+      "A billing cycle defines how frequently you are charged for a subscription. The most common billing cycles are monthly and yearly (annual), though some services offer weekly or quarterly options. Yearly billing often comes with a discount of 15-20% compared to monthly pricing. Understanding your billing cycles is essential for budgeting â€” knowing when payments are due helps you plan finances and avoid overdraft fees. Tracking billing cycles across all subscriptions helps identify the best time to consolidate or cancel services.",
     relatedTerms: ["recurring-billing", "annual-subscription", "monthly-subscription", "payment-date"],
     category: "billing",
   },
@@ -54,7 +54,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     definition:
       "A subscription plan billed once per year, typically offering a discount compared to the equivalent monthly pricing.",
     explanation:
-      "Annual subscriptions require paying for a full year upfront in exchange for a lower per-month cost. Most SaaS and streaming services offer 10-25% savings when you choose annual billing. For example, a service charging $10/month might offer an annual plan at $96/year ($8/month effective). The trade-off is commitment — you pay more upfront and may lose money if you cancel early. Annual plans make sense for services you use consistently, while monthly plans are better for services you're still evaluating.",
+      "Annual subscriptions require paying for a full year upfront in exchange for a lower per-month cost. Most SaaS and streaming services offer 10-25% savings when you choose annual billing. For example, a service charging $10/month might offer an annual plan at $96/year ($8/month effective). The trade-off is commitment â€” you pay more upfront and may lose money if you cancel early. Annual plans make sense for services you use consistently, while monthly plans are better for services you're still evaluating.",
     relatedTerms: ["billing-cycle", "monthly-subscription", "subscription-savings", "commitment"],
     category: "billing",
   },
@@ -74,7 +74,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     definition:
       "A limited-time period where users can access a subscription service at no cost before committing to a paid plan.",
     explanation:
-      "Free trials let you experience a service before paying. Common trial lengths are 7, 14, or 30 days. Most trials require a credit card upfront and automatically convert to a paid subscription when the trial ends. This means you will be charged if you forget to cancel before the trial expires. To avoid unwanted charges, set a reminder a day or two before the trial ends. Some services offer trials without requiring payment information — these are lower risk but less common.",
+      "Free trials let you experience a service before paying. Common trial lengths are 7, 14, or 30 days. Most trials require a credit card upfront and automatically convert to a paid subscription when the trial ends. This means you will be charged if you forget to cancel before the trial expires. To avoid unwanted charges, set a reminder a day or two before the trial ends. Some services offer trials without requiring payment information â€” these are lower risk but less common.",
     relatedTerms: ["freemium", "auto-renewal", "subscription", "cancel-anytime"],
     category: "general",
   },
@@ -94,7 +94,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     definition:
       "A feature that automatically renews a subscription at the end of each billing cycle without requiring manual action from the user.",
     explanation:
-      "Auto-renewal is the default for nearly all subscription services. Your subscription automatically continues and your payment method is charged when each billing period ends. While convenient for services you use regularly, auto-renewal is a leading cause of unwanted charges — especially for forgotten subscriptions or after free trials. Many regions now require services to notify users before auto-renewal and make cancellation easy. Subscription trackers help monitor auto-renewals and send alerts before charges occur.",
+      "Auto-renewal is the default for nearly all subscription services. Your subscription automatically continues and your payment method is charged when each billing period ends. While convenient for services you use regularly, auto-renewal is a leading cause of unwanted charges â€” especially for forgotten subscriptions or after free trials. Many regions now require services to notify users before auto-renewal and make cancellation easy. Subscription trackers help monitor auto-renewals and send alerts before charges occur.",
     relatedTerms: ["recurring-billing", "free-trial", "subscription", "cancellation"],
     category: "billing",
   },
@@ -112,7 +112,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "MRR",
     slug: "mrr",
     definition:
-      "Monthly Recurring Revenue — the predictable total revenue a subscription business expects to earn each month from all active subscriptions.",
+      "Monthly Recurring Revenue â€” the predictable total revenue a subscription business expects to earn each month from all active subscriptions.",
     explanation:
       "MRR is the heartbeat metric of subscription businesses. It represents the total monthly income from all subscribers, normalized to a monthly figure. For example, if you have 100 customers paying $10/month and 50 paying $200/year, your MRR would be $1,000 + $833.33 = $1,833.33. MRR is tracked as New MRR (new customers), Expansion MRR (upgrades), Contraction MRR (downgrades), and Churned MRR (cancellations). For personal finance, your personal MRR is your total monthly subscription spending.",
     relatedTerms: ["arr", "churn-rate", "recurring-billing", "subscription"],
@@ -122,7 +122,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "ARR",
     slug: "arr",
     definition:
-      "Annual Recurring Revenue — the annualized value of recurring subscription revenue, calculated as MRR multiplied by 12.",
+      "Annual Recurring Revenue â€” the annualized value of recurring subscription revenue, calculated as MRR multiplied by 12.",
     explanation:
       "ARR provides a yearly view of subscription revenue and is the standard metric for SaaS businesses, especially those with annual contracts. ARR = MRR x 12. For example, if a company earns $100,000 in MRR, their ARR is $1.2 million. ARR is commonly used by investors to evaluate SaaS companies and is a key factor in valuations. For personal finance, knowing your personal ARR (total yearly subscription spending) helps with annual budgeting and identifying opportunities to save.",
     relatedTerms: ["mrr", "subscription", "recurring-billing", "revenue"],
@@ -144,7 +144,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     definition:
       "A pricing strategy where a service offers multiple plan levels with different feature sets and price points to serve different customer segments.",
     explanation:
-      "Tiered pricing is the most common pricing model for subscription services. Typically, services offer 2-4 tiers: a free or basic tier, a mid-range tier for most users, and a premium or enterprise tier. Each tier adds more features, storage, users, or capabilities. Examples: Spotify (Free, Individual, Family), Notion (Free, Plus, Business, Enterprise). The goal is price discrimination — capturing value from users with different willingness to pay. When choosing a tier, evaluate which features you actually use to avoid overpaying.",
+      "Tiered pricing is the most common pricing model for subscription services. Typically, services offer 2-4 tiers: a free or basic tier, a mid-range tier for most users, and a premium or enterprise tier. Each tier adds more features, storage, users, or capabilities. Examples: Spotify (Free, Individual, Family), Notion (Free, Plus, Business, Enterprise). The goal is price discrimination â€” capturing value from users with different willingness to pay. When choosing a tier, evaluate which features you actually use to avoid overpaying.",
     relatedTerms: ["freemium", "subscription", "upsell", "pricing-model"],
     category: "finance",
   },
@@ -154,7 +154,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     definition:
       "The financial instrument used to pay for a subscription, such as a credit card, debit card, PayPal, or bank account.",
     explanation:
-      "Subscription services accept various payment methods including credit cards, debit cards, PayPal, bank transfers, and digital wallets like Apple Pay. Your choice of payment method affects fraud protection, ease of cancellation, and financial tracking. Credit cards offer the best dispute protection, while bank transfers may provide lower fees. Tracking which payment methods are linked to which subscriptions is crucial for managing your finances — especially when a card expires or you need to cancel multiple services.",
+      "Subscription services accept various payment methods including credit cards, debit cards, PayPal, bank transfers, and digital wallets like Apple Pay. Your choice of payment method affects fraud protection, ease of cancellation, and financial tracking. Credit cards offer the best dispute protection, while bank transfers may provide lower fees. Tracking which payment methods are linked to which subscriptions is crucial for managing your finances â€” especially when a card expires or you need to cancel multiple services.",
     relatedTerms: ["recurring-billing", "auto-renewal", "subscription", "payment-date"],
     category: "finance",
   },
@@ -164,7 +164,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     definition:
       "The feeling of being overwhelmed by the number of active subscriptions and the cumulative cost of maintaining them.",
     explanation:
-      "Subscription fatigue has become increasingly common as more services shift to subscription models. The average consumer has 12+ subscriptions but studies show most people only actively use 5-7 of them. This leads to overspending on unused services — estimated at $133/month per person in wasted subscriptions. Symptoms include losing track of what you're paying for, feeling reluctant to add new subscriptions, and being surprised by bank charges. The solution is regular auditing of your subscriptions using a tracker to identify which services deliver real value.",
+      "Subscription fatigue has become increasingly common as more services shift to subscription models. The average consumer has 12+ subscriptions but studies show most people only actively use 5-7 of them. This leads to overspending on unused services â€” estimated at $133/month per person in wasted subscriptions. Symptoms include losing track of what you're paying for, feeling reluctant to add new subscriptions, and being surprised by bank charges. The solution is regular auditing of your subscriptions using a tracker to identify which services deliver real value.",
     relatedTerms: ["subscription", "subscription-audit", "subscription-creep", "cancel-anytime"],
     category: "management",
   },
@@ -174,7 +174,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     definition:
       "A systematic review of all active subscriptions to evaluate their value, identify unused services, and optimize spending.",
     explanation:
-      "A subscription audit involves listing every recurring charge, categorizing them, evaluating usage and value, and deciding what to keep, downgrade, or cancel. Experts recommend auditing subscriptions quarterly. Steps: 1) Check bank and credit card statements for all recurring charges. 2) List each subscription with its cost and billing cycle. 3) Rate how often you use each service. 4) Cancel unused ones, downgrade underused ones, and consider annual plans for essential ones. Tools like TrackMySubscriptions automate this process by tracking all subscriptions in one dashboard.",
+      "A subscription audit involves listing every recurring charge, categorizing them, evaluating usage and value, and deciding what to keep, downgrade, or cancel. Experts recommend auditing subscriptions quarterly. Steps: 1) Check bank and credit card statements for all recurring charges. 2) List each subscription with its cost and billing cycle. 3) Rate how often you use each service. 4) Cancel unused ones, downgrade underused ones, and consider annual plans for essential ones. Tools like Unsubscribely automate this process by tracking all subscriptions in one dashboard.",
     relatedTerms: ["subscription-fatigue", "subscription-creep", "subscription", "budgeting"],
     category: "management",
   },
@@ -204,7 +204,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     definition:
       "The act of ending a subscription, which stops future billing and eventually terminates access to the service.",
     explanation:
-      "Cancellation policies vary widely between services. Some take effect immediately, while others let you use the service until the end of your current billing period. Key things to know: most services retain your data for 30-90 days after cancellation in case you resubscribe. Annual subscriptions may or may not offer prorated refunds. Some services use 'dark patterns' to make cancellation difficult — requiring phone calls or multiple confirmation steps. The FTC has been pushing for 'click to cancel' rules to make it as easy to cancel as it is to subscribe.",
+      "Cancellation policies vary widely between services. Some take effect immediately, while others let you use the service until the end of your current billing period. Key things to know: most services retain your data for 30-90 days after cancellation in case you resubscribe. Annual subscriptions may or may not offer prorated refunds. Some services use 'dark patterns' to make cancellation difficult â€” requiring phone calls or multiple confirmation steps. The FTC has been pushing for 'click to cancel' rules to make it as easy to cancel as it is to subscribe.",
     relatedTerms: ["auto-renewal", "grace-period", "subscription", "refund"],
     category: "management",
   },
@@ -214,7 +214,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     definition:
       "The calculation of a proportional charge or credit when changing subscription plans mid-billing cycle.",
     explanation:
-      "Proration ensures fair billing when you upgrade, downgrade, or cancel a subscription in the middle of a billing period. If you upgrade from a $10/month plan to a $20/month plan halfway through the month, you would be credited $5 for the unused portion and charged $10 for the remaining half at the new rate. Not all services handle proration — some charge the full new amount immediately or wait until the next billing cycle. Understanding proration helps you time plan changes to minimize costs.",
+      "Proration ensures fair billing when you upgrade, downgrade, or cancel a subscription in the middle of a billing period. If you upgrade from a $10/month plan to a $20/month plan halfway through the month, you would be credited $5 for the unused portion and charged $10 for the remaining half at the new rate. Not all services handle proration â€” some charge the full new amount immediately or wait until the next billing cycle. Understanding proration helps you time plan changes to minimize costs.",
     relatedTerms: ["billing-cycle", "tiered-pricing", "subscription", "upgrade"],
     category: "billing",
   },
@@ -222,7 +222,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Cloud Computing",
     slug: "cloud-computing",
     definition:
-      "The delivery of computing services — including servers, storage, databases, and software — over the internet on a subscription or pay-per-use basis.",
+      "The delivery of computing services â€” including servers, storage, databases, and software â€” over the internet on a subscription or pay-per-use basis.",
     explanation:
       "Cloud computing transformed the technology industry by shifting from capital expenditure (buying hardware) to operational expenditure (paying subscriptions). The three main models are IaaS (Infrastructure as a Service), PaaS (Platform as a Service), and SaaS (Software as a Service). Major providers include AWS, Google Cloud, and Microsoft Azure. For consumers, cloud computing means your data and applications are accessible from anywhere. For businesses, it means scalable resources without managing physical infrastructure. Most modern subscription services run on cloud infrastructure.",
     relatedTerms: ["saas", "subscription", "infrastructure", "scalability"],
@@ -234,7 +234,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     definition:
       "The total cost of sales and marketing efforts required to acquire a new paying subscriber, calculated as total acquisition spend divided by new customers gained.",
     explanation:
-      "Customer Acquisition Cost (CAC) is a critical metric for subscription businesses. It includes advertising spend, sales team costs, marketing tools, and any free trial or onboarding costs. A healthy SaaS business maintains an LTV:CAC ratio of at least 3:1, meaning each customer generates 3x more revenue than it costs to acquire them. CAC varies dramatically by industry — consumer SaaS might be $50-200, while enterprise SaaS can be $5,000-50,000. For consumers, understanding CAC explains why services offer generous free trials and discounts — they're investing in acquiring you as a customer.",
+      "Customer Acquisition Cost (CAC) is a critical metric for subscription businesses. It includes advertising spend, sales team costs, marketing tools, and any free trial or onboarding costs. A healthy SaaS business maintains an LTV:CAC ratio of at least 3:1, meaning each customer generates 3x more revenue than it costs to acquire them. CAC varies dramatically by industry â€” consumer SaaS might be $50-200, while enterprise SaaS can be $5,000-50,000. For consumers, understanding CAC explains why services offer generous free trials and discounts â€” they're investing in acquiring you as a customer.",
     relatedTerms: ["lifetime-value", "churn-rate", "mrr", "conversion-rate"],
     category: "metrics",
   },
@@ -252,7 +252,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "ARPU",
     slug: "arpu",
     definition:
-      "Average Revenue Per User — the average monthly or annual revenue generated per subscriber, calculated by dividing total revenue by total subscribers.",
+      "Average Revenue Per User â€” the average monthly or annual revenue generated per subscriber, calculated by dividing total revenue by total subscribers.",
     explanation:
       "ARPU (Average Revenue Per User) helps subscription businesses understand their revenue efficiency. It is calculated as Total Revenue / Total Users for a given period. For example, if a service earns $100,000/month from 10,000 subscribers, the ARPU is $10/month. ARPU can be increased through upselling, cross-selling, or price increases. Tracking ARPU over time reveals whether a business is becoming more or less efficient at monetizing its user base. For consumers, ARPU gives insight into what the 'typical' customer pays, which can help in negotiating better deals.",
     relatedTerms: ["mrr", "lifetime-value", "tiered-pricing", "subscription"],
@@ -264,7 +264,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     definition:
       "The percentage of subscribers who continue their subscription over a given period, calculated as the inverse of churn rate.",
     explanation:
-      "Retention rate is the flip side of churn rate — if monthly churn is 5%, retention is 95%. High retention indicates customer satisfaction and product-market fit. For subscription businesses, improving retention by even 1-2% can dramatically impact revenue over time due to the compounding effect. Retention strategies include excellent onboarding, regular feature updates, personalized experiences, and proactive customer success outreach. For consumers, services with high retention rates tend to be higher quality because they earn loyalty rather than relying on lock-in.",
+      "Retention rate is the flip side of churn rate â€” if monthly churn is 5%, retention is 95%. High retention indicates customer satisfaction and product-market fit. For subscription businesses, improving retention by even 1-2% can dramatically impact revenue over time due to the compounding effect. Retention strategies include excellent onboarding, regular feature updates, personalized experiences, and proactive customer success outreach. For consumers, services with high retention rates tend to be higher quality because they earn loyalty rather than relying on lock-in.",
     relatedTerms: ["churn-rate", "lifetime-value", "engagement", "loyalty"],
     category: "metrics",
   },
@@ -284,7 +284,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     definition:
       "The specific day within each billing cycle when a subscription payment is processed and charged to the subscriber's payment method.",
     explanation:
-      "Payment dates are set when you first subscribe and typically recur on the same day each billing period. For monthly subscriptions, if you subscribed on the 15th, you will be billed on the 15th of each month. For annual subscriptions, you are billed on the same date each year. Some services allow you to change your payment date. Knowing your payment dates is critical for budgeting — clustering too many subscription payments around the same date can strain your finances. Subscription trackers help visualize payment dates across all your services.",
+      "Payment dates are set when you first subscribe and typically recur on the same day each billing period. For monthly subscriptions, if you subscribed on the 15th, you will be billed on the 15th of each month. For annual subscriptions, you are billed on the same date each year. Some services allow you to change your payment date. Knowing your payment dates is critical for budgeting â€” clustering too many subscription payments around the same date can strain your finances. Subscription trackers help visualize payment dates across all your services.",
     relatedTerms: ["billing-cycle", "recurring-billing", "auto-renewal", "budgeting"],
     category: "billing",
   },
@@ -294,7 +294,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     definition:
       "Switching from a higher-priced subscription plan to a lower-priced one, typically with fewer features or reduced limits.",
     explanation:
-      "Downgrading is a cost-saving strategy where you move to a less expensive plan that still meets your needs. For example, switching from Spotify Family to Spotify Individual, or from a Pro plan to a Free tier. Most services apply downgrades at the end of the current billing cycle. Some offer prorated credits, while others require you to use the remaining time on your current plan first. Before downgrading, check what features or data you might lose — some services delete data that exceeds the lower plan's limits.",
+      "Downgrading is a cost-saving strategy where you move to a less expensive plan that still meets your needs. For example, switching from Spotify Family to Spotify Individual, or from a Pro plan to a Free tier. Most services apply downgrades at the end of the current billing cycle. Some offer prorated credits, while others require you to use the remaining time on your current plan first. Before downgrading, check what features or data you might lose â€” some services delete data that exceeds the lower plan's limits.",
     relatedTerms: ["tiered-pricing", "proration", "cancellation", "subscription-savings"],
     category: "management",
   },
@@ -304,7 +304,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     definition:
       "A sales technique where a subscription service encourages existing users to upgrade to a higher-priced plan with more features.",
     explanation:
-      "Upselling is how subscription services increase ARPU. Common upsell tactics include feature gates (showing locked premium features), usage limits (storage full, upgrade for more), time-limited discounts on upgrades, and in-app prompts during high-engagement moments. Well-executed upsells align with genuine user needs — Dropbox showing you're at 90% storage capacity is a natural upsell. Manipulative upsells use dark patterns or artificial limitations. As a consumer, evaluate upsell offers critically: do you genuinely need the additional features, or is the current plan sufficient?",
+      "Upselling is how subscription services increase ARPU. Common upsell tactics include feature gates (showing locked premium features), usage limits (storage full, upgrade for more), time-limited discounts on upgrades, and in-app prompts during high-engagement moments. Well-executed upsells align with genuine user needs â€” Dropbox showing you're at 90% storage capacity is a natural upsell. Manipulative upsells use dark patterns or artificial limitations. As a consumer, evaluate upsell offers critically: do you genuinely need the additional features, or is the current plan sufficient?",
     relatedTerms: ["tiered-pricing", "freemium", "conversion-rate", "arpu"],
     category: "finance",
   },
@@ -314,7 +314,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     definition:
       "The money saved by optimizing subscriptions through cancelling unused services, downgrading plans, switching to annual billing, or using bundles.",
     explanation:
-      "Studies show the average consumer can save $500+ per year by optimizing their subscriptions. Key strategies include: 1) Cancel services unused for 30+ days. 2) Downgrade plans where you do not use premium features. 3) Switch to annual billing for services you plan to keep (saves 15-20%). 4) Use bundles instead of individual subscriptions. 5) Share family plans with household members. 6) Negotiate retention offers by initiating cancellation. 7) Watch for promotional pricing and lock in lower rates. Regular subscription audits using a tool like TrackMySubscriptions make these savings easy to identify.",
+      "Studies show the average consumer can save $500+ per year by optimizing their subscriptions. Key strategies include: 1) Cancel services unused for 30+ days. 2) Downgrade plans where you do not use premium features. 3) Switch to annual billing for services you plan to keep (saves 15-20%). 4) Use bundles instead of individual subscriptions. 5) Share family plans with household members. 6) Negotiate retention offers by initiating cancellation. 7) Watch for promotional pricing and lock in lower rates. Regular subscription audits using a tool like Unsubscribely make these savings easy to identify.",
     relatedTerms: ["subscription-audit", "downgrade", "subscription-bundle", "annual-subscription"],
     category: "management",
   },
@@ -324,7 +324,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     definition:
       "A tool or application that helps users monitor, manage, and optimize all their active subscriptions in one centralized dashboard.",
     explanation:
-      "Subscription trackers solve the problem of scattered subscriptions across dozens of services. They provide a single view of all your recurring charges, upcoming payments, spending analytics, and cancellation reminders. Key features include: payment date calendars, spending breakdowns by category, alert notifications before renewals, and export capabilities. TrackMySubscriptions is a free, open-source subscription tracker that offers all these features with smart alerts, detailed analytics, and CSV import/export for easy migration.",
+      "Subscription trackers solve the problem of scattered subscriptions across dozens of services. They provide a single view of all your recurring charges, upcoming payments, spending analytics, and cancellation reminders. Key features include: payment date calendars, spending breakdowns by category, alert notifications before renewals, and export capabilities. Unsubscribely is a free, open-source subscription tracker that offers all these features with smart alerts, detailed analytics, and CSV import/export for easy migration.",
     relatedTerms: ["subscription-audit", "subscription-fatigue", "subscription-savings", "budgeting"],
     category: "management",
   },
@@ -334,7 +334,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     definition:
       "The process of creating a plan for how to allocate income, including accounting for recurring subscription expenses.",
     explanation:
-      "Effective budgeting requires a clear picture of all recurring expenses, including subscriptions. The 50/30/20 rule suggests allocating 50% of income to needs, 30% to wants, and 20% to savings. Subscriptions typically fall into the 'wants' category and should be reviewed regularly. Common budgeting methods include zero-based budgeting (YNAB), envelope method, and percentage-based allocation. Tracking subscriptions is a crucial part of budgeting because small recurring charges compound — a $15/month subscription costs $180/year and $900 over five years.",
+      "Effective budgeting requires a clear picture of all recurring expenses, including subscriptions. The 50/30/20 rule suggests allocating 50% of income to needs, 30% to wants, and 20% to savings. Subscriptions typically fall into the 'wants' category and should be reviewed regularly. Common budgeting methods include zero-based budgeting (YNAB), envelope method, and percentage-based allocation. Tracking subscriptions is a crucial part of budgeting because small recurring charges compound â€” a $15/month subscription costs $180/year and $900 over five years.",
     relatedTerms: ["subscription-audit", "subscription-savings", "payment-date", "subscription-tracker"],
     category: "finance",
   },
@@ -364,7 +364,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     definition:
       "The return of subscription payment to the customer, typically when cancelling within a specified window or due to service issues.",
     explanation:
-      "Refund policies vary widely between subscription services. Apple and Google offer refund windows for app store subscriptions (typically 48 hours to 14 days). Many SaaS services offer money-back guarantees (30-60 days). Annual subscriptions may offer prorated refunds for unused months. Key tips: 1) Check the refund policy before subscribing. 2) Request refunds promptly — most have time limits. 3) Contact support directly for the best chance of approval. 4) Credit card chargebacks are a last resort if the service refuses a legitimate refund. Keep records of subscription dates and cancellation requests.",
+      "Refund policies vary widely between subscription services. Apple and Google offer refund windows for app store subscriptions (typically 48 hours to 14 days). Many SaaS services offer money-back guarantees (30-60 days). Annual subscriptions may offer prorated refunds for unused months. Key tips: 1) Check the refund policy before subscribing. 2) Request refunds promptly â€” most have time limits. 3) Contact support directly for the best chance of approval. 4) Credit card chargebacks are a last resort if the service refuses a legitimate refund. Keep records of subscription dates and cancellation requests.",
     relatedTerms: ["cancellation", "proration", "grace-period", "payment-method"],
     category: "billing",
   },
@@ -420,7 +420,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Content Gating",
     slug: "content-gating",
     definition: "The practice of restricting access to digital content behind a registration, subscription, or payment requirement.",
-    explanation: "Content gating is broader than paywalls and includes requiring email registration, account creation, or social shares to access content. It is commonly used in B2B marketing to collect leads (gated whitepapers, webinars) and in media for premium articles. Effective content gating balances lead generation with user experience — too much gating frustrates users, while too little gives away value for free. For subscription services, content gating is the mechanism that converts free users to paid subscribers.",
+    explanation: "Content gating is broader than paywalls and includes requiring email registration, account creation, or social shares to access content. It is commonly used in B2B marketing to collect leads (gated whitepapers, webinars) and in media for premium articles. Effective content gating balances lead generation with user experience â€” too much gating frustrates users, while too little gives away value for free. For subscription services, content gating is the mechanism that converts free users to paid subscribers.",
     relatedTerms: ["paywall", "freemium", "conversion-rate", "lead-generation"],
     category: "general",
   },
@@ -428,7 +428,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Seat-Based Pricing",
     slug: "seat-based-pricing",
     definition: "A pricing model where subscription cost is determined by the number of individual users (seats) who access the service.",
-    explanation: "Seat-based pricing is the dominant model for B2B SaaS. Each user account (seat) costs a fixed amount per month or year. For example, Slack charges per active user, and Figma charges per editor seat. This model aligns cost with value — larger teams pay more because they get more value. However, it can discourage adoption if adding users feels expensive. Some companies use active seat pricing (only billing for users who actually log in) to reduce friction. For budget planning, multiply your per-seat cost by expected team size.",
+    explanation: "Seat-based pricing is the dominant model for B2B SaaS. Each user account (seat) costs a fixed amount per month or year. For example, Slack charges per active user, and Figma charges per editor seat. This model aligns cost with value â€” larger teams pay more because they get more value. However, it can discourage adoption if adding users feels expensive. Some companies use active seat pricing (only billing for users who actually log in) to reduce friction. For budget planning, multiply your per-seat cost by expected team size.",
     relatedTerms: ["tiered-pricing", "usage-based-pricing", "arpu", "subscription"],
     category: "finance",
   },
@@ -444,7 +444,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Grandfathering",
     slug: "grandfathering",
     definition: "The practice of allowing existing subscribers to keep their current pricing or plan terms when a service changes its pricing structure.",
-    explanation: "Grandfathering is a retention strategy where existing customers are exempt from price increases or plan changes. When Netflix raises prices, for example, they may grandfather existing subscribers at the old rate for a period. This builds loyalty and reduces churn during transitions. However, grandfathering is usually temporary — most services eventually migrate all users to new pricing. Savvy consumers leverage grandfathering by subscribing to services before announced price increases. Some services offer permanent grandfathering as a loyalty reward.",
+    explanation: "Grandfathering is a retention strategy where existing customers are exempt from price increases or plan changes. When Netflix raises prices, for example, they may grandfather existing subscribers at the old rate for a period. This builds loyalty and reduces churn during transitions. However, grandfathering is usually temporary â€” most services eventually migrate all users to new pricing. Savvy consumers leverage grandfathering by subscribing to services before announced price increases. Some services offer permanent grandfathering as a loyalty reward.",
     relatedTerms: ["price-increase", "retention-rate", "subscription", "loyalty"],
     category: "billing",
   },
@@ -452,7 +452,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Cohort Analysis",
     slug: "cohort-analysis",
     definition: "A technique that groups subscribers by their sign-up date to analyze retention, behavior, and revenue patterns over time.",
-    explanation: "Cohort analysis is essential for understanding subscription business health. By grouping users who signed up in the same time period (cohort), businesses can compare how different groups behave. For example, a January cohort might retain better than a March cohort, revealing seasonal patterns or the impact of onboarding changes. Key metrics tracked by cohort include retention rate, LTV, and expansion revenue. For consumers, cohort analysis explains why services offer different promotions at different times — they're testing what produces the best long-term subscribers.",
+    explanation: "Cohort analysis is essential for understanding subscription business health. By grouping users who signed up in the same time period (cohort), businesses can compare how different groups behave. For example, a January cohort might retain better than a March cohort, revealing seasonal patterns or the impact of onboarding changes. Key metrics tracked by cohort include retention rate, LTV, and expansion revenue. For consumers, cohort analysis explains why services offer different promotions at different times â€” they're testing what produces the best long-term subscribers.",
     relatedTerms: ["retention-rate", "churn-rate", "lifetime-value", "analytics"],
     category: "metrics",
   },
@@ -460,7 +460,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Expansion Revenue",
     slug: "expansion-revenue",
     definition: "Additional revenue generated from existing subscribers through upgrades, add-ons, or increased usage beyond their initial plan.",
-    explanation: "Expansion revenue is revenue growth from your existing customer base, without acquiring new customers. It includes plan upgrades, additional seat purchases, add-on features, and usage overage. For healthy SaaS companies, expansion revenue should offset churn — leading to net revenue retention above 100%. Common expansion strategies include usage-based pricing tiers, premium feature add-ons, and team plan upgrades. For consumers, expansion revenue opportunities from your subscriptions mean more upsell prompts and encouragement to upgrade.",
+    explanation: "Expansion revenue is revenue growth from your existing customer base, without acquiring new customers. It includes plan upgrades, additional seat purchases, add-on features, and usage overage. For healthy SaaS companies, expansion revenue should offset churn â€” leading to net revenue retention above 100%. Common expansion strategies include usage-based pricing tiers, premium feature add-ons, and team plan upgrades. For consumers, expansion revenue opportunities from your subscriptions mean more upsell prompts and encouragement to upgrade.",
     relatedTerms: ["net-revenue-retention", "upsell", "mrr", "arpu"],
     category: "metrics",
   },
@@ -468,7 +468,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Voluntary Churn",
     slug: "voluntary-churn",
     definition: "Subscriber cancellations that occur by the customer's deliberate choice, as opposed to involuntary churn from payment failures.",
-    explanation: "Voluntary churn happens when customers actively decide to cancel. Reasons include dissatisfaction with the product, finding a better alternative, budget cuts, or no longer needing the service. Unlike involuntary churn (failed payments), voluntary churn signals a fundamental issue with product-market fit or value perception. Reducing voluntary churn requires understanding why customers leave through exit surveys, usage analytics, and proactive customer success outreach. For consumers, knowing the difference helps when negotiating — threatening voluntary churn often triggers retention offers.",
+    explanation: "Voluntary churn happens when customers actively decide to cancel. Reasons include dissatisfaction with the product, finding a better alternative, budget cuts, or no longer needing the service. Unlike involuntary churn (failed payments), voluntary churn signals a fundamental issue with product-market fit or value perception. Reducing voluntary churn requires understanding why customers leave through exit surveys, usage analytics, and proactive customer success outreach. For consumers, knowing the difference helps when negotiating â€” threatening voluntary churn often triggers retention offers.",
     relatedTerms: ["churn-rate", "involuntary-churn", "retention-rate", "cancellation"],
     category: "metrics",
   },
@@ -484,7 +484,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Win-Back Campaign",
     slug: "win-back-campaign",
     definition: "A marketing strategy designed to re-engage and reactivate former subscribers who have cancelled their subscriptions.",
-    explanation: "Win-back campaigns target churned subscribers with incentives to return. Common tactics include discounted re-subscription offers, highlighting new features added since cancellation, limited-time free access, and personalized messaging based on their original usage. These campaigns are often more cost-effective than acquiring new customers since former subscribers already know the product. Timing matters — campaigns sent 30-90 days after cancellation have the highest success rates. For consumers, waiting to be targeted by a win-back campaign can result in significant discounts when resubscribing.",
+    explanation: "Win-back campaigns target churned subscribers with incentives to return. Common tactics include discounted re-subscription offers, highlighting new features added since cancellation, limited-time free access, and personalized messaging based on their original usage. These campaigns are often more cost-effective than acquiring new customers since former subscribers already know the product. Timing matters â€” campaigns sent 30-90 days after cancellation have the highest success rates. For consumers, waiting to be targeted by a win-back campaign can result in significant discounts when resubscribing.",
     relatedTerms: ["churn-rate", "retention-rate", "customer-acquisition-cost", "cancellation"],
     category: "management",
   },
@@ -500,7 +500,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Digital Subscription",
     slug: "digital-subscription",
     definition: "A recurring payment for access to digital content, software, or online services delivered electronically.",
-    explanation: "Digital subscriptions have become the dominant form of subscription commerce. Unlike physical subscription boxes, digital subscriptions deliver value instantly through the internet — streaming content, software access, cloud storage, or digital publications. The zero marginal cost of digital delivery makes this model highly scalable for businesses. For consumers, digital subscriptions are easy to accumulate because there is no physical reminder of what you are paying for. The average American household spends $273/month on digital subscriptions. Tracking tools help manage this growing category of expenses.",
+    explanation: "Digital subscriptions have become the dominant form of subscription commerce. Unlike physical subscription boxes, digital subscriptions deliver value instantly through the internet â€” streaming content, software access, cloud storage, or digital publications. The zero marginal cost of digital delivery makes this model highly scalable for businesses. For consumers, digital subscriptions are easy to accumulate because there is no physical reminder of what you are paying for. The average American household spends $273/month on digital subscriptions. Tracking tools help manage this growing category of expenses.",
     relatedTerms: ["subscription", "saas", "streaming", "cloud-computing"],
     category: "general",
   },
@@ -524,7 +524,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Student Discount",
     slug: "student-discount",
     definition: "A reduced subscription price offered to enrolled students, typically requiring verification of active student status.",
-    explanation: "Student discounts are a customer acquisition strategy — services offer 50% or more off to build brand loyalty during formative years. Major discounts include Spotify Student ($5.99 vs $10.99), Apple Music Student ($5.99), GitHub Student Developer Pack (free), and Amazon Prime Student ($7.49 vs $14.99). Verification is usually done through services like SheerID or UNiDAYS. Student plans typically convert to regular pricing after graduation or verification expiry. Maximizing student discounts while enrolled can save hundreds per year on subscriptions.",
+    explanation: "Student discounts are a customer acquisition strategy â€” services offer 50% or more off to build brand loyalty during formative years. Major discounts include Spotify Student ($5.99 vs $10.99), Apple Music Student ($5.99), GitHub Student Developer Pack (free), and Amazon Prime Student ($7.49 vs $14.99). Verification is usually done through services like SheerID or UNiDAYS. Student plans typically convert to regular pricing after graduation or verification expiry. Maximizing student discounts while enrolled can save hundreds per year on subscriptions.",
     relatedTerms: ["subscription-savings", "tiered-pricing", "subscription", "discount"],
     category: "finance",
   },
@@ -548,7 +548,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Switching Cost",
     slug: "switching-cost",
     definition: "The time, effort, and money required to migrate from one subscription service to a competing alternative.",
-    explanation: "Switching costs are the practical barriers to changing services. They include data migration (moving files, history, settings), learning curve (adapting to new interfaces), integration updates (reconnecting tools and workflows), and potential downtime during transition. High switching costs benefit service providers but harm consumers by limiting competition. When evaluating a new subscription, consider potential switching costs upfront — choose services that make it easy to export your data and don't create unnecessary dependencies. Standards like open APIs and common file formats reduce switching costs.",
+    explanation: "Switching costs are the practical barriers to changing services. They include data migration (moving files, history, settings), learning curve (adapting to new interfaces), integration updates (reconnecting tools and workflows), and potential downtime during transition. High switching costs benefit service providers but harm consumers by limiting competition. When evaluating a new subscription, consider potential switching costs upfront â€” choose services that make it easy to export your data and don't create unnecessary dependencies. Standards like open APIs and common file formats reduce switching costs.",
     relatedTerms: ["lock-in", "data-portability", "cancellation", "subscription"],
     category: "management",
   },
@@ -563,8 +563,8 @@ export const glossaryTerms: GlossaryTerm[] = [
   {
     term: "SLA",
     slug: "sla",
-    definition: "Service Level Agreement — a contract defining the expected level of service, uptime guarantees, and remedies if those levels are not met.",
-    explanation: "SLAs are commitments from subscription services about reliability and performance. Common SLA metrics include uptime percentage (e.g., 99.9% means ~8.7 hours downtime per year), response time for support tickets, and data recovery time. Enterprise subscriptions typically include formal SLAs with financial credits for breaches. Consumer services usually have informal SLAs in their terms of service. Understanding SLAs is important for business-critical subscriptions — compare uptime guarantees when choosing between cloud providers or business tools.",
+    definition: "Service Level Agreement â€” a contract defining the expected level of service, uptime guarantees, and remedies if those levels are not met.",
+    explanation: "SLAs are commitments from subscription services about reliability and performance. Common SLA metrics include uptime percentage (e.g., 99.9% means ~8.7 hours downtime per year), response time for support tickets, and data recovery time. Enterprise subscriptions typically include formal SLAs with financial credits for breaches. Consumer services usually have informal SLAs in their terms of service. Understanding SLAs is important for business-critical subscriptions â€” compare uptime guarantees when choosing between cloud providers or business tools.",
     relatedTerms: ["subscription", "cloud-computing", "uptime", "enterprise"],
     category: "general",
   },
@@ -580,7 +580,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Webhook",
     slug: "webhook",
     definition: "An automated notification sent from a subscription service to your application when specific events occur.",
-    explanation: "Webhooks are the push-based counterpart to APIs (which are pull-based). When something happens in a subscription service — like a payment processed, subscription canceled, or usage limit reached — a webhook sends a notification to a URL you specify. This enables real-time automation without constant polling. Common subscription-related webhooks include payment success/failure notifications, plan change alerts, and usage threshold warnings. For managing subscriptions programmatically, webhooks from payment processors like Stripe are essential for keeping your systems in sync.",
+    explanation: "Webhooks are the push-based counterpart to APIs (which are pull-based). When something happens in a subscription service â€” like a payment processed, subscription canceled, or usage limit reached â€” a webhook sends a notification to a URL you specify. This enables real-time automation without constant polling. Common subscription-related webhooks include payment success/failure notifications, plan change alerts, and usage threshold warnings. For managing subscriptions programmatically, webhooks from payment processors like Stripe are essential for keeping your systems in sync.",
     relatedTerms: ["api-access", "automation", "integration", "notification"],
     category: "general",
   },
@@ -596,7 +596,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "White-Label",
     slug: "white-label",
     definition: "A subscription product or service that can be rebranded and resold by another company as their own.",
-    explanation: "White-label subscriptions allow businesses to offer subscription services under their own brand using another company's technology. Examples include white-label streaming platforms, white-label payment processing, and white-label email services. This model benefits both parties — the technology provider gains distribution without marketing costs, while the reseller offers a service without building technology from scratch. For consumers, many subscription services you use may actually be white-label products, which explains why some competing services feel similar.",
+    explanation: "White-label subscriptions allow businesses to offer subscription services under their own brand using another company's technology. Examples include white-label streaming platforms, white-label payment processing, and white-label email services. This model benefits both parties â€” the technology provider gains distribution without marketing costs, while the reseller offers a service without building technology from scratch. For consumers, many subscription services you use may actually be white-label products, which explains why some competing services feel similar.",
     relatedTerms: ["saas", "platform-fee", "subscription", "branding"],
     category: "general",
   },
@@ -604,7 +604,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Subscription Analytics",
     slug: "subscription-analytics",
     definition: "The practice of tracking and analyzing metrics related to subscription businesses, including revenue, churn, and customer behavior.",
-    explanation: "Subscription analytics encompasses the metrics and tools used to understand subscription business performance. Key dashboards track MRR, churn, LTV, cohort retention, and expansion revenue. Tools like Baremetrics, ChartMogul, and ProfitWell specialize in subscription analytics. For personal subscription management, analytics help you understand spending patterns, identify unused services, and forecast future costs. TrackMySubscriptions provides personal subscription analytics including spending by category, payment calendars, and trend analysis to help optimize your subscription portfolio.",
+    explanation: "Subscription analytics encompasses the metrics and tools used to understand subscription business performance. Key dashboards track MRR, churn, LTV, cohort retention, and expansion revenue. Tools like Baremetrics, ChartMogul, and ProfitWell specialize in subscription analytics. For personal subscription management, analytics help you understand spending patterns, identify unused services, and forecast future costs. Unsubscribely provides personal subscription analytics including spending by category, payment calendars, and trend analysis to help optimize your subscription portfolio.",
     relatedTerms: ["mrr", "churn-rate", "lifetime-value", "subscription-tracker"],
     category: "metrics",
   },
@@ -612,7 +612,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Payment Gateway",
     slug: "payment-gateway",
     definition: "A service that processes credit card and electronic payment transactions for subscription businesses.",
-    explanation: "Payment gateways are the infrastructure behind subscription billing. When you subscribe to a service, the payment gateway securely transmits your payment information to the bank, processes the transaction, and returns the result. Major payment gateways include Stripe, PayPal, Square, Braintree, and Adyen. They handle security (PCI compliance), fraud detection, multiple currencies, and recurring billing automation. The choice of payment gateway affects which payment methods a subscription service can accept and the fees charged — typically 2.9% + $0.30 per transaction for US cards.",
+    explanation: "Payment gateways are the infrastructure behind subscription billing. When you subscribe to a service, the payment gateway securely transmits your payment information to the bank, processes the transaction, and returns the result. Major payment gateways include Stripe, PayPal, Square, Braintree, and Adyen. They handle security (PCI compliance), fraud detection, multiple currencies, and recurring billing automation. The choice of payment gateway affects which payment methods a subscription service can accept and the fees charged â€” typically 2.9% + $0.30 per transaction for US cards.",
     relatedTerms: ["recurring-billing", "payment-method", "subscription", "pci-compliance"],
     category: "billing",
   },
@@ -636,7 +636,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Revenue Recognition",
     slug: "revenue-recognition",
     definition: "The accounting principle determining when subscription revenue should be recorded on financial statements.",
-    explanation: "Revenue recognition in subscription businesses follows specific accounting rules (ASC 606). When a customer pays $120 for an annual subscription, the business cannot recognize all $120 as revenue immediately. Instead, $10 is recognized each month as the service is delivered. The unrecognized portion is recorded as 'deferred revenue' — a liability on the balance sheet. This matters for understanding subscription company financials and explains why fast-growing subscription companies can appear unprofitable despite strong bookings. For consumers, understanding this helps evaluate the financial health of your subscription providers.",
+    explanation: "Revenue recognition in subscription businesses follows specific accounting rules (ASC 606). When a customer pays $120 for an annual subscription, the business cannot recognize all $120 as revenue immediately. Instead, $10 is recognized each month as the service is delivered. The unrecognized portion is recorded as 'deferred revenue' â€” a liability on the balance sheet. This matters for understanding subscription company financials and explains why fast-growing subscription companies can appear unprofitable despite strong bookings. For consumers, understanding this helps evaluate the financial health of your subscription providers.",
     relatedTerms: ["recurring-revenue", "arr", "subscription", "deferred-revenue"],
     category: "finance",
   },
@@ -644,7 +644,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Deferred Revenue",
     slug: "deferred-revenue",
     definition: "Payment received for subscription services that have not yet been delivered, recorded as a liability until the service is provided.",
-    explanation: "Deferred revenue is created when subscribers pay upfront for future service periods. If you pay $120 for an annual plan in January, the company has $110 in deferred revenue (11 months of undelivered service). As each month passes, $10 moves from deferred revenue to recognized revenue. High deferred revenue is generally positive — it means strong future revenue locked in. For investors evaluating subscription companies, deferred revenue growth is a leading indicator of future revenue. For consumers, deferred revenue represents your unused prepaid subscription value.",
+    explanation: "Deferred revenue is created when subscribers pay upfront for future service periods. If you pay $120 for an annual plan in January, the company has $110 in deferred revenue (11 months of undelivered service). As each month passes, $10 moves from deferred revenue to recognized revenue. High deferred revenue is generally positive â€” it means strong future revenue locked in. For investors evaluating subscription companies, deferred revenue growth is a leading indicator of future revenue. For consumers, deferred revenue represents your unused prepaid subscription value.",
     relatedTerms: ["revenue-recognition", "annual-subscription", "recurring-revenue", "prepayment"],
     category: "finance",
   },
@@ -652,7 +652,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Churn Prevention",
     slug: "churn-prevention",
     definition: "Strategies and tactics employed by subscription services to retain customers and reduce cancellation rates.",
-    explanation: "Churn prevention is a multi-faceted discipline combining product improvements, customer success, and strategic interventions. Key strategies include: proactive health scoring (identifying at-risk customers before they cancel), personalized engagement campaigns, improving onboarding to increase initial activation, offering plan flexibility (pause, downgrade options), loyalty rewards for long-term subscribers, and cancellation flow interventions (save offers, feedback collection). The most effective approach combines predictive analytics with human touch — using data to identify who might churn and intervening with the right message at the right time.",
+    explanation: "Churn prevention is a multi-faceted discipline combining product improvements, customer success, and strategic interventions. Key strategies include: proactive health scoring (identifying at-risk customers before they cancel), personalized engagement campaigns, improving onboarding to increase initial activation, offering plan flexibility (pause, downgrade options), loyalty rewards for long-term subscribers, and cancellation flow interventions (save offers, feedback collection). The most effective approach combines predictive analytics with human touch â€” using data to identify who might churn and intervening with the right message at the right time.",
     relatedTerms: ["churn-rate", "retention-rate", "win-back-campaign", "engagement"],
     category: "management",
   },
@@ -660,7 +660,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Engagement",
     slug: "engagement",
     definition: "The frequency and depth of a subscriber's interaction with a service, used as a key predictor of retention and expansion.",
-    explanation: "Engagement metrics tell subscription businesses how actively users interact with their product. Common engagement metrics include daily/monthly active users (DAU/MAU), session frequency and duration, feature adoption rates, and usage depth. High engagement correlates strongly with retention — users who regularly use a product are far less likely to cancel. This is why services send usage reminders, new feature announcements, and activity digests. For consumers, monitoring your own engagement helps identify subscriptions to cancel. If you haven't logged into a service in 30+ days, it's likely not worth the cost.",
+    explanation: "Engagement metrics tell subscription businesses how actively users interact with their product. Common engagement metrics include daily/monthly active users (DAU/MAU), session frequency and duration, feature adoption rates, and usage depth. High engagement correlates strongly with retention â€” users who regularly use a product are far less likely to cancel. This is why services send usage reminders, new feature announcements, and activity digests. For consumers, monitoring your own engagement helps identify subscriptions to cancel. If you haven't logged into a service in 30+ days, it's likely not worth the cost.",
     relatedTerms: ["retention-rate", "churn-prevention", "subscription-audit", "analytics"],
     category: "metrics",
   },
@@ -676,7 +676,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Activation",
     slug: "activation",
     definition: "The moment when a new subscriber first experiences meaningful value from a service, increasing their likelihood of long-term retention.",
-    explanation: "Activation is the key milestone in the subscriber journey — it's when a user goes from 'signed up' to 'finding value.' Each service has specific activation criteria: for Dropbox it's saving the first file, for Slack it's sending 2000+ team messages, for Spotify it's following artists and creating playlists. Reaching activation within the first few days is critical — users who don't activate within the first week have a dramatically higher churn rate. For consumers, pushing past initial setup to truly use a service's core features helps determine whether the subscription is worthwhile.",
+    explanation: "Activation is the key milestone in the subscriber journey â€” it's when a user goes from 'signed up' to 'finding value.' Each service has specific activation criteria: for Dropbox it's saving the first file, for Slack it's sending 2000+ team messages, for Spotify it's following artists and creating playlists. Reaching activation within the first few days is critical â€” users who don't activate within the first week have a dramatically higher churn rate. For consumers, pushing past initial setup to truly use a service's core features helps determine whether the subscription is worthwhile.",
     relatedTerms: ["onboarding", "engagement", "retention-rate", "free-trial"],
     category: "metrics",
   },
@@ -692,7 +692,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Viral Loop",
     slug: "viral-loop",
     definition: "A growth mechanism where existing subscribers naturally invite others to join, creating a self-reinforcing cycle of user acquisition.",
-    explanation: "Viral loops are the holy grail of subscription growth. They occur when using the product naturally leads to inviting others. Dropbox's referral program (give/get storage), Zoom meeting invites (non-users experience the product), and Slack workspace invitations are classic examples. The viral coefficient (K-factor) measures how many new users each existing user brings. A K-factor above 1 means exponential growth. For consumers, viral loops often come with referral bonuses — both you and the person you invite receive benefits like free months, extra storage, or premium feature access.",
+    explanation: "Viral loops are the holy grail of subscription growth. They occur when using the product naturally leads to inviting others. Dropbox's referral program (give/get storage), Zoom meeting invites (non-users experience the product), and Slack workspace invitations are classic examples. The viral coefficient (K-factor) measures how many new users each existing user brings. A K-factor above 1 means exponential growth. For consumers, viral loops often come with referral bonuses â€” both you and the person you invite receive benefits like free months, extra storage, or premium feature access.",
     relatedTerms: ["product-led-growth", "referral", "customer-acquisition-cost", "growth"],
     category: "metrics",
   },
@@ -708,7 +708,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Loyalty Program",
     slug: "loyalty-program",
     definition: "A structured reward system that incentivizes continued subscription by offering benefits based on tenure or engagement level.",
-    explanation: "Loyalty programs in subscriptions reward long-term commitment. Examples include grandfathered pricing for early adopters, anniversary rewards, points systems redeemable for subscription credits, and exclusive content or features for loyal subscribers. Amazon Prime rewards loyalty through an expanding benefits ecosystem. Some services offer loyalty tiers — longer subscribers unlock better features or pricing. For consumers, loyalty programs add value to staying with a service long-term, but should not prevent switching if a significantly better option exists.",
+    explanation: "Loyalty programs in subscriptions reward long-term commitment. Examples include grandfathered pricing for early adopters, anniversary rewards, points systems redeemable for subscription credits, and exclusive content or features for loyal subscribers. Amazon Prime rewards loyalty through an expanding benefits ecosystem. Some services offer loyalty tiers â€” longer subscribers unlock better features or pricing. For consumers, loyalty programs add value to staying with a service long-term, but should not prevent switching if a significantly better option exists.",
     relatedTerms: ["retention-rate", "referral-program", "grandfathering", "engagement"],
     category: "management",
   },
@@ -724,7 +724,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Pause Subscription",
     slug: "pause-subscription",
     definition: "The option to temporarily suspend a subscription and stop billing without fully canceling the account.",
-    explanation: "Subscription pausing is an alternative to cancellation that benefits both parties. For subscribers, it preserves account data, settings, and history while stopping charges during periods of non-use (vacations, seasonal needs, budget constraints). For businesses, paused subscribers are much more likely to resume than canceled ones. Services like YouTube Premium, Peloton, and many SaaS tools offer pause options, typically for 1-3 months. Before canceling a subscription, check if pausing is available — it provides flexibility without the hassle of re-creating your account later.",
+    explanation: "Subscription pausing is an alternative to cancellation that benefits both parties. For subscribers, it preserves account data, settings, and history while stopping charges during periods of non-use (vacations, seasonal needs, budget constraints). For businesses, paused subscribers are much more likely to resume than canceled ones. Services like YouTube Premium, Peloton, and many SaaS tools offer pause options, typically for 1-3 months. Before canceling a subscription, check if pausing is available â€” it provides flexibility without the hassle of re-creating your account later.",
     relatedTerms: ["cancellation", "subscription-savings", "downgrade", "retention-rate"],
     category: "management",
   },
@@ -732,7 +732,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Subscription Lifecycle",
     slug: "subscription-lifecycle",
     definition: "The complete journey of a subscriber from initial awareness through trial, activation, engagement, renewal, and eventual churn.",
-    explanation: "The subscription lifecycle maps the stages every subscriber goes through: awareness (discovering the service), consideration (evaluating options), trial/signup (first experience), activation (finding value), engagement (regular usage), renewal (continued payment), expansion (upgrading), and eventually churn (canceling). Understanding this lifecycle helps both businesses optimize each stage and consumers make better decisions. For personal subscription management, recognizing where you are in the lifecycle with each service — actively engaged vs. passively paying — helps identify optimization opportunities.",
+    explanation: "The subscription lifecycle maps the stages every subscriber goes through: awareness (discovering the service), consideration (evaluating options), trial/signup (first experience), activation (finding value), engagement (regular usage), renewal (continued payment), expansion (upgrading), and eventually churn (canceling). Understanding this lifecycle helps both businesses optimize each stage and consumers make better decisions. For personal subscription management, recognizing where you are in the lifecycle with each service â€” actively engaged vs. passively paying â€” helps identify optimization opportunities.",
     relatedTerms: ["onboarding", "activation", "engagement", "churn-rate"],
     category: "general",
   },
@@ -740,7 +740,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Unit Economics",
     slug: "unit-economics",
     definition: "The direct revenues and costs associated with a single subscriber, used to determine the profitability of each customer.",
-    explanation: "Unit economics answer a fundamental question: is each subscriber profitable? Key components include Customer Acquisition Cost (CAC), Lifetime Value (LTV), cost to serve (hosting, support), and the LTV:CAC ratio. A healthy subscription business has an LTV:CAC ratio of 3:1 or higher, meaning each subscriber generates at least 3x more revenue than it cost to acquire them. Understanding unit economics helps explain subscription pricing — services need to charge enough to cover acquisition costs and generate profit over the subscriber's lifetime.",
+    explanation: "Unit economics answer a fundamental question: is each subscriber profitable? Key components include Customer Acquisition Cost (CAC), Lifetime Value (LTV), cost to serve (hosting, support), and the LTV:CAC ratio. A healthy subscription business has an LTV:CAC ratio of 3:1 or higher, meaning each subscriber generates at least 3x more revenue than it cost to acquire them. Understanding unit economics helps explain subscription pricing â€” services need to charge enough to cover acquisition costs and generate profit over the subscriber's lifetime.",
     relatedTerms: ["lifetime-value", "customer-acquisition-cost", "churn-rate", "mrr"],
     category: "finance",
   },
@@ -756,7 +756,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Freemium Conversion",
     slug: "freemium-conversion",
     definition: "The process and rate at which users of a free product tier upgrade to a paid subscription plan.",
-    explanation: "Freemium conversion differs from trial conversion because the free tier has no time limit. Users can stay on the free tier indefinitely. Typical freemium conversion rates are 2-5%, much lower than trial conversion (15-30%). However, freemium models reach far more potential users. Successful freemium services create natural upgrade triggers — Slack's 10k message limit, Zoom's 40-minute meeting cap, and Canva's locked premium templates all incentivize upgrading without feeling manipulative. The best freemium models provide genuine long-term value at the free tier while making the premium tier irresistible for power users.",
+    explanation: "Freemium conversion differs from trial conversion because the free tier has no time limit. Users can stay on the free tier indefinitely. Typical freemium conversion rates are 2-5%, much lower than trial conversion (15-30%). However, freemium models reach far more potential users. Successful freemium services create natural upgrade triggers â€” Slack's 10k message limit, Zoom's 40-minute meeting cap, and Canva's locked premium templates all incentivize upgrading without feeling manipulative. The best freemium models provide genuine long-term value at the free tier while making the premium tier irresistible for power users.",
     relatedTerms: ["freemium", "free-tier", "conversion-rate", "tiered-pricing"],
     category: "metrics",
   },
@@ -764,7 +764,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Pricing Model",
     slug: "pricing-model",
     definition: "The strategy a subscription service uses to structure its pricing, including flat-rate, tiered, usage-based, or hybrid approaches.",
-    explanation: "Choosing the right pricing model is crucial for subscription success. Common models include: flat-rate (one price for all features), tiered (multiple plans at different price points), per-seat (price per user), usage-based (pay for what you use), and hybrid (base fee plus usage). Each has trade-offs — flat-rate is simple but doesn't capture different willingness to pay, tiered allows segmentation but requires careful design, and usage-based aligns cost with value but makes budgeting difficult. For consumers, understanding the pricing model helps predict future costs and choose the most cost-effective option.",
+    explanation: "Choosing the right pricing model is crucial for subscription success. Common models include: flat-rate (one price for all features), tiered (multiple plans at different price points), per-seat (price per user), usage-based (pay for what you use), and hybrid (base fee plus usage). Each has trade-offs â€” flat-rate is simple but doesn't capture different willingness to pay, tiered allows segmentation but requires careful design, and usage-based aligns cost with value but makes budgeting difficult. For consumers, understanding the pricing model helps predict future costs and choose the most cost-effective option.",
     relatedTerms: ["tiered-pricing", "usage-based-pricing", "seat-based-pricing", "subscription"],
     category: "finance",
   },
@@ -796,7 +796,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Subscription Management",
     slug: "subscription-management",
     definition: "The ongoing process of tracking, optimizing, and controlling all active subscriptions to ensure maximum value and minimum waste.",
-    explanation: "Subscription management has become a necessary life skill as the average person juggles 12+ subscriptions. It encompasses knowing what you are subscribed to, how much each costs, when renewals occur, and whether each subscription is worth keeping. Good subscription management practices include: maintaining a central list of all subscriptions, setting renewal reminders, conducting quarterly audits, tracking spending trends, and negotiating better rates. Tools like TrackMySubscriptions automate much of this process, providing dashboards, alerts, and analytics to help you stay in control of recurring expenses.",
+    explanation: "Subscription management has become a necessary life skill as the average person juggles 12+ subscriptions. It encompasses knowing what you are subscribed to, how much each costs, when renewals occur, and whether each subscription is worth keeping. Good subscription management practices include: maintaining a central list of all subscriptions, setting renewal reminders, conducting quarterly audits, tracking spending trends, and negotiating better rates. Tools like Unsubscribely automate much of this process, providing dashboards, alerts, and analytics to help you stay in control of recurring expenses.",
     relatedTerms: ["subscription-tracker", "subscription-audit", "subscription-savings", "budgeting"],
     category: "management",
   },
@@ -820,7 +820,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Overage Charge",
     slug: "overage-charge",
     definition: "An additional fee charged when a subscriber exceeds the usage limits included in their subscription plan.",
-    explanation: "Overage charges apply when you go beyond your plan's limits — exceeding data caps, storage quotas, API call limits, or user seats. They are common in cloud services, mobile plans, and usage-based SaaS. Overage rates are typically higher than in-plan rates to incentivize upgrading. For example, a cloud storage plan might include 100GB for $10/month but charge $0.25/GB for overage, making 120GB cost $15 instead of upgrading to a 200GB plan at $15. Monitor usage to avoid surprise overages and evaluate whether upgrading your plan would be more cost-effective.",
+    explanation: "Overage charges apply when you go beyond your plan's limits â€” exceeding data caps, storage quotas, API call limits, or user seats. They are common in cloud services, mobile plans, and usage-based SaaS. Overage rates are typically higher than in-plan rates to incentivize upgrading. For example, a cloud storage plan might include 100GB for $10/month but charge $0.25/GB for overage, making 120GB cost $15 instead of upgrading to a 200GB plan at $15. Monitor usage to avoid surprise overages and evaluate whether upgrading your plan would be more cost-effective.",
     relatedTerms: ["usage-based-pricing", "tiered-pricing", "billing-cycle", "subscription"],
     category: "billing",
   },
@@ -828,7 +828,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Committed Use Discount",
     slug: "committed-use-discount",
     definition: "A reduced rate offered by subscription services in exchange for committing to a minimum usage level or contract duration.",
-    explanation: "Committed use discounts reward predictability. Cloud providers like AWS, GCP, and Azure offer reserved instance pricing (30-72% off) when customers commit to 1-3 year terms. Similarly, SaaS annual plans are a form of committed use discount — committing to 12 months earns 15-25% savings. For businesses, committed use discounts can significantly reduce costs but carry risk if needs change. The key is estimating your minimum guaranteed usage accurately. For personal subscriptions, annual plans are the most accessible form of committed use discounts — ideal for services you are confident you will keep long-term.",
+    explanation: "Committed use discounts reward predictability. Cloud providers like AWS, GCP, and Azure offer reserved instance pricing (30-72% off) when customers commit to 1-3 year terms. Similarly, SaaS annual plans are a form of committed use discount â€” committing to 12 months earns 15-25% savings. For businesses, committed use discounts can significantly reduce costs but carry risk if needs change. The key is estimating your minimum guaranteed usage accurately. For personal subscriptions, annual plans are the most accessible form of committed use discounts â€” ideal for services you are confident you will keep long-term.",
     relatedTerms: ["annual-subscription", "subscription-savings", "pricing-model", "cloud-computing"],
     category: "finance",
   },
@@ -860,7 +860,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Notification Preferences",
     slug: "notification-preferences",
     definition: "User settings that control what communications are received from subscription services, including email, push, and SMS alerts.",
-    explanation: "Managing notification preferences across all your subscriptions is an often-overlooked aspect of subscription management. Each service sends various notifications — billing alerts, product updates, marketing emails, and usage warnings. Optimal notification management involves: enabling payment and renewal reminders, disabling excessive marketing emails, turning on usage alerts for metered services, and using email filters to organize subscription communications. Many users receive 50+ subscription-related emails weekly. Taking time to configure preferences reduces noise while keeping important alerts.",
+    explanation: "Managing notification preferences across all your subscriptions is an often-overlooked aspect of subscription management. Each service sends various notifications â€” billing alerts, product updates, marketing emails, and usage warnings. Optimal notification management involves: enabling payment and renewal reminders, disabling excessive marketing emails, turning on usage alerts for metered services, and using email filters to organize subscription communications. Many users receive 50+ subscription-related emails weekly. Taking time to configure preferences reduces noise while keeping important alerts.",
     relatedTerms: ["renewal-reminder", "subscription-management", "auto-renewal", "communication"],
     category: "management",
   },
@@ -884,7 +884,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Recurring Expense",
     slug: "recurring-expense",
     definition: "Any regular, predictable cost that occurs at set intervals, with subscriptions being the most common type of recurring expense.",
-    explanation: "Recurring expenses extend beyond subscriptions to include rent, utilities, insurance, and loan payments. However, subscription costs are the fastest-growing category of recurring expenses for most households. The distinction matters for budgeting — unlike fixed recurring expenses (rent stays the same), subscription expenses are controllable and optimizable. Mapping all recurring expenses, including subscriptions, provides a complete picture of financial commitments. Many people discover that their total recurring expenses consume 60-80% of their income, leaving less discretionary spending than expected.",
+    explanation: "Recurring expenses extend beyond subscriptions to include rent, utilities, insurance, and loan payments. However, subscription costs are the fastest-growing category of recurring expenses for most households. The distinction matters for budgeting â€” unlike fixed recurring expenses (rent stays the same), subscription expenses are controllable and optimizable. Mapping all recurring expenses, including subscriptions, provides a complete picture of financial commitments. Many people discover that their total recurring expenses consume 60-80% of their income, leaving less discretionary spending than expected.",
     relatedTerms: ["budgeting", "subscription-management", "subscription-audit", "payment-date"],
     category: "finance",
   },
@@ -892,7 +892,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Subscription ROI",
     slug: "subscription-roi",
     definition: "The return on investment from a subscription, measured by the value or savings generated relative to the subscription cost.",
-    explanation: "Calculating subscription ROI helps justify or eliminate subscriptions. For business subscriptions, ROI is measured in revenue generated, time saved, or costs avoided. For personal subscriptions, ROI is measured in hours of use, enjoyment value, or savings versus alternatives. A simple framework: if Netflix costs $15.49/month and you watch 30 hours monthly, the cost is $0.52/hour — likely good ROI compared to cinema tickets. If a $20/month productivity app saves you 10 hours monthly, it's generating $200+ in time value. Subscriptions with negative ROI (cost exceeds value) are candidates for cancellation.",
+    explanation: "Calculating subscription ROI helps justify or eliminate subscriptions. For business subscriptions, ROI is measured in revenue generated, time saved, or costs avoided. For personal subscriptions, ROI is measured in hours of use, enjoyment value, or savings versus alternatives. A simple framework: if Netflix costs $15.49/month and you watch 30 hours monthly, the cost is $0.52/hour â€” likely good ROI compared to cinema tickets. If a $20/month productivity app saves you 10 hours monthly, it's generating $200+ in time value. Subscriptions with negative ROI (cost exceeds value) are candidates for cancellation.",
     relatedTerms: ["total-cost-of-ownership", "subscription-audit", "subscription-savings", "value-perception"],
     category: "finance",
   },
@@ -900,7 +900,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Feature Flag",
     slug: "feature-flag",
     definition: "A configuration toggle that allows subscription services to enable or disable features for specific users or subscription tiers.",
-    explanation: "Feature flags are the technical mechanism behind tiered subscription plans. They control which features are available at each pricing level — premium features are 'flagged off' for free users and 'flagged on' for paying subscribers. Beyond simple on/off, feature flags enable gradual rollouts (releasing features to 10% of users first), A/B testing (testing two different feature configurations), and instant rollback (disabling a buggy feature without a code deployment). Services like LaunchDarkly and Split specialize in feature flag management for subscription products.",
+    explanation: "Feature flags are the technical mechanism behind tiered subscription plans. They control which features are available at each pricing level â€” premium features are 'flagged off' for free users and 'flagged on' for paying subscribers. Beyond simple on/off, feature flags enable gradual rollouts (releasing features to 10% of users first), A/B testing (testing two different feature configurations), and instant rollback (disabling a buggy feature without a code deployment). Services like LaunchDarkly and Split specialize in feature flag management for subscription products.",
     relatedTerms: ["tiered-pricing", "freemium", "product-led-growth", "a-b-testing"],
     category: "general",
   },
@@ -908,7 +908,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "A/B Testing",
     slug: "a-b-testing",
     definition: "A method of comparing two versions of a subscription offering (pricing, features, UI) to determine which performs better.",
-    explanation: "A/B testing is how subscription services optimize everything from pricing to onboarding. The service shows version A to half of users and version B to the other half, then measures which version produces better results (higher conversion, lower churn, more engagement). Common subscription A/B tests include pricing page layouts, trial lengths, onboarding flows, email campaigns, and cancellation pages. For consumers, this means you might see different prices or features than someone else — subscription pricing is not always uniform. This is legal and common practice in the subscription industry.",
+    explanation: "A/B testing is how subscription services optimize everything from pricing to onboarding. The service shows version A to half of users and version B to the other half, then measures which version produces better results (higher conversion, lower churn, more engagement). Common subscription A/B tests include pricing page layouts, trial lengths, onboarding flows, email campaigns, and cancellation pages. For consumers, this means you might see different prices or features than someone else â€” subscription pricing is not always uniform. This is legal and common practice in the subscription industry.",
     relatedTerms: ["conversion-rate", "pricing-model", "feature-flag", "optimization"],
     category: "general",
   },
@@ -916,7 +916,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Subscription Compliance",
     slug: "subscription-compliance",
     definition: "Adherence to legal and regulatory requirements governing subscription billing, cancellation, and consumer communication.",
-    explanation: "Subscription compliance has become increasingly complex as regulations evolve. Key regulations include: FTC's Negative Option Rule (clear disclosure of subscription terms), California's auto-renewal law (conspicuous disclosure and easy cancellation), EU Consumer Rights Directive (14-day cooling-off period), GDPR (data protection for subscribers), and PCI DSS (payment security). Non-compliance can result in significant fines and class-action lawsuits. For consumers, compliance regulations protect your rights — if a service violates these rules, you have legal recourse through consumer protection agencies and credit card dispute processes.",
+    explanation: "Subscription compliance has become increasingly complex as regulations evolve. Key regulations include: FTC's Negative Option Rule (clear disclosure of subscription terms), California's auto-renewal law (conspicuous disclosure and easy cancellation), EU Consumer Rights Directive (14-day cooling-off period), GDPR (data protection for subscribers), and PCI DSS (payment security). Non-compliance can result in significant fines and class-action lawsuits. For consumers, compliance regulations protect your rights â€” if a service violates these rules, you have legal recourse through consumer protection agencies and credit card dispute processes.",
     relatedTerms: ["consumer-rights", "auto-renewal", "cancellation", "pci-compliance"],
     category: "billing",
   },
@@ -924,7 +924,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Gross Churn",
     slug: "gross-churn",
     definition: "The total revenue lost from cancellations and downgrades in a period, before accounting for expansion revenue from existing customers.",
-    explanation: "Gross churn measures the raw revenue loss from your subscriber base — how much money walked out the door. It includes both voluntary cancellations and involuntary churn from payment failures. Gross churn is always negative and does not include expansion revenue. The distinction from net churn matters: a company might have 10% gross churn but only 5% net churn because expansion revenue offsets half the losses. For consumers, gross churn rates of services you subscribe to indicate overall satisfaction levels — high gross churn may signal a service in decline.",
+    explanation: "Gross churn measures the raw revenue loss from your subscriber base â€” how much money walked out the door. It includes both voluntary cancellations and involuntary churn from payment failures. Gross churn is always negative and does not include expansion revenue. The distinction from net churn matters: a company might have 10% gross churn but only 5% net churn because expansion revenue offsets half the losses. For consumers, gross churn rates of services you subscribe to indicate overall satisfaction levels â€” high gross churn may signal a service in decline.",
     relatedTerms: ["churn-rate", "net-revenue-retention", "voluntary-churn", "involuntary-churn"],
     category: "metrics",
   },
@@ -932,7 +932,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Quick Ratio",
     slug: "quick-ratio",
     definition: "A SaaS metric measuring growth efficiency by comparing new and expansion revenue to lost revenue from churn and contraction.",
-    explanation: "The SaaS Quick Ratio is calculated as (New MRR + Expansion MRR) / (Churned MRR + Contraction MRR). A quick ratio above 4 indicates efficient growth — the business adds revenue much faster than it loses it. A ratio below 1 means the business is shrinking. This metric helps evaluate the long-term viability of subscription services you rely on. Companies with strong quick ratios are more likely to invest in product improvements and less likely to resort to aggressive price increases. Bessemer Venture Partners recommends a quick ratio of 4x or higher for healthy growth.",
+    explanation: "The SaaS Quick Ratio is calculated as (New MRR + Expansion MRR) / (Churned MRR + Contraction MRR). A quick ratio above 4 indicates efficient growth â€” the business adds revenue much faster than it loses it. A ratio below 1 means the business is shrinking. This metric helps evaluate the long-term viability of subscription services you rely on. Companies with strong quick ratios are more likely to invest in product improvements and less likely to resort to aggressive price increases. Bessemer Venture Partners recommends a quick ratio of 4x or higher for healthy growth.",
     relatedTerms: ["mrr", "churn-rate", "expansion-revenue", "net-revenue-retention"],
     category: "metrics",
   },
@@ -940,7 +940,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Payback Period",
     slug: "payback-period",
     definition: "The number of months it takes for a subscription business to recover its customer acquisition cost from a subscriber's payments.",
-    explanation: "Payback period = Customer Acquisition Cost / Monthly Revenue per Customer. If it costs $120 to acquire a customer who pays $20/month, the payback period is 6 months. Shorter payback periods are better — the business recovers its investment faster and can reinvest in growth. Healthy SaaS companies target payback periods under 12 months. For consumers, payback period explains why some services offer aggressive discounts for the first few months — they are willing to accept a longer payback in exchange for winning your business. Lock-in mechanics ensure you stay long enough for them to recoup acquisition costs.",
+    explanation: "Payback period = Customer Acquisition Cost / Monthly Revenue per Customer. If it costs $120 to acquire a customer who pays $20/month, the payback period is 6 months. Shorter payback periods are better â€” the business recovers its investment faster and can reinvest in growth. Healthy SaaS companies target payback periods under 12 months. For consumers, payback period explains why some services offer aggressive discounts for the first few months â€” they are willing to accept a longer payback in exchange for winning your business. Lock-in mechanics ensure you stay long enough for them to recoup acquisition costs.",
     relatedTerms: ["customer-acquisition-cost", "lifetime-value", "mrr", "unit-economics"],
     category: "metrics",
   },
@@ -956,7 +956,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Customer Success",
     slug: "customer-success",
     definition: "A proactive function within subscription companies focused on helping customers achieve their desired outcomes and maximize value from the service.",
-    explanation: "Customer success (CS) emerged specifically for the subscription model. Unlike traditional support (reactive, fixing problems), CS is proactive — ensuring customers use the product effectively and achieve their goals. CS teams monitor usage data, conduct health checks, provide training, and intervene before customers consider canceling. For enterprise subscriptions, dedicated Customer Success Managers (CSMs) are assigned to accounts. For consumers, customer success manifests as onboarding emails, usage tips, and check-in messages. Good CS is a sign of a company that values retention over just acquisition.",
+    explanation: "Customer success (CS) emerged specifically for the subscription model. Unlike traditional support (reactive, fixing problems), CS is proactive â€” ensuring customers use the product effectively and achieve their goals. CS teams monitor usage data, conduct health checks, provide training, and intervene before customers consider canceling. For enterprise subscriptions, dedicated Customer Success Managers (CSMs) are assigned to accounts. For consumers, customer success manifests as onboarding emails, usage tips, and check-in messages. Good CS is a sign of a company that values retention over just acquisition.",
     relatedTerms: ["churn-prevention", "onboarding", "retention-rate", "engagement"],
     category: "management",
   },
@@ -988,7 +988,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Subscription Spending",
     slug: "subscription-spending",
     definition: "The total amount of money allocated to all active subscription services over a given time period.",
-    explanation: "Average subscription spending has risen dramatically — studies show the average American spends $273/month on subscriptions, up from $72/month in 2018. This includes streaming, software, fitness, news, and other digital services. Most people underestimate their total subscription spending by 2-3x because individual charges seem small. Tracking total subscription spending reveals the true impact on your budget. Categories with the highest spending are typically streaming entertainment, software tools, and fitness/health. Quarterly reviews of total spending help identify optimization opportunities and prevent subscription creep.",
+    explanation: "Average subscription spending has risen dramatically â€” studies show the average American spends $273/month on subscriptions, up from $72/month in 2018. This includes streaming, software, fitness, news, and other digital services. Most people underestimate their total subscription spending by 2-3x because individual charges seem small. Tracking total subscription spending reveals the true impact on your budget. Categories with the highest spending are typically streaming entertainment, software tools, and fitness/health. Quarterly reviews of total spending help identify optimization opportunities and prevent subscription creep.",
     relatedTerms: ["subscription-management", "budgeting", "subscription-audit", "subscription-creep"],
     category: "finance",
   },
@@ -996,7 +996,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Price Discrimination",
     slug: "price-discrimination",
     definition: "The practice of charging different prices to different customer segments for essentially the same subscription service.",
-    explanation: "Price discrimination in subscriptions is legal and widespread. It takes several forms: regional pricing (lower prices in developing markets), student discounts, family plans, startup pricing (reduced rates for small companies), and enterprise custom pricing. Services like Spotify charge different rates in different countries based on purchasing power. Some SaaS tools offer significant discounts to startups (AWS credits, Notion's startup plan). For consumers, understanding price discrimination means checking for available discounts — student status, company size, geographic location, and even the device you use to visit the pricing page can affect what price you see.",
+    explanation: "Price discrimination in subscriptions is legal and widespread. It takes several forms: regional pricing (lower prices in developing markets), student discounts, family plans, startup pricing (reduced rates for small companies), and enterprise custom pricing. Services like Spotify charge different rates in different countries based on purchasing power. Some SaaS tools offer significant discounts to startups (AWS credits, Notion's startup plan). For consumers, understanding price discrimination means checking for available discounts â€” student status, company size, geographic location, and even the device you use to visit the pricing page can affect what price you see.",
     relatedTerms: ["pricing-model", "student-discount", "tiered-pricing", "discount-code"],
     category: "finance",
   },
@@ -1004,7 +1004,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Churn Survey",
     slug: "churn-survey",
     definition: "A questionnaire presented to subscribers during or after the cancellation process to understand their reasons for leaving.",
-    explanation: "Churn surveys collect valuable feedback about why subscribers cancel. Common response options include: too expensive, not using it enough, missing features, switching to a competitor, technical issues, and temporary need fulfilled. This data drives product improvements and retention strategies. For subscribers, churn surveys serve a dual purpose — providing feedback helps improve the service for remaining users, and the survey page often includes retention offers (discounts, plan changes, or feature unlocks) that might address your concerns. Taking a moment to complete the survey can sometimes reveal cost-saving options you didn't know existed.",
+    explanation: "Churn surveys collect valuable feedback about why subscribers cancel. Common response options include: too expensive, not using it enough, missing features, switching to a competitor, technical issues, and temporary need fulfilled. This data drives product improvements and retention strategies. For subscribers, churn surveys serve a dual purpose â€” providing feedback helps improve the service for remaining users, and the survey page often includes retention offers (discounts, plan changes, or feature unlocks) that might address your concerns. Taking a moment to complete the survey can sometimes reveal cost-saving options you didn't know existed.",
     relatedTerms: ["voluntary-churn", "cancellation", "churn-prevention", "retention-rate"],
     category: "management",
   },
@@ -1052,7 +1052,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Tax Compliance",
     slug: "tax-compliance",
     definition: "The requirement for subscription services to correctly calculate, collect, and remit sales tax or VAT based on subscriber location.",
-    explanation: "Tax compliance for subscription services is increasingly complex. In the US, the 2018 Wayfair ruling requires sales tax collection in states where economic nexus exists. Internationally, VAT/GST rules vary by country and product type — digital services are often taxed differently than physical goods. Many jurisdictions require that the displayed price includes tax (EU) while others add tax at checkout (US). Subscription billing platforms handle much of this complexity, but it affects pricing. For consumers, the tax on subscriptions varies by location and can significantly impact the actual cost paid versus the advertised price.",
+    explanation: "Tax compliance for subscription services is increasingly complex. In the US, the 2018 Wayfair ruling requires sales tax collection in states where economic nexus exists. Internationally, VAT/GST rules vary by country and product type â€” digital services are often taxed differently than physical goods. Many jurisdictions require that the displayed price includes tax (EU) while others add tax at checkout (US). Subscription billing platforms handle much of this complexity, but it affects pricing. For consumers, the tax on subscriptions varies by location and can significantly impact the actual cost paid versus the advertised price.",
     relatedTerms: ["subscription-compliance", "invoice", "recurring-billing", "pricing-model"],
     category: "billing",
   },
@@ -1060,7 +1060,7 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Subscription Intelligence",
     slug: "subscription-intelligence",
     definition: "The use of data analytics and AI to gain insights about subscription spending patterns, usage trends, and optimization opportunities.",
-    explanation: "Subscription intelligence applies data-driven analysis to subscription management. For businesses, it means analyzing subscriber behavior to predict churn, optimize pricing, and identify growth opportunities. For consumers, it means using AI and analytics tools to detect unused subscriptions, find cheaper alternatives, identify price increases, and recommend bundle optimizations. TrackMySubscriptions provides subscription intelligence through spending analytics, trend analysis, and smart alerts. As subscription portfolios grow more complex, intelligence tools become essential for maintaining cost efficiency.",
+    explanation: "Subscription intelligence applies data-driven analysis to subscription management. For businesses, it means analyzing subscriber behavior to predict churn, optimize pricing, and identify growth opportunities. For consumers, it means using AI and analytics tools to detect unused subscriptions, find cheaper alternatives, identify price increases, and recommend bundle optimizations. Unsubscribely provides subscription intelligence through spending analytics, trend analysis, and smart alerts. As subscription portfolios grow more complex, intelligence tools become essential for maintaining cost efficiency.",
     relatedTerms: ["subscription-analytics", "subscription-management", "subscription-tracker", "budgeting"],
     category: "metrics",
   },
@@ -1092,13 +1092,13 @@ export const glossaryTerms: GlossaryTerm[] = [
     term: "Subscription Portfolio",
     slug: "subscription-portfolio",
     definition: "The complete collection of all active subscriptions held by an individual or organization, viewed as a managed set of investments.",
-    explanation: "Thinking of your subscriptions as a portfolio encourages strategic management. Just as financial portfolios are diversified and regularly rebalanced, subscription portfolios should be periodically reviewed and optimized. Key portfolio metrics include total monthly cost, usage rates per subscription, overlap between services, and cost per category. A healthy subscription portfolio has high utilization across all services, minimal feature overlap, appropriate tier selection, and regular review cadence. Tools like TrackMySubscriptions provide the portfolio view needed to make informed decisions about adding, upgrading, downgrading, or removing subscriptions.",
+    explanation: "Thinking of your subscriptions as a portfolio encourages strategic management. Just as financial portfolios are diversified and regularly rebalanced, subscription portfolios should be periodically reviewed and optimized. Key portfolio metrics include total monthly cost, usage rates per subscription, overlap between services, and cost per category. A healthy subscription portfolio has high utilization across all services, minimal feature overlap, appropriate tier selection, and regular review cadence. Tools like Unsubscribely provide the portfolio view needed to make informed decisions about adding, upgrading, downgrading, or removing subscriptions.",
     relatedTerms: ["subscription-management", "subscription-audit", "budgeting", "subscription-spending"],
     category: "management",
   },
 ]
 
-// ── Helper functions ─────────────────────────────────────────────────
+// â”€â”€ Helper functions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function getTermBySlug(slug: string): GlossaryTerm | undefined {
   return glossaryTerms.find((t) => t.slug === slug)

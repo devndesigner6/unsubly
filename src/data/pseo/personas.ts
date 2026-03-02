@@ -18,7 +18,7 @@ export const personas: Persona[] = [
     headline: "Subscription Tracking Built for Freelancers",
     subheadline: "Keep your business tools organized and deductible expenses clear",
     description:
-      "As a freelancer, you juggle dozens of software subscriptions — from design tools and hosting to invoicing and project management. Each one is a business expense that needs tracking for tax deductions. TrackMySubscriptions helps freelancers centralize all subscriptions, categorize business vs personal expenses, and never miss a renewal that could disrupt your workflow.",
+      "As a freelancer, you juggle dozens of software subscriptions â€” from design tools and hosting to invoicing and project management. Each one is a business expense that needs tracking for tax deductions. Unsubscribely helps freelancers centralize all subscriptions, categorize business vs personal expenses, and never miss a renewal that could disrupt your workflow.",
     painPoints: [
       "Losing track of which subscriptions are tax-deductible business expenses",
       "Forgetting to cancel free trials for tools you evaluated but didn't adopt",
@@ -58,7 +58,7 @@ export const personas: Persona[] = [
     headline: "Family Subscription Tracker",
     subheadline: "Get your household's subscription spending under control",
     description:
-      "Between streaming services, music, cloud storage, fitness apps, and educational platforms, family subscription costs add up fast. TrackMySubscriptions gives families a clear view of every recurring charge across the household, helping you cut waste, find family plan savings, and budget smarter.",
+      "Between streaming services, music, cloud storage, fitness apps, and educational platforms, family subscription costs add up fast. Unsubscribely gives families a clear view of every recurring charge across the household, helping you cut waste, find family plan savings, and budget smarter.",
     painPoints: [
       "Multiple family members signing up for overlapping services",
       "Not knowing the true total of household subscription spending",
@@ -98,7 +98,7 @@ export const personas: Persona[] = [
     headline: "Subscription Tracker for Students",
     subheadline: "Manage your subscriptions on a student budget",
     description:
-      "Students often qualify for significant subscription discounts but may not know about them — or forget to renew student pricing before it expires. TrackMySubscriptions helps students keep track of every subscription, find student discounts, and stay on top of tight budgets.",
+      "Students often qualify for significant subscription discounts but may not know about them â€” or forget to renew student pricing before it expires. Unsubscribely helps students keep track of every subscription, find student discounts, and stay on top of tight budgets.",
     painPoints: [
       "Not knowing which services offer student discounts",
       "Forgetting to renew student verification before prices increase",
@@ -121,7 +121,7 @@ export const personas: Persona[] = [
       },
       {
         title: "Free Forever",
-        description: "TrackMySubscriptions is 100% free — no premium tier to worry about on a student budget.",
+        description: "Unsubscribely is 100% free â€” no premium tier to worry about on a student budget.",
       },
     ],
     stats: [
@@ -129,7 +129,7 @@ export const personas: Persona[] = [
       { label: "Student discount savings", value: "50%" },
       { label: "Wasted on unused trials/year", value: "$200+" },
     ],
-    cta: "Start Tracking Subscriptions Free — No Card Required",
+    cta: "Start Tracking Subscriptions Free â€” No Card Required",
     relevantCategories: ["education", "entertainment", "music", "productivity", "cloud"],
   },
   {
@@ -138,7 +138,7 @@ export const personas: Persona[] = [
     headline: "Subscription Management for Small Businesses",
     subheadline: "Track every SaaS tool your business depends on",
     description:
-      "Small businesses rely on dozens of SaaS subscriptions for everything from email and CRM to accounting and marketing. Without centralized tracking, costs spiral and unused licenses go unnoticed. TrackMySubscriptions gives small business owners a clear picture of their SaaS stack and its total cost.",
+      "Small businesses rely on dozens of SaaS subscriptions for everything from email and CRM to accounting and marketing. Without centralized tracking, costs spiral and unused licenses go unnoticed. Unsubscribely gives small business owners a clear picture of their SaaS stack and its total cost.",
     painPoints: [
       "No centralized view of all business software subscriptions",
       "Paying for unused seats or licenses after employees leave",
@@ -178,7 +178,7 @@ export const personas: Persona[] = [
     headline: "Subscription Tracker for Remote Workers",
     subheadline: "Manage the tools that power your remote work life",
     description:
-      "Remote work means relying on subscriptions for communication, collaboration, cloud storage, VPNs, and more. The line between personal and work subscriptions blurs. TrackMySubscriptions helps remote workers organize their tool stack, track reimbursable expenses, and optimize spending.",
+      "Remote work means relying on subscriptions for communication, collaboration, cloud storage, VPNs, and more. The line between personal and work subscriptions blurs. Unsubscribely helps remote workers organize their tool stack, track reimbursable expenses, and optimize spending.",
     painPoints: [
       "Blurred line between personal and work-reimbursable subscriptions",
       "Accumulating duplicate tools for collaboration (Slack, Teams, Zoom, etc.)",
@@ -193,7 +193,7 @@ export const personas: Persona[] = [
       },
       {
         title: "Folder Organization",
-        description: "Group subscriptions by purpose — communication, storage, productivity, entertainment.",
+        description: "Group subscriptions by purpose â€” communication, storage, productivity, entertainment.",
       },
       {
         title: "Spending Insights",
@@ -218,7 +218,7 @@ export const personas: Persona[] = [
     headline: "Subscription Tracker for Developers",
     subheadline: "Keep your dev tools, hosting, and services organized",
     description:
-      "Developers subscribe to a unique mix of services: IDEs, hosting platforms, CI/CD tools, domain registrars, monitoring services, and API subscriptions. Each with different billing cycles and pricing models. TrackMySubscriptions helps developers track their entire tech stack and avoid surprise bills from usage-based services.",
+      "Developers subscribe to a unique mix of services: IDEs, hosting platforms, CI/CD tools, domain registrars, monitoring services, and API subscriptions. Each with different billing cycles and pricing models. Unsubscribely helps developers track their entire tech stack and avoid surprise bills from usage-based services.",
     painPoints: [
       "Multiple hosting and cloud services with different billing dates",
       "Forgetting about domain renewals until the domain expires",
@@ -237,11 +237,11 @@ export const personas: Persona[] = [
       },
       {
         title: "Multi-Currency Support",
-        description: "Track subscriptions in USD, EUR, GBP, or any currency — essential for global services.",
+        description: "Track subscriptions in USD, EUR, GBP, or any currency â€” essential for global services.",
       },
       {
         title: "Open Source",
-        description: "TrackMySubscriptions is open source. Inspect the code, self-host, or contribute on GitHub.",
+        description: "Unsubscribely is open source. Inspect the code, self-host, or contribute on GitHub.",
       },
     ],
     stats: [
@@ -258,7 +258,7 @@ export const personas: Persona[] = [
     headline: "Subscription Tracker for Content Creators",
     subheadline: "Manage your creative tools and platform subscriptions",
     description:
-      "Content creators rely on a growing stack of subscriptions: editing software, stock media, scheduling tools, analytics platforms, hosting, and distribution services. TrackMySubscriptions helps creators see the true cost of their content business and find savings to improve margins.",
+      "Content creators rely on a growing stack of subscriptions: editing software, stock media, scheduling tools, analytics platforms, hosting, and distribution services. Unsubscribely helps creators see the true cost of their content business and find savings to improve margins.",
     painPoints: [
       "Creative tool subscriptions adding up to hundreds per month",
       "Stock media subscriptions with unused credits that do not roll over",
@@ -298,7 +298,7 @@ export const personas: Persona[] = [
     headline: "Take Control of Your Subscription Spending",
     subheadline: "See where every dollar goes and cut what you do not need",
     description:
-      "If you are watching your spending, subscriptions are one of the easiest places to save. Small recurring charges add up to thousands per year. TrackMySubscriptions gives you complete visibility into your subscription spending so you can make informed decisions about what to keep, downgrade, or cancel.",
+      "If you are watching your spending, subscriptions are one of the easiest places to save. Small recurring charges add up to thousands per year. Unsubscribely gives you complete visibility into your subscription spending so you can make informed decisions about what to keep, downgrade, or cancel.",
     painPoints: [
       "Small $5-15 subscriptions that feel insignificant but add up to hundreds monthly",
       "No single view of total subscription spending across all payment methods",
@@ -329,12 +329,12 @@ export const personas: Persona[] = [
       { label: "Wasted per year on unused subs", value: "$600+" },
       { label: "Users who save after auditing", value: "85%" },
     ],
-    cta: "Find Your Hidden Subscription Costs — Free",
+    cta: "Find Your Hidden Subscription Costs â€” Free",
     relevantCategories: ["entertainment", "music", "cloud", "health", "education"],
   },
 ]
 
-// ── Helper functions ─────────────────────────────────────────────────
+// â”€â”€ Helper functions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function getPersonaBySlug(slug: string): Persona | undefined {
   return personas.find((p) => p.slug === slug)

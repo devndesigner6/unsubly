@@ -121,7 +121,7 @@ const nextConfig: NextConfig = {
             value: "http",
           },
         ],
-        destination: "https://trackmysubscriptions.com/:path+",
+        destination: "https://unsubscribely.com/:path+",
         permanent: true,
       })
     }

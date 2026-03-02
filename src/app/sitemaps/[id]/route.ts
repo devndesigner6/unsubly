@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server"
 import { getAllComparisonSlugs } from "@/data/pseo/comparisons"
 
-const BASE_URL = "https://trackmysubscriptions.com"
+const BASE_URL = "https://unsubscribely.com"
 const URLS_PER_CHUNK = 40000
 
-// ── /sitemaps/0  /sitemaps/1  /sitemaps/2 … ─────────────────────────
+// â”€â”€ /sitemaps/0  /sitemaps/1  /sitemaps/2 â€¦ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Each chunk returns up to 40 000 comparison-page URLs as sitemap XML.
 
 export async function GET(

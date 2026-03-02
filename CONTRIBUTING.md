@@ -1,6 +1,6 @@
-## Contributing to TrackMySubscriptions
+## Contributing to Unsubscribely
 
-First off, thank you for taking the time to contribute — every improvement helps.
+First off, thank you for taking the time to contribute â€” every improvement helps.
 
 ### Ways to contribute
 
@@ -82,9 +82,9 @@ You will receive an acknowledgement as soon as possible.
 By participating in this project, you agree to abide by the
 [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md).
 
-# Contributing to TrackMySubscriptions
+# Contributing to Unsubscribely
 
-First off, thank you for considering contributing to TrackMySubscriptions! It's people like you that make this project better for everyone.
+First off, thank you for considering contributing to Unsubscribely! It's people like you that make this project better for everyone.
 
 ## Code of Conduct
 
@@ -133,8 +133,8 @@ Feature suggestions are welcome! Please:
 1. Fork and clone the repository:
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/trackmysubscriptions.git
-cd trackmysubscriptions
+git clone https://github.com/YOUR_USERNAME/unsubscribely.git
+cd unsubscribely
 ```
 
 2. Install dependencies:
@@ -163,16 +163,16 @@ npm run dev
 
 ```
 src/
-├── app/            # Next.js App Router pages and API routes
-│   ├── (auth)/     # Authentication pages
-│   ├── (dashboard)/ # Dashboard pages (protected)
-│   └── (marketing)/ # Public & pSEO pages (browse, compare, glossary, etc.)
-├── components/     # React components
-│   └── pseo/       # pSEO-specific components (breadcrumbs, CTAs, tables)
-├── data/pseo/      # Programmatic SEO data (services, glossary, personas)
-├── lib/            # Utility functions and configurations (incl. jsonld.ts)
-├── models/         # Mongoose database models
-└── types/          # TypeScript type definitions
+â”œâ”€â”€ app/            # Next.js App Router pages and API routes
+â”‚   â”œâ”€â”€ (auth)/     # Authentication pages
+â”‚   â”œâ”€â”€ (dashboard)/ # Dashboard pages (protected)
+â”‚   â””â”€â”€ (marketing)/ # Public & pSEO pages (browse, compare, glossary, etc.)
+â”œâ”€â”€ components/     # React components
+â”‚   â””â”€â”€ pseo/       # pSEO-specific components (breadcrumbs, CTAs, tables)
+â”œâ”€â”€ data/pseo/      # Programmatic SEO data (services, glossary, personas)
+â”œâ”€â”€ lib/            # Utility functions and configurations (incl. jsonld.ts)
+â”œâ”€â”€ models/         # Mongoose database models
+â””â”€â”€ types/          # TypeScript type definitions
 ```
 
 ## Coding Standards
@@ -227,7 +227,7 @@ The project includes a large-scale pSEO system. Here's how to contribute:
 1. Add the service definition to the appropriate file in `src/data/pseo/services/`
 2. Follow the `SubscriptionService` type in `src/data/pseo/services/types.ts`
 3. The service automatically gets detail, alternatives, pricing, and comparison pages
-4. Sitemaps regenerate on build — no manual sitemap changes needed
+4. Sitemaps regenerate on build â€” no manual sitemap changes needed
 
 ### Adding Glossary Terms
 

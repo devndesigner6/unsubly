@@ -3,9 +3,9 @@ import Link from "next/link"
 import { RiHome4Line, RiSearchLine } from "@remixicon/react"
 
 export const metadata: Metadata = {
-  title: "Page Not Found | TrackMySubscriptions",
+  title: "Page Not Found | Unsubscribely",
   description:
-    "The page you are looking for does not exist or has been moved. Return to TrackMySubscriptions to track your subscriptions.",
+    "The page you are looking for does not exist or has been moved. Return to Unsubscribely to track your subscriptions.",
   robots: {
     index: false,
     follow: true,

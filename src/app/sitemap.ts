@@ -3,9 +3,9 @@ import { getAllCategorySlugs, getAllServiceSlugs } from "@/data/pseo/services"
 import { getAllTermSlugs } from "@/data/pseo/glossary"
 import { getAllPersonaSlugs } from "@/data/pseo/personas"
 
-const BASE_URL = "https://trackmysubscriptions.com"
+const BASE_URL = "https://unsubscribely.com"
 
-// ── Single sitemap covering all non-comparison pages ─────────────────
+// â”€â”€ Single sitemap covering all non-comparison pages â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Comparison pages (~103k) are served via /api/sitemaps/[id] route.
 // This file serves /sitemap.xml with ~1,500 core URLs.
 

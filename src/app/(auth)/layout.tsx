@@ -4,11 +4,11 @@ import type { Metadata } from "next"
 
 export const metadata: Metadata = {
   title: {
-    default: "Sign In | TrackMySubscriptions",
-    template: "%s | TrackMySubscriptions",
+    default: "Sign In | Unsubscribely",
+    template: "%s | Unsubscribely",
   },
   description:
-    "Sign in to TrackMySubscriptions to manage your subscriptions, view spending analytics, and get payment alerts.",
+    "Sign in to Unsubscribely to manage your subscriptions, view spending analytics, and get payment alerts.",
   robots: {
     index: false,
     follow: false,

@@ -27,16 +27,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!data) return {}
 
   return {
-    title: `What is ${data.term}? — Definition & Guide | TrackMySubscriptions`,
+    title: `What is ${data.term}? â€” Definition & Guide | Unsubscribely`,
     description: `${data.definition} Learn everything about ${data.term.toLowerCase()} with our comprehensive guide.`,
     alternates: {
-      canonical: `https://trackmysubscriptions.com/glossary/${term}`,
+      canonical: `https://unsubscribely.com/glossary/${term}`,
     },
     openGraph: {
-      title: `What is ${data.term}? — Subscription Glossary`,
+      title: `What is ${data.term}? â€” Subscription Glossary`,
       description: data.definition,
-      url: `https://trackmysubscriptions.com/glossary/${term}`,
-      images: [{ url: "/og-image.png", width: 1200, height: 630, alt: `${data.term} — Subscription Glossary` }],
+      url: `https://unsubscribely.com/glossary/${term}`,
+      images: [{ url: "/og-image.png", width: 1200, height: 630, alt: `${data.term} â€” Subscription Glossary` }],
     },
   }
 }

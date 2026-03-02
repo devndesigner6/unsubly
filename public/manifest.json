@@ -1,6 +1,6 @@
 {
-  "name": "TrackMySubscriptions",
-  "short_name": "TrackMySubs",
+  "name": "Unsubscribely",
+  "short_name": "Unsubscribely",
   "description": "Track all your subscriptions in one organized place. Get alerts before charges and stay in control.",
   "start_url": "/dashboard",
   "display": "standalone",

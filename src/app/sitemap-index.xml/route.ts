@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server"
 import { getTotalComparisonCount } from "@/data/pseo/comparisons"
 
-const BASE_URL = "https://trackmysubscriptions.com"
+const BASE_URL = "https://unsubscribely.com"
 const URLS_PER_CHUNK = 40000
 
-// ── /sitemap-index.xml ───────────────────────────────────────────────
+// â”€â”€ /sitemap-index.xml â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // A sitemap index that ties together:
-//   • /sitemap.xml          → core pages (services, alternatives, pricing, glossary, etc.)
-//   • /sitemaps/0 … /N      → comparison pages in 40 000-URL chunks
+//   â€¢ /sitemap.xml          â†’ core pages (services, alternatives, pricing, glossary, etc.)
+//   â€¢ /sitemaps/0 â€¦ /N      â†’ comparison pages in 40 000-URL chunks
 
 export async function GET() {
   const totalComparisons = getTotalComparisonCount()

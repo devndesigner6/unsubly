@@ -20,7 +20,7 @@ export default function RegisterPage() {
               <Logo className="size-5 text-white dark:text-gray-900" />
             </div>
             <span className="text-lg font-semibold text-gray-900 dark:text-white">
-              TrackMySubscriptions
+              Unsubscribely
             </span>
           </Link>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-50">

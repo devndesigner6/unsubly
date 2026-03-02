@@ -41,15 +41,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const year = new Date().getFullYear()
 
   return {
-    title: `${serviceA.name} vs ${serviceB.name} ${year} — Comparison | TrackMySubscriptions`,
+    title: `${serviceA.name} vs ${serviceB.name} ${year} â€” Comparison | Unsubscribely`,
     description: `Compare ${serviceA.name} vs ${serviceB.name} in ${year}. Side-by-side comparison of pricing, features, and plans to help you choose the best option.`,
     alternates: {
-      canonical: `https://trackmysubscriptions.com/compare/${slug}`,
+      canonical: `https://unsubscribely.com/compare/${slug}`,
     },
     openGraph: {
-      title: `${serviceA.name} vs ${serviceB.name} — Full Comparison ${year}`,
+      title: `${serviceA.name} vs ${serviceB.name} â€” Full Comparison ${year}`,
       description: `Detailed comparison of ${serviceA.name} and ${serviceB.name} including pricing, features, and recommendations.`,
-      url: `https://trackmysubscriptions.com/compare/${slug}`,
+      url: `https://unsubscribely.com/compare/${slug}`,
       images: [{ url: "/og-image.png", width: 1200, height: 630, alt: `${serviceA.name} vs ${serviceB.name} Comparison` }],
     },
   }
@@ -88,7 +88,7 @@ export default async function ComparisonPage({ params }: Props) {
     },
     {
       question: `Can I track both ${serviceA.name} and ${serviceB.name} subscriptions?`,
-      answer: `Yes! TrackMySubscriptions lets you track all your subscriptions in one place, including ${serviceA.name} and ${serviceB.name}. Get renewal alerts, spending analytics, and never miss a payment — 100% free.`,
+      answer: `Yes! Unsubscribely lets you track all your subscriptions in one place, including ${serviceA.name} and ${serviceB.name}. Get renewal alerts, spending analytics, and never miss a payment â€” 100% free.`,
     },
   ]
 
@@ -296,7 +296,7 @@ export default async function ComparisonPage({ params }: Props) {
 
       <CTABanner
         title="Track Both Services in One Dashboard"
-        description={`Whether you choose ${serviceA.name}, ${serviceB.name}, or both — track all your subscriptions in one place with smart alerts and analytics.`}
+        description={`Whether you choose ${serviceA.name}, ${serviceB.name}, or both â€” track all your subscriptions in one place with smart alerts and analytics.`}
       />
     </div>
   )

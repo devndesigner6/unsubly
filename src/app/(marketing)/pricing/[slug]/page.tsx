@@ -20,10 +20,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!s) return {}
   const year = new Date().getFullYear()
   return {
-    title: `${s.name} Pricing ${year} — Plans & Costs | TrackMySubscriptions`,
+    title: `${s.name} Pricing ${year} â€” Plans & Costs | Unsubscribely`,
     description: `${s.name} pricing breakdown for ${year}. Compare all ${s.pricing.length} plans with monthly and yearly costs, features per tier, and savings tips.`,
-    alternates: { canonical: `https://trackmysubscriptions.com/pricing/${slug}` },
-    openGraph: { title: `${s.name} Pricing ${year}`, description: `Detailed pricing for all ${s.name} plans`, url: `https://trackmysubscriptions.com/pricing/${slug}`, images: [{ url: "/og-image.png", width: 1200, height: 630, alt: `${s.name} Pricing` }] },
+    alternates: { canonical: `https://unsubscribely.com/pricing/${slug}` },
+    openGraph: { title: `${s.name} Pricing ${year}`, description: `Detailed pricing for all ${s.name} plans`, url: `https://unsubscribely.com/pricing/${slug}`, images: [{ url: "/og-image.png", width: 1200, height: 630, alt: `${s.name} Pricing` }] },
   }
 }
 
@@ -111,7 +111,7 @@ export default async function PricingPage({ params }: Props) {
             <thead><tr className="border-b border-gray-200 dark:border-gray-800"><th className="py-2 pr-4 text-left text-gray-500 dark:text-gray-400">Plan</th><th className="px-4 py-2 text-right text-gray-500 dark:text-gray-400">Monthly</th><th className="px-4 py-2 text-right text-gray-500 dark:text-gray-400">Yearly</th><th className="px-4 py-2 text-right text-gray-500 dark:text-gray-400">5 Years</th></tr></thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
               {costPerYear.map((p) => (
-                <tr key={p.plan}><td className="py-2 pr-4 font-medium text-gray-900 dark:text-gray-50">{p.plan}</td><td className="px-4 py-2 text-right text-gray-700 dark:text-gray-300">{p.monthlyPrice === 0 ? "Free" : p.monthlyPrice ? `$${p.monthlyPrice}` : "—"}</td><td className="px-4 py-2 text-right text-gray-700 dark:text-gray-300">{p.yearly === 0 ? "Free" : p.yearly ? `$${p.yearly.toFixed(2)}` : "—"}</td><td className="px-4 py-2 text-right font-medium text-gray-900 dark:text-gray-50">{p.fiveYear === 0 ? "Free" : p.fiveYear ? `$${p.fiveYear.toFixed(2)}` : "—"}</td></tr>
+                <tr key={p.plan}><td className="py-2 pr-4 font-medium text-gray-900 dark:text-gray-50">{p.plan}</td><td className="px-4 py-2 text-right text-gray-700 dark:text-gray-300">{p.monthlyPrice === 0 ? "Free" : p.monthlyPrice ? `$${p.monthlyPrice}` : "â€”"}</td><td className="px-4 py-2 text-right text-gray-700 dark:text-gray-300">{p.yearly === 0 ? "Free" : p.yearly ? `$${p.yearly.toFixed(2)}` : "â€”"}</td><td className="px-4 py-2 text-right font-medium text-gray-900 dark:text-gray-50">{p.fiveYear === 0 ? "Free" : p.fiveYear ? `$${p.fiveYear.toFixed(2)}` : "â€”"}</td></tr>
               ))}
             </tbody>
           </table>

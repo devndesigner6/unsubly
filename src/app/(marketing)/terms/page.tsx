@@ -6,16 +6,16 @@ import { webPageJsonLd, breadcrumbJsonLd } from "@/lib/jsonld"
 export const metadata: Metadata = {
   title: "Terms of Service",
   description:
-    "Read the terms and conditions for using TrackMySubscriptions. Understand your rights and responsibilities as a user of our free subscription tracking service.",
+    "Read the terms and conditions for using Unsubscribely. Understand your rights and responsibilities as a user of our free subscription tracking service.",
   alternates: {
-    canonical: "https://trackmysubscriptions.com/terms",
+    canonical: "https://unsubscribely.com/terms",
   },
   openGraph: {
-    title: "Terms of Service | TrackMySubscriptions",
+    title: "Terms of Service | Unsubscribely",
     description:
-      "Read the terms and conditions for using TrackMySubscriptions.",
-    url: "https://trackmysubscriptions.com/terms",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "TrackMySubscriptions — Terms of Service" }],
+      "Read the terms and conditions for using Unsubscribely.",
+    url: "https://unsubscribely.com/terms",
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Unsubscribely â€” Terms of Service" }],
   },
 }
 
@@ -28,7 +28,7 @@ export default function TermsPage() {
           __html: webPageJsonLd({
             name: "Terms of Service",
             description:
-              "Read the terms and conditions for using TrackMySubscriptions.",
+              "Read the terms and conditions for using Unsubscribely.",
             url: "/terms",
             dateModified: "2026-02-01",
           }),
@@ -65,7 +65,7 @@ export default function TermsPage() {
               1. Acceptance of Terms
             </h2>
             <p>
-              By accessing or using TrackMySubscriptions, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our service.
+              By accessing or using Unsubscribely, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our service.
             </p>
           </section>
 
@@ -74,7 +74,7 @@ export default function TermsPage() {
               2. Description of Service
             </h2>
             <p>
-              TrackMySubscriptions is a subscription management tool that helps you track, organize, and manage your recurring subscriptions. We provide tools to monitor payment dates, categorize subscriptions, and analyze spending patterns.
+              Unsubscribely is a subscription management tool that helps you track, organize, and manage your recurring subscriptions. We provide tools to monitor payment dates, categorize subscriptions, and analyze spending patterns.
             </p>
           </section>
 
@@ -98,7 +98,7 @@ export default function TermsPage() {
               4. Free Service
             </h2>
             <p className="mb-4">
-              TrackMySubscriptions is completely free to use. By creating an account:
+              Unsubscribely is completely free to use. By creating an account:
             </p>
             <ul className="list-disc pl-6 space-y-2">
               <li>You receive full access to all features at no cost</li>
@@ -128,7 +128,7 @@ export default function TermsPage() {
               6. Data Usage and Communications
             </h2>
             <p className="mb-4">
-              By creating an account and using TrackMySubscriptions, you grant us permission to:
+              By creating an account and using Unsubscribely, you grant us permission to:
             </p>
             <ul className="list-disc pl-6 space-y-2 mb-4">
               <li>Collect, store, and process your personal data including email address and subscription information</li>
@@ -161,7 +161,7 @@ export default function TermsPage() {
               8. Limitation of Liability
             </h2>
             <p>
-              TrackMySubscriptions shall not be liable for any indirect, incidental, special, consequential, or punitive damages resulting from your use of or inability to use the service.
+              Unsubscribely shall not be liable for any indirect, incidental, special, consequential, or punitive damages resulting from your use of or inability to use the service.
             </p>
           </section>
 
