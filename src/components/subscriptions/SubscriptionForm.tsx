@@ -18,7 +18,7 @@ import {
   RiNotification3Line,
   RiStickyNoteLine,
 } from "@remixicon/react"
-import { useRouter } from "next/navigation"
+import { useNavigate } from "react-router-dom"
 import { useState, useEffect } from "react"
 
 /** Subscription from API may have folderId/paymentMethodId as populated objects. */
@@ -116,7 +116,8 @@ const currencies = [
 const SELECT_NONE_VALUE = "__none__"
 
 export function SubscriptionForm({ subscription }: SubscriptionFormProps) {
-  const router = useRouter()
+  const navigate = useNavigate()
+  const router = { push: (p: string) => navigate(p), back: () => navigate(-1), refresh: () => {} }
   const isEditing = !!subscription
 
   const [formData, setFormData] = useState(() => ({

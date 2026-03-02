@@ -22,9 +22,9 @@ export default function PaymentMethods() {
 
   const add = async () => {
     if (!name.trim() || !user) return
-    const { data } = await supabase.from("payment_methods").insert({
-      name, type, last_four: lastFour || null, user_id: user.id
-    }).select().single()
+    const { data } = await supabase.from("payment_methods").insert([{
+      name, type: type as "credit_card" | "debit_card" | "paypal" | "bank_account" | "other", last_four: lastFour || null, user_id: user.id
+    }]).select().single()
     if (data) { setMethods((m) => [...m, data as PM]); setName(""); setLastFour("") }
   }
 

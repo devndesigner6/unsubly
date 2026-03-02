@@ -5,7 +5,7 @@ import { Button } from "@/components/Button"
 import { formatCurrency } from "@/lib/currency"
 import { cx } from "@/lib/utils"
 import { RiArrowRightLine, RiLoader4Line } from "@remixicon/react"
-import Link from "next/link"
+import { Link } from "react-router-dom"
 import { useEffect, useState, memo } from "react"
 
 interface Subscription {
@@ -50,7 +50,7 @@ const SubscriptionListItem = memo(function SubscriptionListItem({
 
   return (
     <Link
-      href={`/subscriptions/${sub.id}`}
+      to={`/subscriptions/${sub.id}`}
       className="flex items-center justify-between p-4 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50"
     >
       <div className="flex items-center gap-4">
@@ -155,7 +155,7 @@ export function RecentSubscriptions() {
           </p>
         </div>
         <Button variant="secondary" asChild className="group">
-          <Link href="/subscriptions">
+          <Link to="/subscriptions">
             View All
             <RiArrowRightLine className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
           </Link>
@@ -173,7 +173,7 @@ export function RecentSubscriptions() {
             No subscriptions yet. Add your first subscription to get started.
           </p>
           <Button asChild className="mt-4">
-            <Link href="/subscriptions/new">Add Subscription</Link>
+            <Link to="/subscriptions/new">Add Subscription</Link>
           </Button>
         </div>
       ) : (

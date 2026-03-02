@@ -1,4 +1,4 @@
-import Link from "next/link"
+import { Link } from "react-router-dom"
 import { RiArrowRightLine } from "@remixicon/react"
 
 interface RelatedLink {
@@ -27,7 +27,7 @@ export function RelatedLinks({
         {links.map((link) => (
           <Link
             key={link.href}
-            href={link.href}
+            to={link.href}
             className="group flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-4 transition-all hover:border-blue-200 hover:bg-blue-50/50 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-blue-900 dark:hover:bg-blue-900/10"
           >
             <div className="flex-1">

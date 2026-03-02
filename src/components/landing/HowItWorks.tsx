@@ -57,7 +57,7 @@ export function HowItWorks() {
           <div className={`relative transition-all delay-300 duration-700 ${inView ? "translate-x-0 opacity-100" : "translate-x-8 opacity-0"}`}>
             <div className="flex h-[320px] items-center justify-center rounded-2xl border border-gray-200 bg-white p-6 shadow-xl dark:border-gray-800 dark:bg-gray-950 sm:h-[380px] lg:h-[420px]">
               <div className="text-center">
-                {steps[activeStep] && <steps[activeStep].icon className="mx-auto size-12 text-gray-900 dark:text-white" />}
+                {steps[activeStep] && (() => { const Icon = steps[activeStep].icon; return <Icon className="mx-auto size-12 text-gray-900 dark:text-white" />; })()}
                 <h3 className="mt-4 text-xl font-semibold text-gray-900 dark:text-white">{steps[activeStep]?.name}</h3>
                 <p className="mt-2 text-gray-500">{steps[activeStep]?.description}</p>
               </div>
