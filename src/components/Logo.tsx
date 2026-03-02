@@ -1,5 +1,4 @@
 import type { SVGProps } from "react"
-import Image from "next/image"
 
 // SVG Logo component for inline use with color control
 export const Logo = (props: SVGProps<SVGSVGElement>) => (
@@ -18,12 +17,11 @@ export const LogoImage = ({
   size?: number
   variant?: "svg" | "png"
 }) => (
-  <Image
+  <img
     src={variant === "svg" ? "/logo.svg" : "/logo.png"}
     alt="Unsubscribely Logo"
     width={size}
     height={size}
     className={className}
-    priority
   />
 )

@@ -18,7 +18,7 @@ import {
   RiNotification3Line,
   RiStickyNoteLine,
 } from "@remixicon/react"
-import { useRouter } from "next/navigation"
+import { useNavigate } from "react-router-dom"
 import { useState, useEffect } from "react"
 
 /** Subscription from API may have folderId/paymentMethodId as populated objects. */
@@ -116,7 +116,7 @@ const currencies = [
 const SELECT_NONE_VALUE = "__none__"
 
 export function SubscriptionForm({ subscription }: SubscriptionFormProps) {
-  const router = useRouter()
+  const router = useNavigate()
   const isEditing = !!subscription
 
   const [formData, setFormData] = useState(() => ({
@@ -249,8 +249,7 @@ export function SubscriptionForm({ subscription }: SubscriptionFormProps) {
         throw new Error(data.error || "Failed to save subscription")
       }
 
-      router.push("/subscriptions")
-      router.refresh()
+      router("/subscriptions")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong")
     } finally {
@@ -684,7 +683,7 @@ export function SubscriptionForm({ subscription }: SubscriptionFormProps) {
 
       {/* Actions */}
       <div className="flex items-center justify-end gap-3 pt-2">
-        <Button type="button" variant="secondary" onClick={() => router.back()}>
+        <Button type="button" variant="secondary" onClick={() => router(-1)}>
           Cancel
         </Button>
         <Button type="submit" isLoading={isLoading}>
