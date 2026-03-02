@@ -1,5 +1,18 @@
-import { ReactNode } from "react"
+"use client"
 
-export function Providers({ children }: { children: ReactNode }) {
-  return <>{children}</>
+import { SessionProvider } from "next-auth/react"
+import { ThemeProvider } from "next-themes"
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <SessionProvider>
+      <ThemeProvider
+        defaultTheme="light"
+        disableTransitionOnChange
+        attribute="class"
+      >
+        {children}
+      </ThemeProvider>
+    </SessionProvider>
+  )
 }

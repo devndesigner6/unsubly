@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom"
+import Link from "next/link"
 import { RiArrowRightSLine, RiHome4Line } from "@remixicon/react"
 import { breadcrumbJsonLd } from "@/lib/jsonld"
 
@@ -36,7 +36,7 @@ export function PseoBreadcrumb({ items }: { items: BreadcrumbItem[] }) {
                 </span>
               ) : (
                 <Link
-                  to={item.href}
+                  href={item.href}
                   className="transition-colors hover:text-gray-900 dark:hover:text-gray-50"
                 >
                   {item.name}

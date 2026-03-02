@@ -1,53 +1,113 @@
+"use client"
 import { Divider } from "@/components/Divider"
 import { Logo } from "@/components/Logo"
 import {
-  Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent,
-  SidebarHeader, SidebarLink, SidebarMenu, SidebarMenuItem,
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarHeader,
+  SidebarLink,
+  SidebarMenu,
+  SidebarMenuItem,
 } from "@/components/Sidebar"
-import { siteConfig } from "@/lib/siteConfig"
+import { siteConfig } from "@/app/siteConfig"
 import {
-  RiDashboardLine, RiFileListLine, RiCalendarLine, RiPieChartLine,
-  RiSettings4Line, RiFolderLine, RiPriceTag3Line, RiBankCardLine,
+  RiDashboardLine,
+  RiFileListLine,
+  RiCalendarLine,
+  RiPieChartLine,
+  RiSettings4Line,
+  RiFolderLine,
+  RiPriceTag3Line,
+  RiBankCardLine,
 } from "@remixicon/react"
-import { Link, useLocation } from "react-router-dom"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
 import * as React from "react"
 import { UserProfile } from "./UserProfile"
 
+// Navigation arrays defined outside component to prevent recreation on each render
 const mainNavigation = [
-  { name: "Dashboard", href: siteConfig.baseLinks.dashboard, icon: RiDashboardLine },
-  { name: "Subscriptions", href: siteConfig.baseLinks.subscriptions, icon: RiFileListLine },
-  { name: "Calendar", href: siteConfig.baseLinks.calendar, icon: RiCalendarLine },
-  { name: "Analytics", href: siteConfig.baseLinks.analytics, icon: RiPieChartLine },
+  {
+    name: "Dashboard",
+    href: siteConfig.baseLinks.dashboard,
+    icon: RiDashboardLine,
+  },
+  {
+    name: "Subscriptions",
+    href: siteConfig.baseLinks.subscriptions,
+    icon: RiFileListLine,
+  },
+  {
+    name: "Calendar",
+    href: siteConfig.baseLinks.calendar,
+    icon: RiCalendarLine,
+  },
+  {
+    name: "Analytics",
+    href: siteConfig.baseLinks.analytics,
+    icon: RiPieChartLine,
+  },
 ] as const
 
 const organizationNavigation = [
-  { name: "Folders", href: "/folders", icon: RiFolderLine },
-  { name: "Tags", href: "/tags", icon: RiPriceTag3Line },
-  { name: "Payment Methods", href: "/payment-methods", icon: RiBankCardLine },
+  {
+    name: "Folders",
+    href: "/folders",
+    icon: RiFolderLine,
+  },
+  {
+    name: "Tags",
+    href: "/tags",
+    icon: RiPriceTag3Line,
+  },
+  {
+    name: "Payment Methods",
+    href: "/payment-methods",
+    icon: RiBankCardLine,
+  },
 ] as const
 
 const settingsNavigation = [
-  { name: "Settings", href: siteConfig.baseLinks.settings, icon: RiSettings4Line },
+  {
+    name: "Settings",
+    href: siteConfig.baseLinks.settings,
+    icon: RiSettings4Line,
+  },
 ] as const
 
-export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { pathname } = useLocation()
+export function DashboardSidebar({
+  ...props
+}: React.ComponentProps<typeof Sidebar>) {
+  const pathname = usePathname()
 
+  // Memoize isActive function to prevent recreation on each render
   const isActive = React.useCallback((href: string) => {
-    if (href === "/dashboard") return pathname === "/dashboard"
+    if (href === "/dashboard") {
+      return pathname === "/dashboard"
+    }
     return pathname.startsWith(href)
   }, [pathname])
 
   return (
     <Sidebar {...props} className="bg-gray-50 dark:bg-gray-925">
       <SidebarHeader className="px-3 py-4">
-        <Link to="/" className="-m-2 flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gray-900 dark:bg-white">
+        <Link
+          href="/"
+          className="flex items-center gap-3 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 -m-2 p-2"
+        >
+          <div className="flex size-9 items-center justify-center rounded-xl bg-gray-900 dark:bg-white shrink-0">
             <Logo className="size-5 text-white dark:text-gray-900" />
           </div>
           <div className="min-w-0">
-            <span className="block truncate text-sm font-semibold text-gray-900 dark:text-gray-50">Unsubscribely</span>
-            <span className="block truncate text-xs text-gray-600 dark:text-gray-400">Subscription Manager</span>
+            <span className="block text-sm font-semibold text-gray-900 dark:text-gray-50 truncate">
+              Unsubscribely
+            </span>
+            <span className="block text-xs text-gray-600 dark:text-gray-400 truncate">
+              Subscription Manager
+            </span>
           </div>
         </Link>
       </SidebarHeader>
@@ -57,32 +117,56 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
             <SidebarMenu className="space-y-1">
               {mainNavigation.map((item) => (
                 <SidebarMenuItem key={item.name}>
-                  <SidebarLink href={item.href} isActive={isActive(item.href)} icon={item.icon}>{item.name}</SidebarLink>
+                  <SidebarLink
+                    href={item.href}
+                    isActive={isActive(item.href)}
+                    icon={item.icon}
+                  >
+                    {item.name}
+                  </SidebarLink>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        <div className="px-3"><Divider className="my-0 py-0" /></div>
+        <div className="px-3">
+          <Divider className="my-0 py-0" />
+        </div>
         <SidebarGroup>
           <SidebarGroupContent>
-            <p className="mb-2 px-2 text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-500">Organization</p>
+            <p className="mb-2 px-2 text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-500">
+              Organization
+            </p>
             <SidebarMenu className="space-y-1">
               {organizationNavigation.map((item) => (
                 <SidebarMenuItem key={item.name}>
-                  <SidebarLink href={item.href} isActive={isActive(item.href)} icon={item.icon}>{item.name}</SidebarLink>
+                  <SidebarLink
+                    href={item.href}
+                    isActive={isActive(item.href)}
+                    icon={item.icon}
+                  >
+                    {item.name}
+                  </SidebarLink>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        <div className="px-3"><Divider className="my-0 py-0" /></div>
+        <div className="px-3">
+          <Divider className="my-0 py-0" />
+        </div>
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
               {settingsNavigation.map((item) => (
                 <SidebarMenuItem key={item.name}>
-                  <SidebarLink href={item.href} isActive={isActive(item.href)} icon={item.icon}>{item.name}</SidebarLink>
+                  <SidebarLink
+                    href={item.href}
+                    isActive={isActive(item.href)}
+                    icon={item.icon}
+                  >
+                    {item.name}
+                  </SidebarLink>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>

@@ -1,0 +1,76 @@
+import { MongoDBAdapter } from "@auth/mongodb-adapter"
+import { ObjectId } from "mongodb"
+import type { NextAuthConfig } from "next-auth"
+import NextAuth from "next-auth"
+import Google from "next-auth/providers/google"
+import clientPromise from "./mongodb-client"
+import { sendWelcomeEmail } from "./email"
+
+export const authConfig: NextAuthConfig = {
+  adapter: MongoDBAdapter(clientPromise),
+  session: {
+    strategy: "jwt",
+  },
+  pages: {
+    signIn: "/login",
+  },
+  providers: [
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      // Allow linking Google accounts to existing users with the same email.
+      // This prevents "OAuthAccountNotLinked" errors when a user previously
+      // signed up using another method that stored the same email.
+      allowDangerousEmailAccountLinking: true,
+    }),
+  ],
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id
+      }
+      return token
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id as string
+      }
+      return session
+    },
+  },
+  events: {
+    async createUser({ user }) {
+      // Set default values for new users
+      const client = await clientPromise
+      const db = client.db()
+      const usersCollection = db.collection("users")
+
+      await usersCollection.updateOne(
+        { _id: new ObjectId(user.id) },
+        {
+          $set: {
+            currency: "USD",
+            defaultAlertDays: 3,
+            emailAlerts: true,
+            weeklyDigest: false,
+          },
+        },
+      )
+
+      // Send welcome email to new users
+      if (user.email) {
+        try {
+          await sendWelcomeEmail(user.email, {
+            userName: user.name || "",
+            email: user.email,
+          })
+        } catch (error) {
+          // Log error but don't block user creation
+          console.error("Failed to send welcome email:", error)
+        }
+      }
+    },
+  },
+}
+
+export const { handlers, auth, signIn, signOut } = NextAuth(authConfig)

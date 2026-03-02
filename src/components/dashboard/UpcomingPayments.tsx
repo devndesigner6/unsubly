@@ -5,7 +5,7 @@ import { Button } from "@/components/Button"
 import { formatCurrency } from "@/lib/currency"
 import { cx } from "@/lib/utils"
 import { RiArrowRightLine, RiLoader4Line, RiTimeLine } from "@remixicon/react"
-import { Link } from "react-router-dom"
+import Link from "next/link"
 import { useEffect, useState, useMemo, memo } from "react"
 
 interface UpcomingPayment {
@@ -225,7 +225,7 @@ export function UpcomingPayments() {
 
       <div className="border-t border-gray-200 p-4 dark:border-gray-800">
         <Button variant="ghost" asChild className="w-full justify-center group">
-          <Link to="/calendar">
+          <Link href="/calendar">
             View Calendar
             <RiArrowRightLine className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
           </Link>
