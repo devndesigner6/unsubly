@@ -130,10 +130,10 @@ const EXCHANGE_RATE_V4_URL = "https://api.exchangerate-api.com/v4/latest"
 export async function fetchExchangeRates(
   baseCurrency: string = "USD",
 ): Promise<Record<string, number>> {
+  const apiKey = import.meta.env.VITE_EXCHANGE_RATE_API_KEY
   const url =
-    process.env.EXCHANGE_RATE_API_KEY &&
-    process.env.EXCHANGE_RATE_API_KEY.startsWith("http")
-      ? process.env.EXCHANGE_RATE_API_KEY.replace(/\/USD$/, `/${baseCurrency}`)
+    apiKey && apiKey.startsWith("http")
+      ? apiKey.replace(/\/USD$/, `/${baseCurrency}`)
       : `${EXCHANGE_RATE_V4_URL}/${baseCurrency}`
 
   try {
