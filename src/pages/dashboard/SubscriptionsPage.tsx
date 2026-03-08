@@ -67,6 +67,52 @@ export default function SubscriptionsPage() {
     }
   }
 
+  function handleExport() {
+    const csv = generateCSV(subscriptions)
+    const blob = new Blob([csv], { type: "text/csv" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = "subscriptions.csv"
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !user) return
+    setImporting(true)
+    try {
+      const text = await file.text()
+      const parsed = parseCSV(text)
+      for (const sub of parsed) {
+        await createSubscription({
+          user_id: user.id,
+          name: sub.name,
+          description: sub.description || null,
+          amount: sub.amount,
+          currency: sub.currency,
+          billing_cycle: sub.billingCycle as any,
+          next_billing_date: sub.nextBillingDate.split("T")[0],
+          start_date: sub.startDate.split("T")[0],
+          status: sub.status as any,
+          category: sub.category || null,
+          url: sub.url || null,
+          notes: sub.notes || null,
+          alert_days: sub.alertDays,
+          alert_enabled: sub.alertEnabled,
+        })
+      }
+      await loadData()
+      alert(`Successfully imported ${parsed.length} subscription(s)`)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Import failed")
+    } finally {
+      setImporting(false)
+      if (fileInputRef.current) fileInputRef.current.value = ""
+    }
+  }
+
   const filtered = useMemo(() => {
     if (!searchQuery) return subscriptions
     return subscriptions.filter((s) =>
