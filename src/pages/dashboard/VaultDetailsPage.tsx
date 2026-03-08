@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { useParams, Link } from "react-router-dom"
+import { useParams, Link, useNavigate } from "react-router-dom"
 import { useAuth } from "@/lib/auth-context"
 import { useAlgorand } from "@/lib/algorand/context"
 import { supabase } from "@/integrations/supabase/client"
@@ -13,17 +13,19 @@ import {
   RiUserLine, RiCoinLine,
 } from "@remixicon/react"
 import algosdk from "algosdk"
+import { toast } from "sonner"
 
 interface OnChainState {
   creator: string
   recipient: string
-  balance: number // microalgos
+  balance: number
   appExists: boolean
   globalState: Record<string, string | number>
 }
 
 export default function VaultDetailsPage() {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
   const { user } = useAuth()
   const { walletAddress, algodClient, peraWallet } = useAlgorand()
   const [vault, setVault] = useState<any>(null)
@@ -36,6 +38,7 @@ export default function VaultDetailsPage() {
   const [error, setError] = useState<string | null>(null)
   const [chainError, setChainError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<"details" | "history">("details")
+  const [confirmAction, setConfirmAction] = useState<"kill" | "delete" | null>(null)
 
   async function loadVault() {
     if (!user || !id) return
@@ -50,12 +53,11 @@ export default function VaultDetailsPage() {
     setLoading(false)
     if ((data as any).app_id) fetchOnChainState((data as any).app_id, (data as any).app_address)
 
-    // Fetch related payments
     const { data: paymentData } = await supabase
       .from("onchain_payments" as any)
       .select("*")
       .eq("user_id", user.id)
-      .eq("subscription_id", (data as any).subscription_id)
+      .or(`subscription_id.eq.${(data as any).subscription_id},recipient_address.eq.${(data as any).app_address}`)
       .order("created_at", { ascending: false })
     setPayments(paymentData || [])
   }
@@ -67,8 +69,11 @@ export default function VaultDetailsPage() {
       const appInfo = await algodClient.getApplicationByID(appId).do() as any
       const globalState: Record<string, string | number> = {}
 
-      if (appInfo.params?.globalState) {
-        for (const item of appInfo.params.globalState as any[]) {
+      // Handle both v2 and v3 response formats
+      const stateArray = appInfo.params?.globalState ?? appInfo.params?.["global-state"] ?? appInfo?.["global-state-schema"] ?? []
+
+      if (Array.isArray(stateArray)) {
+        for (const item of stateArray) {
           const key = atob(item.key)
           if (item.value.type === 1) {
             const bytes = Uint8Array.from(atob(item.value.bytes), c => c.charCodeAt(0))
@@ -83,17 +88,16 @@ export default function VaultDetailsPage() {
         }
       }
 
-      // Get app account balance
       let balance = 0
       if (appAddress) {
         try {
           const acctInfo = await algodClient.accountInformation(appAddress).do() as any
-          balance = Number(acctInfo.amount || 0)
+          balance = Number(acctInfo.amount ?? acctInfo?.amount ?? 0)
         } catch {}
       }
 
       setOnChainState({
-        creator: String(appInfo.params?.creator || ""),
+        creator: String(appInfo.params?.creator ?? ""),
         recipient: String(globalState["recipient"] || ""),
         balance,
         appExists: true,
@@ -119,34 +123,57 @@ export default function VaultDetailsPage() {
 
   const handleRelease = async () => {
     if (!walletAddress || !vault?.app_id) return
-    setIsProcessing(true); setActionMsg("Releasing funds on-chain…")
+    setIsProcessing(true)
+    setActionMsg("Releasing funds on-chain… (sign in Pera)")
     try {
       const txnId = await releaseEscrowFunds(algodClient, walletAddress, vault.app_id, signTransaction)
       await supabase.from("escrow_vaults" as any).update({ status: "released", txn_id: txnId, released_at: new Date().toISOString() } as any).eq("id", vault.id)
       await supabase.from("onchain_payments" as any).insert({ user_id: user!.id, subscription_id: vault.subscription_id, algorand_txn_id: txnId, amount: vault.amount, sender_address: vault.app_address || walletAddress, recipient_address: vault.escrow_address || walletAddress, note: `Released from App ${vault.app_id}` } as any)
+      toast.success("Funds released!", { description: `${vault.amount} ALGO sent to recipient` })
       loadVault()
-    } catch (err) { console.error(err) } finally { setIsProcessing(false); setActionMsg("") }
+    } catch (err: any) {
+      toast.error("Release failed", { description: err?.message || "Transaction failed" })
+    } finally {
+      setIsProcessing(false)
+      setActionMsg("")
+    }
   }
 
   const handleKill = async () => {
     if (!walletAddress || !vault?.app_id) return
-    setIsProcessing(true); setActionMsg("Activating kill switch…")
+    setConfirmAction(null)
+    setIsProcessing(true)
+    setActionMsg("Activating kill switch…")
     try {
       const txnId = await killEscrowContract(algodClient, walletAddress, vault.app_id, signTransaction)
       await supabase.from("escrow_vaults" as any).update({ status: "killed", kill_switch_active: true, txn_id: txnId, released_at: new Date().toISOString() } as any).eq("id", vault.id)
       await supabase.from("onchain_payments" as any).insert({ user_id: user!.id, subscription_id: vault.subscription_id, algorand_txn_id: txnId, amount: 0, sender_address: vault.app_address || walletAddress, recipient_address: walletAddress, note: `Kill switch on App ${vault.app_id}` } as any)
+      toast.success("Kill switch activated", { description: "Funds returned to your wallet" })
       loadVault()
-    } catch (err) { console.error(err) } finally { setIsProcessing(false); setActionMsg("") }
+    } catch (err: any) {
+      toast.error("Kill switch failed", { description: err?.message || "Transaction failed" })
+    } finally {
+      setIsProcessing(false)
+      setActionMsg("")
+    }
   }
 
   const handleDelete = async () => {
     if (!walletAddress || !vault?.app_id) return
-    setIsProcessing(true); setActionMsg("Deleting contract…")
+    setConfirmAction(null)
+    setIsProcessing(true)
+    setActionMsg("Deleting contract…")
     try {
       await deleteEscrowContract(algodClient, walletAddress, vault.app_id, signTransaction)
       await supabase.from("escrow_vaults" as any).delete().eq("id", vault.id)
-      window.location.href = "/escrow-vaults"
-    } catch (err) { console.error(err) } finally { setIsProcessing(false); setActionMsg("") }
+      toast.success("Contract deleted", { description: "MBR reclaimed" })
+      navigate("/escrow-vaults")
+    } catch (err: any) {
+      toast.error("Delete failed", { description: err?.message || "Transaction failed" })
+    } finally {
+      setIsProcessing(false)
+      setActionMsg("")
+    }
   }
 
   if (loading) {
@@ -425,30 +452,46 @@ export default function VaultDetailsPage() {
         </div>
       )}
 
-
       {actionMsg && (
         <div className="mt-4 rounded-lg bg-primary/5 border border-primary/20 px-4 py-3">
-          <p className="text-sm text-primary font-medium">{actionMsg}</p>
+          <p className="text-sm text-primary font-medium animate-pulse">{actionMsg}</p>
         </div>
       )}
 
-      {vault.status === "locked" && isSmartContract && (
+      {/* Confirmation dialog */}
+      {confirmAction && (
+        <div className="mt-4 rounded-lg bg-destructive/5 border border-destructive/20 px-4 py-4">
+          <p className="text-sm text-destructive font-medium mb-3">
+            {confirmAction === "kill"
+              ? "Are you sure you want to activate the kill switch? This returns all funds to your wallet and cannot be undone."
+              : "Are you sure you want to delete this contract from the blockchain?"}
+          </p>
+          <div className="flex gap-2">
+            <Button variant="destructive" onClick={confirmAction === "kill" ? handleKill : handleDelete}>
+              Confirm {confirmAction === "kill" ? "Kill Switch" : "Delete"}
+            </Button>
+            <Button variant="secondary" onClick={() => setConfirmAction(null)}>Cancel</Button>
+          </div>
+        </div>
+      )}
+
+      {vault.status === "locked" && isSmartContract && !confirmAction && (
         <div className="mt-6 flex flex-wrap gap-3">
           <Button onClick={handleRelease} disabled={isProcessing || !walletAddress}>
             <RiLockUnlockLine className="mr-1.5 size-4" />
             {isProcessing ? "Processing…" : "Release Payment"}
           </Button>
-          <Button variant="destructive" onClick={handleKill} disabled={isProcessing || !walletAddress}>
+          <Button variant="destructive" onClick={() => setConfirmAction("kill")} disabled={isProcessing || !walletAddress}>
             <RiAlarmWarningLine className="mr-1.5 size-4" />
             Kill Switch
           </Button>
         </div>
       )}
 
-      {(vault.status === "released" || vault.status === "killed") && isSmartContract && (
+      {(vault.status === "released" || vault.status === "killed") && isSmartContract && !confirmAction && (
         <div className="mt-6">
           <button
-            onClick={handleDelete}
+            onClick={() => setConfirmAction("delete")}
             disabled={isProcessing || !walletAddress}
             className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
           >

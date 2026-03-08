@@ -4,6 +4,7 @@ import algosdk from "algosdk"
 import { ALGORAND_TESTNET, microalgosToAlgo } from "./constants"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/lib/auth-context"
+import { toast } from "sonner"
 
 const peraWallet = new PeraWalletConnect()
 
@@ -54,9 +55,11 @@ export function AlgorandProvider({ children }: { children: ReactNode }) {
     setIsLoadingBalance(true)
     try {
       const accountInfo = await algodClient.accountInformation(address).do()
-      setBalance(microalgosToAlgo(Number(accountInfo.amount)))
+      const amount = Number((accountInfo as any).amount ?? accountInfo?.amount ?? 0)
+      setBalance(microalgosToAlgo(amount))
     } catch (err) {
       console.error("Failed to fetch balance:", err)
+      setBalance(0)
     } finally {
       setIsLoadingBalance(false)
     }
@@ -68,7 +71,6 @@ export function AlgorandProvider({ children }: { children: ReactNode }) {
     }
   }, [walletAddress, fetchBalance])
 
-  // Save wallet address to profile
   const saveWalletToProfile = useCallback(async (address: string | null) => {
     if (!user) return
     await supabase
@@ -91,7 +93,6 @@ export function AlgorandProvider({ children }: { children: ReactNode }) {
         const address = (data as any).algorand_address as string
         setWalletAddress(address)
         fetchBalance(address)
-        // Reconnect Pera session
         try {
           const accounts = await peraWallet.reconnectSession()
           if (accounts.length > 0 && accounts[0] === address) {
@@ -100,7 +101,7 @@ export function AlgorandProvider({ children }: { children: ReactNode }) {
             })
           }
         } catch {
-          // Session expired, user will need to reconnect
+          // Session expired, user will need to reconnect via button
         }
       }
     }
@@ -110,11 +111,10 @@ export function AlgorandProvider({ children }: { children: ReactNode }) {
   const connectWallet = useCallback(async () => {
     setIsConnecting(true)
     try {
-      // Disconnect any existing session first to avoid "Session currently connected" error
       try {
         await peraWallet.disconnect()
       } catch {
-        // No existing session, that's fine
+        // No existing session
       }
 
       const accounts = await peraWallet.connect()
@@ -122,14 +122,19 @@ export function AlgorandProvider({ children }: { children: ReactNode }) {
       setWalletAddress(address)
       await saveWalletToProfile(address)
       await fetchBalance(address)
+      toast.success("Wallet connected", { description: `${address.slice(0, 8)}...${address.slice(-4)}` })
 
       peraWallet.connector?.on("disconnect", () => {
         setWalletAddress(null)
         saveWalletToProfile(null)
+        toast.info("Wallet disconnected")
       })
     } catch (err: any) {
       if (err?.data?.type !== "CONNECT_MODAL_CLOSED") {
         console.error("Wallet connection error:", err)
+        toast.error("Failed to connect wallet", {
+          description: err?.message || "Please try again",
+        })
       }
     } finally {
       setIsConnecting(false)
@@ -145,14 +150,17 @@ export function AlgorandProvider({ children }: { children: ReactNode }) {
     setWalletAddress(null)
     setBalance(0)
     await saveWalletToProfile(null)
+    toast.info("Wallet disconnected")
   }, [saveWalletToProfile])
 
   const signAndSendTransaction = useCallback(async (txn: algosdk.Transaction): Promise<string> => {
     if (!walletAddress) throw new Error("Wallet not connected")
 
-    const encodedTxn = txn.toByte()
-    const signedTxns = await peraWallet.signTransaction([[{ txn: txn }]])
-    const { txid } = await algodClient.sendRawTransaction(signedTxns[0]).do()
+    const signedTxns = await peraWallet.signTransaction([[{ txn }]])
+    const response = await algodClient.sendRawTransaction(signedTxns[0]).do()
+    const txid = typeof response === "object" && response !== null
+      ? String((response as any).txid ?? (response as any).txId ?? "")
+      : String(response)
     await algosdk.waitForConfirmation(algodClient, txid, 4)
     await refreshBalance()
     return txid

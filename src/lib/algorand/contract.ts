@@ -1,8 +1,6 @@
 import algosdk from "algosdk"
 import { supabase } from "@/integrations/supabase/client"
 
-const ALGOD_SERVER = "https://testnet-api.algonode.cloud"
-
 interface CompiledContract {
   approval: string // base64
   clear: string // base64
@@ -16,6 +14,9 @@ interface CompiledContract {
 export async function fetchCompiledContract(): Promise<CompiledContract> {
   const { data, error } = await supabase.functions.invoke("algorand-compile")
   if (error) throw new Error(`Failed to compile contract: ${error.message}`)
+  if (!data || !data.approval || !data.clear) {
+    throw new Error("Invalid contract compilation response")
+  }
   return data as CompiledContract
 }
 
@@ -28,7 +29,6 @@ export async function deployEscrowContract(
   recipientAddress: string,
   signTransaction: (txn: algosdk.Transaction) => Promise<Uint8Array[]>
 ): Promise<{ appId: number; appAddress: string; txnId: string }> {
-  // Get compiled contract
   const contract = await fetchCompiledContract()
 
   const approvalBytes = new Uint8Array(
@@ -43,8 +43,6 @@ export async function deployEscrowContract(
   )
 
   const params = await algodClient.getTransactionParams().do()
-
-  // Encode recipient address as bytes arg
   const recipientBytes = algosdk.decodeAddress(recipientAddress).publicKey
 
   const txn = algosdk.makeApplicationCreateTxnFromObject({
@@ -61,11 +59,15 @@ export async function deployEscrowContract(
   })
 
   const signedTxns = await signTransaction(txn)
-  const { txid } = await algodClient.sendRawTransaction(signedTxns[0]).do()
+  const sendResponse = await algodClient.sendRawTransaction(signedTxns[0]).do()
+  const txid = extractTxId(sendResponse)
   const result = await algosdk.waitForConfirmation(algodClient, txid, 4)
 
-  const appId = Number(result.applicationIndex)
-  const appAddress = algosdk.getApplicationAddress(appId).toString()
+  // Handle bigint from algosdk v3
+  const appId = Number((result as any).applicationIndex ?? (result as any)["application-index"] ?? 0)
+  if (appId === 0) throw new Error("Failed to retrieve application ID from confirmed transaction")
+
+  const appAddress = String(algosdk.getApplicationAddress(appId))
 
   return { appId, appAddress, txnId: txid }
 }
@@ -82,7 +84,6 @@ export async function fundEscrowContract(
 ): Promise<string> {
   const params = await algodClient.getTransactionParams().do()
 
-  // Fund with amount + 0.1 ALGO for minimum balance requirement
   const txn = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
     sender: senderAddress,
     receiver: appAddress,
@@ -91,7 +92,8 @@ export async function fundEscrowContract(
   })
 
   const signedTxns = await signTransaction(txn)
-  const { txid } = await algodClient.sendRawTransaction(signedTxns[0]).do()
+  const sendResponse = await algodClient.sendRawTransaction(signedTxns[0]).do()
+  const txid = extractTxId(sendResponse)
   await algosdk.waitForConfirmation(algodClient, txid, 4)
   return txid
 }
@@ -111,12 +113,13 @@ export async function releaseEscrowFunds(
     sender: senderAddress,
     appIndex: appId,
     onComplete: algosdk.OnApplicationComplete.NoOpOC,
-    suggestedParams: { ...params, fee: 2000, flatFee: true }, // cover inner txn fee
+    suggestedParams: { ...params, fee: 2000, flatFee: true },
     appArgs: [new TextEncoder().encode("release")],
   })
 
   const signedTxns = await signTransaction(txn)
-  const { txid } = await algodClient.sendRawTransaction(signedTxns[0]).do()
+  const sendResponse = await algodClient.sendRawTransaction(signedTxns[0]).do()
+  const txid = extractTxId(sendResponse)
   await algosdk.waitForConfirmation(algodClient, txid, 4)
   return txid
 }
@@ -136,12 +139,13 @@ export async function killEscrowContract(
     sender: senderAddress,
     appIndex: appId,
     onComplete: algosdk.OnApplicationComplete.NoOpOC,
-    suggestedParams: { ...params, fee: 2000, flatFee: true }, // cover inner txn fee
+    suggestedParams: { ...params, fee: 2000, flatFee: true },
     appArgs: [new TextEncoder().encode("kill")],
   })
 
   const signedTxns = await signTransaction(txn)
-  const { txid } = await algodClient.sendRawTransaction(signedTxns[0]).do()
+  const sendResponse = await algodClient.sendRawTransaction(signedTxns[0]).do()
+  const txid = extractTxId(sendResponse)
   await algosdk.waitForConfirmation(algodClient, txid, 4)
   return txid
 }
@@ -165,7 +169,16 @@ export async function deleteEscrowContract(
   })
 
   const signedTxns = await signTransaction(txn)
-  const { txid } = await algodClient.sendRawTransaction(signedTxns[0]).do()
+  const sendResponse = await algodClient.sendRawTransaction(signedTxns[0]).do()
+  const txid = extractTxId(sendResponse)
   await algosdk.waitForConfirmation(algodClient, txid, 4)
   return txid
+}
+
+/**
+ * Extract txid from sendRawTransaction response (handles v2 and v3 response formats)
+ */
+function extractTxId(response: any): string {
+  if (typeof response === "string") return response
+  return String(response?.txid ?? response?.txId ?? response?.["txId"] ?? "")
 }

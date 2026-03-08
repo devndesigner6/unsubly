@@ -14,6 +14,7 @@ import {
 } from "@remixicon/react"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/lib/auth-context"
+import { toast } from "sonner"
 
 interface EscrowVault {
   id: string
@@ -42,6 +43,7 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
   const { walletAddress, algodClient, peraWallet } = useAlgorand()
   const [isProcessing, setIsProcessing] = useState(false)
   const [action, setAction] = useState("")
+  const [confirmAction, setConfirmAction] = useState<"kill" | "delete" | null>(null)
 
   const isSmartContract = !!vault.app_id
 
@@ -68,22 +70,15 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
   const handleRelease = async () => {
     if (!walletAddress || !user || !vault.app_id) return
     setIsProcessing(true)
-    setAction("Releasing funds on-chain…")
+    setAction("Releasing funds on-chain… (sign in Pera)")
     try {
       const txnId = await releaseEscrowFunds(
-        algodClient,
-        walletAddress,
-        vault.app_id,
-        signTransaction
+        algodClient, walletAddress, vault.app_id, signTransaction
       )
 
       await supabase
         .from("escrow_vaults" as any)
-        .update({
-          status: "released",
-          txn_id: txnId,
-          released_at: new Date().toISOString(),
-        } as any)
+        .update({ status: "released", txn_id: txnId, released_at: new Date().toISOString() } as any)
         .eq("id", vault.id)
 
       await supabase.from("onchain_payments" as any).insert({
@@ -96,9 +91,11 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
         note: `Payment released from smart contract (App ${vault.app_id})`,
       } as any)
 
+      toast.success("Funds released!", { description: `${vault.amount} ALGO sent to recipient` })
       onUpdate()
-    } catch (err) {
+    } catch (err: any) {
       console.error("Release error:", err)
+      toast.error("Release failed", { description: err?.message || "Transaction failed" })
     } finally {
       setIsProcessing(false)
       setAction("")
@@ -107,24 +104,17 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
 
   const handleKillSwitch = async () => {
     if (!walletAddress || !user || !vault.app_id) return
+    setConfirmAction(null)
     setIsProcessing(true)
     setAction("Activating kill switch on-chain…")
     try {
       const txnId = await killEscrowContract(
-        algodClient,
-        walletAddress,
-        vault.app_id,
-        signTransaction
+        algodClient, walletAddress, vault.app_id, signTransaction
       )
 
       await supabase
         .from("escrow_vaults" as any)
-        .update({
-          status: "killed",
-          kill_switch_active: true,
-          txn_id: txnId,
-          released_at: new Date().toISOString(),
-        } as any)
+        .update({ status: "killed", kill_switch_active: true, txn_id: txnId, released_at: new Date().toISOString() } as any)
         .eq("id", vault.id)
 
       await supabase.from("onchain_payments" as any).insert({
@@ -137,9 +127,11 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
         note: `Kill switch activated on smart contract (App ${vault.app_id})`,
       } as any)
 
+      toast.success("Kill switch activated", { description: "Funds returned to your wallet" })
       onUpdate()
-    } catch (err) {
+    } catch (err: any) {
       console.error("Kill switch error:", err)
+      toast.error("Kill switch failed", { description: err?.message || "Transaction failed" })
     } finally {
       setIsProcessing(false)
       setAction("")
@@ -148,6 +140,7 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
 
   const handleDelete = async () => {
     if (!walletAddress || !vault.app_id) return
+    setConfirmAction(null)
     setIsProcessing(true)
     setAction("Deleting contract…")
     try {
@@ -158,9 +151,11 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
         .delete()
         .eq("id", vault.id)
 
+      toast.success("Contract deleted", { description: "MBR reclaimed to your wallet" })
       onUpdate()
-    } catch (err) {
+    } catch (err: any) {
       console.error("Delete error:", err)
+      toast.error("Delete failed", { description: err?.message || "Transaction failed" })
     } finally {
       setIsProcessing(false)
       setAction("")
@@ -197,7 +192,6 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
         </span>
       </div>
 
-      {/* Smart Contract Badge */}
       {isSmartContract && (
         <div className="mt-2 flex items-center gap-1.5 text-xs text-primary">
           <RiCodeLine className="size-3" />
@@ -222,11 +216,36 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
 
       {action && (
         <div className="mt-3 rounded-md bg-primary/5 border border-primary/20 px-3 py-2">
-          <p className="text-xs text-primary font-medium">{action}</p>
+          <p className="text-xs text-primary font-medium animate-pulse">{action}</p>
         </div>
       )}
 
-      {vault.status === "locked" && isSmartContract && (
+      {/* Confirmation dialog for destructive actions */}
+      {confirmAction && (
+        <div className="mt-3 rounded-md bg-destructive/5 border border-destructive/20 px-3 py-3">
+          <p className="text-xs text-destructive font-medium mb-2">
+            {confirmAction === "kill"
+              ? "Are you sure? This will return all funds to your wallet and cannot be undone."
+              : "Are you sure? This will delete the contract from the blockchain."}
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={confirmAction === "kill" ? handleKillSwitch : handleDelete}
+              className="rounded-md bg-destructive px-3 py-1.5 text-xs font-medium text-destructive-foreground"
+            >
+              Confirm
+            </button>
+            <button
+              onClick={() => setConfirmAction(null)}
+              className="rounded-md bg-muted px-3 py-1.5 text-xs font-medium text-foreground"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {vault.status === "locked" && isSmartContract && !confirmAction && (
         <div className="mt-4 flex gap-2">
           <button
             onClick={handleRelease}
@@ -236,7 +255,7 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
             {isProcessing ? "Processing…" : "Release Payment"}
           </button>
           <button
-            onClick={handleKillSwitch}
+            onClick={() => setConfirmAction("kill")}
             disabled={isProcessing}
             className="flex items-center gap-1.5 rounded-lg bg-destructive px-3 py-2 text-xs font-medium text-destructive-foreground transition-colors hover:bg-destructive/90 disabled:opacity-50"
           >
@@ -246,18 +265,16 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
         </div>
       )}
 
-      {/* Legacy vaults without smart contract */}
       {vault.status === "locked" && !isSmartContract && (
         <div className="mt-3 rounded-md bg-muted/50 border border-border px-3 py-2">
           <p className="text-xs text-muted-foreground">Legacy vault (no on-chain contract)</p>
         </div>
       )}
 
-      {/* Delete button for released/killed smart contract vaults */}
-      {(vault.status === "released" || vault.status === "killed") && isSmartContract && (
+      {(vault.status === "released" || vault.status === "killed") && isSmartContract && !confirmAction && (
         <div className="mt-3">
           <button
-            onClick={handleDelete}
+            onClick={() => setConfirmAction("delete")}
             disabled={isProcessing || !walletAddress}
             className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors"
           >

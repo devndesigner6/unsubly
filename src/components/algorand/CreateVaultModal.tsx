@@ -3,9 +3,10 @@ import { useState, useEffect } from "react"
 import { useAlgorand } from "@/lib/algorand/context"
 import { useAuth } from "@/lib/auth-context"
 import { supabase } from "@/integrations/supabase/client"
-import { algoToMicroalgos, MIN_BALANCE_MICROALGOS, microalgosToAlgo } from "@/lib/algorand/constants"
+import { algoToMicroalgos } from "@/lib/algorand/constants"
 import { deployEscrowContract, fundEscrowContract } from "@/lib/algorand/contract"
-import { RiCloseLine, RiLockLine, RiAlertLine } from "@remixicon/react"
+import { RiCloseLine, RiLockLine } from "@remixicon/react"
+import { toast } from "sonner"
 
 interface Subscription {
   id: string
@@ -22,13 +23,14 @@ interface CreateVaultModalProps {
 
 export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModalProps) {
   const { user } = useAuth()
-  const { walletAddress, algodClient, peraWallet, balance } = useAlgorand()
+  const { walletAddress, algodClient, peraWallet, balance, refreshBalance } = useAlgorand()
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
   const [selectedSubscription, setSelectedSubscription] = useState("")
   const [amount, setAmount] = useState("")
   const [recipientAddress, setRecipientAddress] = useState("")
   const [isCreating, setIsCreating] = useState(false)
   const [step, setStep] = useState("")
+  const [errorMsg, setErrorMsg] = useState("")
 
   useEffect(() => {
     if (!user || !isOpen) return
@@ -41,6 +43,8 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
       if (data) setSubscriptions(data)
     }
     fetchSubscriptions()
+    setErrorMsg("")
+    setStep("")
   }, [user, isOpen])
 
   useEffect(() => {
@@ -68,36 +72,37 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
     if (!walletAddress || !user || !amount) return
 
     const recipient = recipientAddress || walletAddress
+    setErrorMsg("")
 
-    // Validate recipient address before attempting transaction
     if (recipientAddress && !isValidAlgorandAddress(recipientAddress)) {
-      setStep("❌ Invalid Algorand address. Must be 58 characters.")
+      setErrorMsg("Invalid Algorand address. Must be 58 characters.")
       return
     }
 
     const algoAmount = parseFloat(amount)
-    if (algoAmount <= 0) {
-      setStep("❌ Amount must be greater than 0.")
+    if (isNaN(algoAmount) || algoAmount <= 0) {
+      setErrorMsg("Amount must be greater than 0.")
       return
     }
 
-    // Check wallet balance before attempting transaction
+    // Refresh balance before checking
+    await refreshBalance()
+
     if (balance <= 0) {
-      setStep("❌ Wallet has 0 ALGO. Fund your testnet wallet first.")
+      setErrorMsg("Wallet has 0 ALGO. Fund your testnet wallet first at https://bank.testnet.algorand.network/")
       return
     }
 
-    const requiredAlgo = algoAmount + 0.3 // amount + MBR + fees
+    const requiredAlgo = algoAmount + 0.3
     if (balance < requiredAlgo) {
-      setStep(`❌ Insufficient balance. Need ~${requiredAlgo.toFixed(4)} ALGO, have ${balance.toFixed(4)} ALGO.`)
+      setErrorMsg(`Insufficient balance. Need ~${requiredAlgo.toFixed(4)} ALGO, have ${balance.toFixed(4)} ALGO.`)
       return
     }
 
     setIsCreating(true)
     try {
-
       // Step 1: Deploy the TEAL smart contract
-      setStep("Deploying smart contract… (sign txn 1/2)")
+      setStep("Deploying smart contract… (sign txn 1/2 in Pera Wallet)")
       const { appId, appAddress, txnId: deployTxnId } = await deployEscrowContract(
         algodClient,
         walletAddress,
@@ -106,7 +111,7 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
       )
 
       // Step 2: Fund the contract with escrowed ALGO
-      setStep("Funding escrow vault… (sign txn 2/2)")
+      setStep("Funding escrow vault… (sign txn 2/2 in Pera Wallet)")
       const fundTxnId = await fundEscrowContract(
         algodClient,
         walletAddress,
@@ -115,8 +120,8 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
         signTransaction
       )
 
-      // Step 3: Save vault to database with app_id
-      await supabase.from("escrow_vaults" as any).insert({
+      // Step 3: Save vault to database
+      const { error: insertError } = await supabase.from("escrow_vaults" as any).insert({
         user_id: user.id,
         subscription_id: selectedSubscription || null,
         algorand_address: walletAddress,
@@ -129,6 +134,13 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
         app_address: appAddress,
       } as any)
 
+      if (insertError) {
+        console.error("DB insert error:", insertError)
+        toast.error("Vault created on-chain but failed to save to database", {
+          description: `App ID: ${appId}. Contact support with this ID.`,
+        })
+      }
+
       // Record on-chain payment
       await supabase.from("onchain_payments" as any).insert({
         user_id: user.id,
@@ -140,14 +152,26 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
         note: `Escrow vault created (App ID: ${appId})`,
       } as any)
 
+      toast.success("Escrow vault created!", {
+        description: `${algoAmount} ALGO locked in smart contract (App ID: ${appId})`,
+      })
+
       onCreated()
       onClose()
       setAmount("")
       setSelectedSubscription("")
       setRecipientAddress("")
       setStep("")
-    } catch (err) {
+      setErrorMsg("")
+    } catch (err: any) {
       console.error("Create vault error:", err)
+      const message = err?.message || "Transaction failed"
+      if (message.includes("CONNECT_MODAL_CLOSED") || message.includes("cancelled")) {
+        setErrorMsg("Transaction cancelled by user.")
+      } else {
+        setErrorMsg(message)
+        toast.error("Failed to create vault", { description: message })
+      }
       setStep("")
     } finally {
       setIsCreating(false)
@@ -161,7 +185,7 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
       <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-semibold text-foreground">Create Escrow Vault</h2>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted transition-colors">
+          <button onClick={onClose} disabled={isCreating} className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted transition-colors disabled:opacity-50">
             <RiCloseLine className="size-5" />
           </button>
         </div>
@@ -174,6 +198,7 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
             <select
               value={selectedSubscription}
               onChange={(e) => setSelectedSubscription(e.target.value)}
+              disabled={isCreating}
               className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
             >
               <option value="">No linked subscription</option>
@@ -196,8 +221,14 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0.00"
+              disabled={isCreating}
               className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
             />
+            {balance > 0 && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Available: {balance.toFixed(4)} ALGO
+              </p>
+            )}
           </div>
 
           <div>
@@ -209,6 +240,7 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
               value={recipientAddress}
               onChange={(e) => setRecipientAddress(e.target.value)}
               placeholder="Service provider's Algorand address"
+              disabled={isCreating}
               className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground font-mono text-xs"
             />
             <p className="mt-1 text-xs text-muted-foreground">
@@ -218,13 +250,19 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
 
           <div className="rounded-lg bg-muted/50 border border-border p-3">
             <p className="text-xs text-muted-foreground">
-              <strong className="text-foreground">Real Smart Contract:</strong> This deploys a TEAL escrow contract on Algorand Testnet. You'll sign 2 transactions: one to deploy the contract, one to fund it. The kill switch is enforced on-chain.
+              <strong className="text-foreground">Real Smart Contract:</strong> This deploys a TEAL escrow contract on Algorand Testnet. You'll sign 2 transactions in Pera Wallet: one to deploy the contract, one to fund it.
             </p>
           </div>
 
           {step && (
             <div className="rounded-lg bg-primary/5 border border-primary/20 p-3">
-              <p className="text-xs text-primary font-medium">{step}</p>
+              <p className="text-xs text-primary font-medium animate-pulse">{step}</p>
+            </div>
+          )}
+
+          {errorMsg && (
+            <div className="rounded-lg bg-destructive/5 border border-destructive/20 p-3">
+              <p className="text-xs text-destructive font-medium">❌ {errorMsg}</p>
             </div>
           )}
 
