@@ -86,6 +86,7 @@ export default function App() {
                 <Route path="/tags" element={<TagsPage />} />
                 <Route path="/payment-methods" element={<PaymentMethodsPage />} />
                 <Route path="/escrow-vaults" element={<EscrowVaultsPage />} />
+                <Route path="/escrow-vaults/:id" element={<VaultDetailsPage />} />
                 <Route path="/onchain-resume" element={<OnChainResumePage />} />
                 <Route path="/settings" element={<SettingsPage />} />
               </Route>
