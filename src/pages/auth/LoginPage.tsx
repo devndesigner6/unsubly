@@ -1,9 +1,10 @@
 import { Button } from "@/components/Button"
 import { Logo } from "@/components/Logo"
-import { RiArrowRightLine } from "@remixicon/react"
+import { RiArrowRightLine, RiMailSendLine } from "@remixicon/react"
 import { Link, useNavigate } from "react-router-dom"
 import { supabase } from "@/integrations/supabase/client"
 import { useState } from "react"
+import { toast } from "sonner"
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -11,19 +12,40 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [showResend, setShowResend] = useState(false)
+  const [resending, setResending] = useState(false)
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError("")
+    setShowResend(false)
 
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) {
+      if (error.message.toLowerCase().includes("email not confirmed")) {
+        setShowResend(true)
+      }
       setError(error.message)
       setLoading(false)
     } else {
       navigate("/dashboard")
     }
+  }
+
+  const handleResendVerification = async () => {
+    setResending(true)
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: email.trim().toLowerCase(),
+    })
+    if (error) {
+      toast.error(error.message)
+    } else {
+      toast.success("Verification email sent! Check your inbox.")
+      setShowResend(false)
+    }
+    setResending(false)
   }
 
   return (
@@ -86,6 +108,18 @@ export default function LoginPage() {
           <div className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
             {error}
           </div>
+        )}
+
+        {showResend && (
+          <button
+            type="button"
+            onClick={handleResendVerification}
+            disabled={resending}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-muted/50 px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-50"
+          >
+            <RiMailSendLine className="size-4" />
+            {resending ? "Sending…" : "Resend verification email"}
+          </button>
         )}
 
         <Button
