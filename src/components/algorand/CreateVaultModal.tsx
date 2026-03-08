@@ -3,9 +3,9 @@ import { useState, useEffect } from "react"
 import { useAlgorand } from "@/lib/algorand/context"
 import { useAuth } from "@/lib/auth-context"
 import { supabase } from "@/integrations/supabase/client"
-import { algoToMicroalgos } from "@/lib/algorand/constants"
+import { algoToMicroalgos, MIN_BALANCE_MICROALGOS, microalgosToAlgo } from "@/lib/algorand/constants"
 import { deployEscrowContract, fundEscrowContract } from "@/lib/algorand/contract"
-import { RiCloseLine, RiLockLine } from "@remixicon/react"
+import { RiCloseLine, RiLockLine, RiAlertLine } from "@remixicon/react"
 
 interface Subscription {
   id: string
