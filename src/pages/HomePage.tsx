@@ -9,8 +9,8 @@ export default function HomePage() {
   return (
     <>
       <Hero />
-      <Stats />
       <Features />
+      <Stats />
       <AlgorandShowcase />
       <HowItWorks />
       <CTA />

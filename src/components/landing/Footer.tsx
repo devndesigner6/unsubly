@@ -9,14 +9,14 @@ const navigation = {
     { name: "How It Works", href: "#how-it-works" },
   ],
   support: [
-    { name: "Contact", href: "mailto:kalashvasaniya@gmail.com" },
+    { name: "Contact", href: "mailto:peddadahemanth6@gmail.com" },
   ],
 }
 
 const social = [
-  { name: "Twitter", href: "https://x.com/kalashbuilds", icon: RiTwitterXLine },
-  { name: "GitHub", href: "https://github.com/kalashvasaniya/unsubscribely", icon: RiGithubLine },
-  { name: "LinkedIn", href: "https://www.linkedin.com/in/kalashvasaniya/", icon: RiLinkedinLine },
+  { name: "Twitter", href: "https://x.com/hemanttbuilds", icon: RiTwitterXLine },
+  { name: "GitHub", href: "https://github.com/devndesigner6", icon: RiGithubLine },
+  { name: "LinkedIn", href: "https://www.linkedin.com/in/hemanthp15gr6", icon: RiLinkedinLine },
 ]
 
 export function Footer() {
