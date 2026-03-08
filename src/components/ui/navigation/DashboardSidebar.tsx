@@ -61,20 +61,20 @@ export function DashboardSidebar({
   }, [pathname])
 
   return (
-    <Sidebar {...props} className="bg-gray-50 dark:bg-gray-925">
+    <Sidebar {...props} className="bg-muted">
       <SidebarHeader className="px-3 py-4">
         <Link
           to="/"
-          className="flex items-center gap-3 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 -m-2 p-2"
+          className="flex items-center gap-3 rounded-lg transition-colors hover:bg-accent -m-2 p-2"
         >
-          <div className="flex size-9 items-center justify-center rounded-xl bg-gray-900 dark:bg-white shrink-0">
-            <Logo className="size-5 text-white dark:text-gray-900" />
+          <div className="flex size-9 items-center justify-center rounded-xl bg-foreground shrink-0">
+            <Logo className="size-5 text-background" />
           </div>
           <div className="min-w-0">
-            <span className="block text-sm font-semibold text-gray-900 dark:text-gray-50 truncate">
+            <span className="block text-sm font-semibold text-foreground truncate">
               Unsubscribely
             </span>
-            <span className="block text-xs text-gray-600 dark:text-gray-400 truncate">
+            <span className="block text-xs text-muted-foreground truncate">
               Subscription Manager
             </span>
           </div>
@@ -97,7 +97,7 @@ export function DashboardSidebar({
         <div className="px-3"><Divider className="my-0 py-0" /></div>
         <SidebarGroup>
           <SidebarGroupContent>
-            <p className="mb-2 px-2 text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-500">Organization</p>
+            <p className="mb-2 px-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">Organization</p>
             <SidebarMenu className="space-y-1">
               {organizationNavigation.map((item) => (
                 <SidebarMenuItem key={item.name}>
@@ -112,7 +112,7 @@ export function DashboardSidebar({
         <div className="px-3"><Divider className="my-0 py-0" /></div>
         <SidebarGroup>
           <SidebarGroupContent>
-            <p className="mb-2 px-2 text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-500">Algorand</p>
+            <p className="mb-2 px-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">Algorand</p>
             <SidebarMenu className="space-y-1">
               {algorandNavigation.map((item) => (
                 <SidebarMenuItem key={item.name}>
@@ -140,7 +140,7 @@ export function DashboardSidebar({
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <div className="border-t border-gray-200 dark:border-gray-800" />
+        <div className="border-t border-border" />
         <UserProfile />
       </SidebarFooter>
     </Sidebar>

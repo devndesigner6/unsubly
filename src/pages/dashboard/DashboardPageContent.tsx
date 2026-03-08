@@ -9,10 +9,10 @@ import { Button } from "@/components/Button"
 import { Link } from "react-router-dom"
 import { supabase } from "@/integrations/supabase/client"
 import {
-  RiAddLine, RiArrowUpLine, RiArrowDownLine, RiWalletLine,
+  RiAddLine, RiWalletLine,
   RiCalendarCheckLine, RiAlertLine, RiLoader4Line,
-  RiPlayCircleLine, RiBarChartBoxLine,
-  RiShieldLine, RiAlarmWarningLine, RiFileChartLine, RiLockLine,
+  RiPlayCircleLine,
+  RiShieldLine, RiFileChartLine, RiLockLine,
   RiExternalLinkLine,
 } from "@remixicon/react"
 import { useState, useEffect, useMemo } from "react"
@@ -38,7 +38,6 @@ export default function DashboardPageContent() {
         setSubscriptions(subs)
         setProfile(prof)
 
-        // Fetch vault stats
         const { data: vaults } = await supabase
           .from("escrow_vaults" as any)
           .select("status, amount")
@@ -53,7 +52,6 @@ export default function DashboardPageContent() {
           })
         }
 
-        // Fetch recent on-chain payments
         const { data: payments } = await supabase
           .from("onchain_payments" as any)
           .select("*")
@@ -90,12 +88,7 @@ export default function DashboardPageContent() {
       return days >= 0 && days <= 7 && s.status === "active"
     })
 
-    return {
-      total: subscriptions.length,
-      active: active.length,
-      monthly,
-      upcoming: upcoming.length,
-    }
+    return { total: subscriptions.length, active: active.length, monthly, upcoming: upcoming.length }
   }, [subscriptions])
 
   function getGreeting() {
@@ -107,10 +100,10 @@ export default function DashboardPageContent() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
+      <div className="flex h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
-          <RiLoader4Line className="size-10 animate-spin text-blue-500" />
-          <p className="text-gray-500 dark:text-gray-400">Loading your dashboard...</p>
+          <RiLoader4Line className="size-10 animate-spin text-primary" />
+          <p className="text-muted-foreground">Loading your dashboard...</p>
         </div>
       </div>
     )
@@ -119,9 +112,9 @@ export default function DashboardPageContent() {
   if (error) {
     return (
       <div className="flex h-96 items-center justify-center p-8">
-        <div className="rounded-2xl border border-red-200 bg-red-50 p-8 text-center dark:border-red-800 dark:bg-red-900/20">
-          <RiAlertLine className="mx-auto mb-4 size-12 text-red-400" />
-          <p className="text-lg font-medium text-red-600 dark:text-red-400">{error}</p>
+        <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-8 text-center">
+          <RiAlertLine className="mx-auto mb-4 size-12 text-destructive" />
+          <p className="text-lg font-medium text-destructive">{error}</p>
           <Button variant="secondary" className="mt-4" onClick={() => window.location.reload()}>
             Try Again
           </Button>
@@ -131,9 +124,9 @@ export default function DashboardPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen bg-background">
       {/* Hero Welcome */}
-      <div className="relative overflow-hidden border-b border-gray-200 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 dark:border-gray-800">
+      <div className="relative overflow-hidden border-b border-border bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800">
         <div className="absolute inset-0 bg-grid-white/10" />
         <div className="relative mx-auto max-w-7xl px-3 py-6 sm:px-6 sm:py-8 lg:px-8">
           <div className="flex flex-col gap-4 sm:gap-6 lg:flex-row lg:items-center lg:justify-between">
@@ -192,26 +185,21 @@ export default function DashboardPageContent() {
       <div className="mx-auto max-w-7xl p-3 sm:p-6 lg:p-8">
         {/* Stats Cards */}
         <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-          <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Total Subscriptions</p>
-            <p className="mt-2 text-2xl font-bold text-gray-900 dark:text-gray-50">{metrics.total}</p>
-          </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Active</p>
-            <p className="mt-2 text-2xl font-bold text-gray-900 dark:text-gray-50">{metrics.active}</p>
-          </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Monthly Spending</p>
-            <p className="mt-2 text-2xl font-bold text-gray-900 dark:text-gray-50">{formatCurrency(metrics.monthly, currency)}</p>
-          </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Yearly Projection</p>
-            <p className="mt-2 text-2xl font-bold text-gray-900 dark:text-gray-50">{formatCurrency(metrics.monthly * 12, currency)}</p>
-          </div>
+          {[
+            { label: "Total Subscriptions", value: metrics.total },
+            { label: "Active", value: metrics.active },
+            { label: "Monthly Spending", value: formatCurrency(metrics.monthly, currency) },
+            { label: "Yearly Projection", value: formatCurrency(metrics.monthly * 12, currency) },
+          ].map((card) => (
+            <div key={card.label} className="rounded-xl border border-border bg-card p-4">
+              <p className="text-xs font-medium text-muted-foreground">{card.label}</p>
+              <p className="mt-2 text-2xl font-bold text-foreground">{card.value}</p>
+            </div>
+          ))}
         </div>
 
         {/* Algorand Blockchain Section */}
-        <div className="mt-6 rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-5 sm:p-6 dark:from-primary/5 dark:to-primary/10">
+        <div className="mt-6 rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-5 sm:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               <div className="flex size-10 items-center justify-center rounded-xl bg-primary/20">
@@ -270,25 +258,15 @@ export default function DashboardPageContent() {
                 </div>
               </div>
 
-              {/* Quick Actions */}
               <div className="mt-4 flex flex-wrap gap-2">
-                <Link
-                  to="/escrow-vaults"
-                  className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted"
-                >
-                  <RiLockLine className="size-3.5" />
-                  Manage Vaults
+                <Link to="/escrow-vaults" className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted">
+                  <RiLockLine className="size-3.5" /> Manage Vaults
                 </Link>
-                <Link
-                  to="/onchain-resume"
-                  className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted"
-                >
-                  <RiFileChartLine className="size-3.5" />
-                  View Resume
+                <Link to="/onchain-resume" className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted">
+                  <RiFileChartLine className="size-3.5" /> View Resume
                 </Link>
               </div>
 
-              {/* Recent On-Chain Activity */}
               {recentPayments.length > 0 && (
                 <div className="mt-4">
                   <p className="mb-2 text-xs font-medium text-muted-foreground">Recent On-Chain Activity</p>
@@ -310,17 +288,18 @@ export default function DashboardPageContent() {
         </div>
 
         {/* Recent Subscriptions */}
-        <div className="mt-6 rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="flex items-center justify-between border-b border-gray-200 p-5 dark:border-gray-800">
-            <h2 className="font-semibold text-gray-900 dark:text-gray-50">Recent Subscriptions</h2>
-            <Link to="/subscriptions" className="text-sm font-medium text-blue-600 hover:text-blue-500">
+        <div className="mt-6 rounded-2xl border border-border bg-card shadow-sm">
+          <div className="flex items-center justify-between border-b border-border p-5">
+            <h2 className="font-semibold text-foreground">Recent Subscriptions</h2>
+            <Link to="/subscriptions" className="text-sm font-medium text-primary hover:underline">
               View all →
             </Link>
           </div>
-          <div className="divide-y divide-gray-100 dark:divide-gray-800">
+          <div className="divide-y divide-border">
             {subscriptions.length === 0 ? (
               <div className="p-8 text-center">
-                <p className="text-gray-500 dark:text-gray-400">No subscriptions yet.</p>
+                <RiAddLine className="mx-auto mb-3 size-10 text-muted-foreground/50" />
+                <p className="text-sm text-muted-foreground">No subscriptions yet.</p>
                 <Button asChild className="mt-4">
                   <Link to="/subscriptions/new">
                     <RiAddLine className="mr-2 size-4" />
@@ -333,17 +312,17 @@ export default function DashboardPageContent() {
                 <Link
                   key={sub.id}
                   to={`/subscriptions/${sub.id}`}
-                  className="flex items-center justify-between p-4 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                  className="flex items-center justify-between p-4 transition-colors hover:bg-muted/50"
                 >
                   <div>
-                    <p className="font-medium text-gray-900 dark:text-gray-50">{sub.name}</p>
-                    <p className="text-xs text-gray-500">{sub.category || "Uncategorized"} · {sub.billing_cycle}</p>
+                    <p className="font-medium text-foreground">{sub.name}</p>
+                    <p className="text-xs text-muted-foreground">{sub.category || "Uncategorized"} · {sub.billing_cycle}</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold text-gray-900 dark:text-gray-50">
+                    <p className="font-semibold text-foreground">
                       {formatCurrency(sub.amount, sub.currency || currency)}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       {new Date(sub.next_billing_date).toLocaleDateString()}
                     </p>
                   </div>

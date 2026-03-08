@@ -6,13 +6,13 @@ import { ErrorBoundary } from "@/components/ErrorBoundary"
 
 export default function DashboardLayout() {
   return (
-    <div className="h-full min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="h-full min-h-screen bg-background">
       <SidebarProvider defaultOpen={true}>
         <DashboardSidebar />
         <div className="w-full">
-          <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-950">
+          <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-border bg-background px-4">
             <SidebarTrigger className="-ml-1" />
-            <div className="mr-2 h-4 w-px bg-gray-200 dark:bg-gray-800" />
+            <div className="mr-2 h-4 w-px bg-border" />
             <Breadcrumbs />
           </header>
           <main className="min-h-[calc(100vh-4rem)]">
