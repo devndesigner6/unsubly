@@ -14,6 +14,62 @@ export type Database = {
   }
   public: {
     Tables: {
+      escrow_vaults: {
+        Row: {
+          algorand_address: string
+          amount: number
+          created_at: string
+          currency: string
+          escrow_address: string | null
+          id: string
+          kill_switch_active: boolean
+          released_at: string | null
+          status: string
+          subscription_id: string | null
+          txn_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          algorand_address: string
+          amount: number
+          created_at?: string
+          currency?: string
+          escrow_address?: string | null
+          id?: string
+          kill_switch_active?: boolean
+          released_at?: string | null
+          status?: string
+          subscription_id?: string | null
+          txn_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          algorand_address?: string
+          amount?: number
+          created_at?: string
+          currency?: string
+          escrow_address?: string | null
+          id?: string
+          kill_switch_active?: boolean
+          released_at?: string | null
+          status?: string
+          subscription_id?: string | null
+          txn_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "escrow_vaults_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       folders: {
         Row: {
           color: string | null
@@ -40,6 +96,56 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      onchain_payments: {
+        Row: {
+          algorand_txn_id: string
+          amount: number
+          block_round: number | null
+          confirmed_at: string | null
+          created_at: string
+          id: string
+          note: string | null
+          recipient_address: string | null
+          sender_address: string
+          subscription_id: string | null
+          user_id: string
+        }
+        Insert: {
+          algorand_txn_id: string
+          amount: number
+          block_round?: number | null
+          confirmed_at?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          recipient_address?: string | null
+          sender_address: string
+          subscription_id?: string | null
+          user_id: string
+        }
+        Update: {
+          algorand_txn_id?: string
+          amount?: number
+          block_round?: number | null
+          confirmed_at?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          recipient_address?: string | null
+          sender_address?: string
+          subscription_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onchain_payments_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payment_methods: {
         Row: {
@@ -73,6 +179,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          algorand_address: string | null
           avatar_url: string | null
           created_at: string
           currency: string
@@ -84,6 +191,7 @@ export type Database = {
           weekly_digest: boolean | null
         }
         Insert: {
+          algorand_address?: string | null
           avatar_url?: string | null
           created_at?: string
           currency?: string
@@ -95,6 +203,7 @@ export type Database = {
           weekly_digest?: boolean | null
         }
         Update: {
+          algorand_address?: string | null
           avatar_url?: string | null
           created_at?: string
           currency?: string
