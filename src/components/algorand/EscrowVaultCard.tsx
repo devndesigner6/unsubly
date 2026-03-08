@@ -1,14 +1,16 @@
 import { useState } from "react"
 import { useAlgorand } from "@/lib/algorand/context"
-import { shortenAddress, getAlgoExplorerUrl, algoToMicroalgos } from "@/lib/algorand/constants"
+import { shortenAddress, getAlgoExplorerUrl } from "@/lib/algorand/constants"
+import { releaseEscrowFunds, killEscrowContract, deleteEscrowContract } from "@/lib/algorand/contract"
 import {
   RiLockLine,
   RiLockUnlockLine,
   RiShieldLine,
   RiExternalLinkLine,
   RiAlarmWarningLine,
+  RiDeleteBinLine,
+  RiCodeLine,
 } from "@remixicon/react"
-import algosdk from "algosdk"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/lib/auth-context"
 
@@ -24,6 +26,8 @@ interface EscrowVault {
   kill_switch_active: boolean
   created_at: string
   released_at: string | null
+  app_id?: number | null
+  app_address?: string | null
   subscription?: { name: string; logo: string | null } | null
 }
 
@@ -34,8 +38,11 @@ interface EscrowVaultCardProps {
 
 export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
   const { user } = useAuth()
-  const { walletAddress, signAndSendTransaction, algodClient } = useAlgorand()
+  const { walletAddress, algodClient, peraWallet } = useAlgorand()
   const [isProcessing, setIsProcessing] = useState(false)
+  const [action, setAction] = useState("")
+
+  const isSmartContract = !!vault.app_id
 
   const statusColors: Record<string, string> = {
     locked: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
@@ -53,88 +60,22 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
 
   const StatusIcon = statusIcons[vault.status] || RiShieldLine
 
-  const handleKillSwitch = async () => {
-    if (!user) return
-    setIsProcessing(true)
-    try {
-      // Update vault status to killed
-      await supabase
-        .from("escrow_vaults" as any)
-        .update({ 
-          status: "killed", 
-          kill_switch_active: true,
-          released_at: new Date().toISOString() 
-        } as any)
-        .eq("id", vault.id)
-
-      // If there's a real transaction, send a 0-ALGO "kill" transaction with a note
-      if (walletAddress) {
-        try {
-          const params = await algodClient.getTransactionParams().do()
-          const txn = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-            sender: walletAddress,
-            receiver: walletAddress,
-            amount: 0,
-            suggestedParams: params,
-            note: new TextEncoder().encode(
-              JSON.stringify({
-                app: "unsubscribely",
-                action: "kill_switch",
-                vault_id: vault.id,
-                subscription: vault.subscription?.name || "unknown",
-                timestamp: Date.now(),
-              })
-            ),
-          })
-          const txnId = await signAndSendTransaction(txn)
-          
-          // Record on-chain
-          await supabase.from("onchain_payments" as any).insert({
-            user_id: user.id,
-            subscription_id: vault.subscription_id,
-            algorand_txn_id: txnId,
-            amount: 0,
-            sender_address: walletAddress,
-            recipient_address: walletAddress,
-            note: `Kill switch activated for ${vault.subscription?.name || "subscription"}`,
-          } as any)
-        } catch (err) {
-          console.error("On-chain kill switch failed, but vault is locked:", err)
-        }
-      }
-
-      onUpdate()
-    } catch (err) {
-      console.error("Kill switch error:", err)
-    } finally {
-      setIsProcessing(false)
-    }
+  const signTransaction = async (txn: any): Promise<Uint8Array[]> => {
+    return await peraWallet.signTransaction([[{ txn }]])
   }
 
   const handleRelease = async () => {
-    if (!walletAddress || !user) return
+    if (!walletAddress || !user || !vault.app_id) return
     setIsProcessing(true)
+    setAction("Releasing funds on-chain…")
     try {
-      const params = await algodClient.getTransactionParams().do()
-      const txn = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-        sender: walletAddress,
-        receiver: vault.escrow_address || walletAddress,
-        amount: algoToMicroalgos(vault.amount),
-        suggestedParams: params,
-        note: new TextEncoder().encode(
-          JSON.stringify({
-            app: "unsubscribely",
-            action: "release_payment",
-            vault_id: vault.id,
-            subscription: vault.subscription?.name || "unknown",
-            timestamp: Date.now(),
-          })
-        ),
-      })
+      const txnId = await releaseEscrowFunds(
+        algodClient,
+        walletAddress,
+        vault.app_id,
+        signTransaction
+      )
 
-      const txnId = await signAndSendTransaction(txn)
-
-      // Update vault
       await supabase
         .from("escrow_vaults" as any)
         .update({
@@ -144,22 +85,84 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
         } as any)
         .eq("id", vault.id)
 
-      // Record on-chain payment
       await supabase.from("onchain_payments" as any).insert({
         user_id: user.id,
         subscription_id: vault.subscription_id,
         algorand_txn_id: txnId,
         amount: vault.amount,
-        sender_address: walletAddress,
+        sender_address: vault.app_address || walletAddress,
         recipient_address: vault.escrow_address || walletAddress,
-        note: `Payment released for ${vault.subscription?.name || "subscription"}`,
+        note: `Payment released from smart contract (App ${vault.app_id})`,
       } as any)
 
       onUpdate()
     } catch (err) {
-      console.error("Release payment error:", err)
+      console.error("Release error:", err)
     } finally {
       setIsProcessing(false)
+      setAction("")
+    }
+  }
+
+  const handleKillSwitch = async () => {
+    if (!walletAddress || !user || !vault.app_id) return
+    setIsProcessing(true)
+    setAction("Activating kill switch on-chain…")
+    try {
+      const txnId = await killEscrowContract(
+        algodClient,
+        walletAddress,
+        vault.app_id,
+        signTransaction
+      )
+
+      await supabase
+        .from("escrow_vaults" as any)
+        .update({
+          status: "killed",
+          kill_switch_active: true,
+          txn_id: txnId,
+          released_at: new Date().toISOString(),
+        } as any)
+        .eq("id", vault.id)
+
+      await supabase.from("onchain_payments" as any).insert({
+        user_id: user.id,
+        subscription_id: vault.subscription_id,
+        algorand_txn_id: txnId,
+        amount: 0,
+        sender_address: vault.app_address || walletAddress,
+        recipient_address: walletAddress,
+        note: `Kill switch activated on smart contract (App ${vault.app_id})`,
+      } as any)
+
+      onUpdate()
+    } catch (err) {
+      console.error("Kill switch error:", err)
+    } finally {
+      setIsProcessing(false)
+      setAction("")
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!walletAddress || !vault.app_id) return
+    setIsProcessing(true)
+    setAction("Deleting contract…")
+    try {
+      await deleteEscrowContract(algodClient, walletAddress, vault.app_id, signTransaction)
+
+      await supabase
+        .from("escrow_vaults" as any)
+        .delete()
+        .eq("id", vault.id)
+
+      onUpdate()
+    } catch (err) {
+      console.error("Delete error:", err)
+    } finally {
+      setIsProcessing(false)
+      setAction("")
     }
   }
 
@@ -193,8 +196,17 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
         </span>
       </div>
 
+      {/* Smart Contract Badge */}
+      {isSmartContract && (
+        <div className="mt-2 flex items-center gap-1.5 text-xs text-primary">
+          <RiCodeLine className="size-3" />
+          <span className="font-medium">TEAL Smart Contract</span>
+          <span className="text-muted-foreground">• App ID: {vault.app_id}</span>
+        </div>
+      )}
+
       {vault.txn_id && (
-        <div className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
+        <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
           <span>Txn: {shortenAddress(vault.txn_id, 8)}</span>
           <a
             href={getAlgoExplorerUrl(vault.txn_id)}
@@ -207,14 +219,20 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
         </div>
       )}
 
-      {vault.status === "locked" && (
+      {action && (
+        <div className="mt-3 rounded-md bg-primary/5 border border-primary/20 px-3 py-2">
+          <p className="text-xs text-primary font-medium">{action}</p>
+        </div>
+      )}
+
+      {vault.status === "locked" && isSmartContract && (
         <div className="mt-4 flex gap-2">
           <button
             onClick={handleRelease}
             disabled={isProcessing || !walletAddress}
             className="flex-1 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
           >
-            {isProcessing ? "Processing..." : "Release Payment"}
+            {isProcessing ? "Processing…" : "Release Payment"}
           </button>
           <button
             onClick={handleKillSwitch}
@@ -223,6 +241,27 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
           >
             <RiAlarmWarningLine className="size-3.5" />
             Kill Switch
+          </button>
+        </div>
+      )}
+
+      {/* Legacy vaults without smart contract */}
+      {vault.status === "locked" && !isSmartContract && (
+        <div className="mt-3 rounded-md bg-muted/50 border border-border px-3 py-2">
+          <p className="text-xs text-muted-foreground">Legacy vault (no on-chain contract)</p>
+        </div>
+      )}
+
+      {/* Delete button for released/killed smart contract vaults */}
+      {(vault.status === "released" || vault.status === "killed") && isSmartContract && (
+        <div className="mt-3">
+          <button
+            onClick={handleDelete}
+            disabled={isProcessing || !walletAddress}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors"
+          >
+            <RiDeleteBinLine className="size-3.5" />
+            Delete Contract (reclaim MBR)
           </button>
         </div>
       )}
