@@ -152,12 +152,6 @@ export default function DashboardPageContent() {
             </div>
             <div className="flex flex-wrap gap-2 sm:gap-3">
               <Button asChild variant="secondary" className="bg-white/20 text-white hover:bg-white/30 border-white/20 text-sm sm:text-base">
-                <Link to="/analytics">
-                  <RiBarChartBoxLine className="mr-1.5 size-4 sm:mr-2" />
-                  Analytics
-                </Link>
-              </Button>
-              <Button asChild variant="secondary" className="bg-white/20 text-white hover:bg-white/30 border-white/20 text-sm sm:text-base">
                 <Link to="/escrow-vaults">
                   <RiShieldLine className="mr-1.5 size-4 sm:mr-2" />
                   Escrow Vaults
