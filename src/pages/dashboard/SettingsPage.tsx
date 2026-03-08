@@ -2,11 +2,13 @@ import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { fetchProfile, updateProfile } from "@/lib/supabase-queries"
 import { supabase } from "@/integrations/supabase/client"
+import { usePushNotifications } from "@/lib/usePushNotifications"
 import { Button } from "@/components/Button"
 import {
   RiLoader4Line, RiSaveLine, RiLogoutBoxLine, RiAlertLine,
   RiUserLine, RiMoneyDollarCircleLine, RiNotification3Line,
   RiShieldLine, RiCheckLine, RiLockPasswordLine,
+  RiSmartphoneLine,
 } from "@remixicon/react"
 
 const CURRENCIES = ["USD", "EUR", "GBP", "INR", "AUD", "CAD", "JPY", "SGD", "AED"]
