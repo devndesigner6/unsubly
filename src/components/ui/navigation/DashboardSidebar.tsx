@@ -23,6 +23,7 @@ import {
   RiBankCardLine,
   RiShieldLine,
   RiFileChartLine,
+  RiExchangeLine,
 } from "@remixicon/react"
 import { Link, useLocation } from "react-router-dom"
 import * as React from "react"
