@@ -1,23 +1,31 @@
 import { useAuth } from "@/lib/auth-context"
+import { useAlgorand } from "@/lib/algorand/context"
 import { fetchSubscriptions } from "@/lib/supabase-queries"
 import { fetchProfile } from "@/lib/supabase-queries"
 import { formatCurrency } from "@/lib/currency"
+import { shortenAddress, getAddressExplorerUrl } from "@/lib/algorand/constants"
 import { cx } from "@/lib/utils"
 import { Button } from "@/components/Button"
 import { Link } from "react-router-dom"
+import { supabase } from "@/integrations/supabase/client"
 import {
   RiAddLine, RiArrowUpLine, RiArrowDownLine, RiWalletLine,
   RiCalendarCheckLine, RiAlertLine, RiLoader4Line,
   RiPlayCircleLine, RiBarChartBoxLine,
+  RiShieldLine, RiAlarmWarningLine, RiFileChartLine, RiLockLine,
+  RiExternalLinkLine,
 } from "@remixicon/react"
 import { useState, useEffect, useMemo } from "react"
 
 export default function DashboardPageContent() {
   const { user } = useAuth()
+  const { walletAddress, balance, isConnecting, connectWallet, isLoadingBalance } = useAlgorand()
   const [subscriptions, setSubscriptions] = useState<any[]>([])
   const [profile, setProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [vaultStats, setVaultStats] = useState({ total: 0, locked: 0, killed: 0, totalLocked: 0 })
+  const [recentPayments, setRecentPayments] = useState<any[]>([])
 
   useEffect(() => {
     if (!user) return
@@ -29,6 +37,30 @@ export default function DashboardPageContent() {
         ])
         setSubscriptions(subs)
         setProfile(prof)
+
+        // Fetch vault stats
+        const { data: vaults } = await supabase
+          .from("escrow_vaults" as any)
+          .select("status, amount")
+          .eq("user_id", user!.id)
+        if (vaults) {
+          const v = vaults as any[]
+          setVaultStats({
+            total: v.length,
+            locked: v.filter((x) => x.status === "locked").length,
+            killed: v.filter((x) => x.status === "killed").length,
+            totalLocked: v.filter((x) => x.status === "locked").reduce((s, x) => s + Number(x.amount), 0),
+          })
+        }
+
+        // Fetch recent on-chain payments
+        const { data: payments } = await supabase
+          .from("onchain_payments" as any)
+          .select("*")
+          .eq("user_id", user!.id)
+          .order("created_at", { ascending: false })
+          .limit(3)
+        if (payments) setRecentPayments(payments as any[])
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load")
       } finally {
@@ -125,6 +157,18 @@ export default function DashboardPageContent() {
                   Analytics
                 </Link>
               </Button>
+              <Button asChild variant="secondary" className="bg-white/20 text-white hover:bg-white/30 border-white/20 text-sm sm:text-base">
+                <Link to="/escrow-vaults">
+                  <RiShieldLine className="mr-1.5 size-4 sm:mr-2" />
+                  Escrow Vaults
+                </Link>
+              </Button>
+              <Button asChild variant="secondary" className="bg-white/20 text-white hover:bg-white/30 border-white/20 text-sm sm:text-base">
+                <Link to="/onchain-resume">
+                  <RiFileChartLine className="mr-1.5 size-4 sm:mr-2" />
+                  On-Chain Resume
+                </Link>
+              </Button>
               <Button asChild className="bg-white text-blue-700 hover:bg-blue-50 shadow-lg text-sm sm:text-base">
                 <Link to="/subscriptions/new">
                   <RiAddLine className="mr-1.5 size-4 sm:mr-2" />
@@ -170,6 +214,105 @@ export default function DashboardPageContent() {
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Yearly Projection</p>
             <p className="mt-2 text-2xl font-bold text-gray-900 dark:text-gray-50">{formatCurrency(metrics.monthly * 12, currency)}</p>
           </div>
+        </div>
+
+        {/* Algorand Blockchain Section */}
+        <div className="mt-6 rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-5 sm:p-6 dark:from-primary/5 dark:to-primary/10">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-xl bg-primary/20">
+                <RiShieldLine className="size-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-foreground">Algorand Blockchain</h2>
+                <p className="text-xs text-muted-foreground">
+                  {walletAddress
+                    ? `Connected: ${shortenAddress(walletAddress)}`
+                    : "Connect your wallet to enable blockchain features"}
+                </p>
+              </div>
+            </div>
+            {!walletAddress ? (
+              <button
+                onClick={connectWallet}
+                disabled={isConnecting}
+                className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+              >
+                <RiWalletLine className="size-4" />
+                {isConnecting ? "Connecting..." : "Connect Pera Wallet"}
+              </button>
+            ) : (
+              <a
+                href={getAddressExplorerUrl(walletAddress)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-xs text-primary hover:underline"
+              >
+                View on Explorer <RiExternalLinkLine className="size-3" />
+              </a>
+            )}
+          </div>
+
+          {walletAddress && (
+            <>
+              <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div className="rounded-xl bg-card/80 p-3 backdrop-blur-sm">
+                  <p className="text-xs text-muted-foreground">Wallet Balance</p>
+                  <p className="mt-1 text-lg font-bold text-foreground">
+                    {isLoadingBalance ? "..." : `${balance.toFixed(2)} ALGO`}
+                  </p>
+                </div>
+                <div className="rounded-xl bg-card/80 p-3 backdrop-blur-sm">
+                  <p className="text-xs text-muted-foreground">Total Vaults</p>
+                  <p className="mt-1 text-lg font-bold text-foreground">{vaultStats.total}</p>
+                </div>
+                <div className="rounded-xl bg-card/80 p-3 backdrop-blur-sm">
+                  <p className="text-xs text-muted-foreground">Locked</p>
+                  <p className="mt-1 text-lg font-bold text-foreground">{vaultStats.totalLocked.toFixed(2)} ALGO</p>
+                </div>
+                <div className="rounded-xl bg-card/80 p-3 backdrop-blur-sm">
+                  <p className="text-xs text-muted-foreground">Kill Switches</p>
+                  <p className="mt-1 text-lg font-bold text-destructive">{vaultStats.killed}</p>
+                </div>
+              </div>
+
+              {/* Quick Actions */}
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Link
+                  to="/escrow-vaults"
+                  className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+                >
+                  <RiLockLine className="size-3.5" />
+                  Manage Vaults
+                </Link>
+                <Link
+                  to="/onchain-resume"
+                  className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+                >
+                  <RiFileChartLine className="size-3.5" />
+                  View Resume
+                </Link>
+              </div>
+
+              {/* Recent On-Chain Activity */}
+              {recentPayments.length > 0 && (
+                <div className="mt-4">
+                  <p className="mb-2 text-xs font-medium text-muted-foreground">Recent On-Chain Activity</p>
+                  <div className="space-y-2">
+                    {recentPayments.map((p: any) => (
+                      <div key={p.id} className="flex items-center justify-between rounded-lg bg-card/80 p-2.5 backdrop-blur-sm">
+                        <div className="flex items-center gap-2">
+                          <RiShieldLine className="size-3.5 text-primary" />
+                          <span className="text-xs text-foreground truncate max-w-[200px]">{p.note || "Transaction"}</span>
+                        </div>
+                        <span className="text-xs font-medium text-foreground">{Number(p.amount).toFixed(2)} ALGO</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
 
         {/* Recent Subscriptions */}
