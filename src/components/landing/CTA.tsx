@@ -1,9 +1,7 @@
 import { useEffect, useState, useRef } from "react"
 import { Button } from "@/components/Button"
-import { RiArrowRightLine, RiCheckLine, RiSparklingLine } from "@remixicon/react"
+import { RiArrowRightLine } from "@remixicon/react"
 import { Link } from "react-router-dom"
-
-const benefits = ["100% Free forever", "No credit card required", "Set up in 2 minutes"]
 
 export function CTA() {
   const [inView, setInView] = useState(false)
@@ -19,40 +17,38 @@ export function CTA() {
   }, [])
 
   return (
-    <section className="py-16 sm:py-24 lg:py-32 bg-gray-50 dark:bg-gray-900 overflow-hidden">
-      <div ref={ref} className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className={`relative overflow-hidden rounded-2xl sm:rounded-3xl border border-gray-200 bg-white p-6 sm:p-8 lg:p-12 shadow-lg sm:shadow-xl dark:border-gray-800 dark:bg-gray-950 transition-all duration-700 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`}>
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:2rem_2rem] sm:bg-[size:4rem_4rem] opacity-50 dark:bg-[linear-gradient(to_right,#1a1a1a_1px,transparent_1px),linear-gradient(to_bottom,#1a1a1a_1px,transparent_1px)]" />
-          <div className="relative mx-auto max-w-3xl text-center">
-            <div className={`inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-gray-200 bg-gray-50 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm transition-all duration-500 dark:border-gray-800 dark:bg-gray-900 ${inView ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4"}`}>
-              <RiSparklingLine className="size-3.5 sm:size-4 text-amber-500" />
-              <span className="text-gray-600 dark:text-gray-400">100% Free</span>
-            </div>
-            <h2 className={`mt-6 sm:mt-8 text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-semibold tracking-tight text-gray-900 dark:text-white transition-all duration-700 delay-100 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
-              Ready to take control of<br /><span className="text-gray-400 dark:text-gray-500">your subscriptions?</span>
-            </h2>
-            <p className={`mt-4 sm:mt-6 text-sm sm:text-base lg:text-lg text-gray-500 dark:text-gray-400 transition-all duration-700 delay-200 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
-              Start saving money and stay on top of your recurring expenses for free.
-            </p>
-            <div className={`mt-6 sm:mt-8 lg:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 transition-all duration-700 delay-300 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
-              <Button size="lg" asChild className="px-6 sm:px-8 py-5 sm:py-6 text-sm sm:text-base w-full sm:w-auto">
-                <Link to="/register">
-                  Get Started Free
-                  <RiArrowRightLine className="size-4 sm:size-5" />
-                </Link>
-              </Button>
-              <Button variant="secondary" size="lg" asChild className="px-6 sm:px-8 py-5 sm:py-6 text-sm sm:text-base w-full sm:w-auto">
-                <a href="#how-it-works">See How It Works</a>
-              </Button>
-            </div>
-            <div className={`mt-6 sm:mt-8 lg:mt-10 flex flex-wrap items-center justify-center gap-3 sm:gap-4 lg:gap-6 transition-all duration-700 delay-400 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
-              {benefits.map((benefit) => (
-                <div key={benefit} className="flex items-center gap-1.5 sm:gap-2">
-                  <RiCheckLine className="size-3.5 sm:size-4 text-emerald-500" />
-                  <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{benefit}</span>
+    <section className="py-24 sm:py-32 lg:py-40 border-t border-border overflow-hidden">
+      <div ref={ref} className="mx-auto max-w-5xl px-6 lg:px-8 text-center">
+        <div className={`transition-all duration-1000 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`}>
+          <h2 className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-foreground tracking-tight leading-[0.9]">
+            TAKE
+            <br />
+            <span className="text-muted-foreground/40">CONTROL.</span>
+          </h2>
+          <p className="mt-8 text-base sm:text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed">
+            Start tracking subscriptions, locking payments in escrow,
+            and building your on-chain financial identity. 100% free.
+          </p>
+          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Button asChild className="rounded-full bg-foreground text-background hover:bg-foreground/90 px-8 py-6 text-sm font-medium gap-2 group w-full sm:w-auto">
+              <Link to="/register">
+                <div className="flex size-6 items-center justify-center rounded-md bg-background/20">
+                  <RiArrowRightLine className="size-3.5 transition-transform group-hover:translate-x-0.5" />
                 </div>
-              ))}
-            </div>
+                Get Started Free
+              </Link>
+            </Button>
+            <Button variant="ghost" asChild className="rounded-full px-8 py-6 text-sm text-muted-foreground hover:text-foreground w-full sm:w-auto">
+              <a href="#how-it-works">See How It Works</a>
+            </Button>
+          </div>
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-6 text-xs text-muted-foreground">
+            {["No credit card", "Free forever", "Open source"].map((item) => (
+              <span key={item} className="flex items-center gap-2">
+                <span className="size-1 rounded-full bg-foreground/30" />
+                {item}
+              </span>
+            ))}
           </div>
         </div>
       </div>
