@@ -5,9 +5,7 @@ import { ALGORAND_TESTNET, microalgosToAlgo } from "./constants"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/lib/auth-context"
 
-const peraWallet = new PeraWalletConnect({
-  network: "testnet",
-})
+const peraWallet = new PeraWalletConnect()
 
 const algodClient = new algosdk.Algodv2(
   ALGORAND_TESTNET.algodToken,

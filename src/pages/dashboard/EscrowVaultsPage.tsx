@@ -63,7 +63,7 @@ export default function EscrowVaultsPage() {
           <p className="mt-2 text-2xl font-bold text-foreground">{stats.total}</p>
         </div>
         <div className="rounded-xl border border-border bg-card p-4">
-          <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
+          <div className="flex items-center gap-2 text-muted-foreground">
             <RiLockLine className="size-4" />
             <span className="text-xs font-medium">Locked</span>
           </div>

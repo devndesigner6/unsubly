@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 import { ThemeProvider } from "next-themes"
 import { AuthProvider, useAuth } from "@/lib/auth-context"
+import { AlgorandProvider } from "@/lib/algorand/context"
 import { Toaster } from "@/components/ui/toaster"
 
 // Layouts
@@ -26,6 +27,8 @@ import FoldersPage from "@/pages/dashboard/FoldersPage"
 import TagsPage from "@/pages/dashboard/TagsPage"
 import PaymentMethodsPage from "@/pages/dashboard/PaymentMethodsPage"
 import SettingsPage from "@/pages/dashboard/SettingsPage"
+import EscrowVaultsPage from "@/pages/dashboard/EscrowVaultsPage"
+import OnChainResumePage from "@/pages/dashboard/OnChainResumePage"
 import NotFoundPage from "@/pages/NotFoundPage"
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -51,40 +54,44 @@ export default function App() {
     <BrowserRouter>
       <ThemeProvider defaultTheme="light" disableTransitionOnChange attribute="class">
         <AuthProvider>
-          <Routes>
-            {/* Marketing */}
-            <Route element={<MarketingLayout />}>
-              <Route path="/" element={<HomePage />} />
-            </Route>
+          <AlgorandProvider>
+            <Routes>
+              {/* Marketing */}
+              <Route element={<MarketingLayout />}>
+                <Route path="/" element={<HomePage />} />
+              </Route>
 
-            {/* Auth */}
-            <Route element={<AuthLayout />}>
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-            </Route>
+              {/* Auth */}
+              <Route element={<AuthLayout />}>
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+              </Route>
 
-            {/* Dashboard (Protected) */}
-            <Route
-              element={
-                <ProtectedRoute>
-                  <DashboardLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/subscriptions" element={<SubscriptionsPage />} />
-              <Route path="/subscriptions/new" element={<NewSubscriptionPage />} />
-              <Route path="/subscriptions/:id" element={<EditSubscriptionPage />} />
-              <Route path="/calendar" element={<CalendarPage />} />
-              <Route path="/analytics" element={<AnalyticsPage />} />
-              <Route path="/folders" element={<FoldersPage />} />
-              <Route path="/tags" element={<TagsPage />} />
-              <Route path="/payment-methods" element={<PaymentMethodsPage />} />
-              <Route path="/settings" element={<SettingsPage />} />
-            </Route>
+              {/* Dashboard (Protected) */}
+              <Route
+                element={
+                  <ProtectedRoute>
+                    <DashboardLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/subscriptions" element={<SubscriptionsPage />} />
+                <Route path="/subscriptions/new" element={<NewSubscriptionPage />} />
+                <Route path="/subscriptions/:id" element={<EditSubscriptionPage />} />
+                <Route path="/calendar" element={<CalendarPage />} />
+                <Route path="/analytics" element={<AnalyticsPage />} />
+                <Route path="/folders" element={<FoldersPage />} />
+                <Route path="/tags" element={<TagsPage />} />
+                <Route path="/payment-methods" element={<PaymentMethodsPage />} />
+                <Route path="/escrow-vaults" element={<EscrowVaultsPage />} />
+                <Route path="/onchain-resume" element={<OnChainResumePage />} />
+                <Route path="/settings" element={<SettingsPage />} />
+              </Route>
 
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </AlgorandProvider>
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>

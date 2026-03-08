@@ -16,8 +16,8 @@ interface OnChainPayment {
 export function OnChainResumeCard({ payment }: { payment: OnChainPayment }) {
   return (
     <div className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 transition-shadow hover:shadow-sm">
-      <div className="flex size-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
-        <RiCheckDoubleLine className="size-5 text-green-600 dark:text-green-400" />
+      <div className="flex size-10 items-center justify-center rounded-full bg-primary/10">
+        <RiCheckDoubleLine className="size-5 text-primary" />
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">

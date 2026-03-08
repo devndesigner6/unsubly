@@ -10,7 +10,7 @@ interface Subscription {
   id: string
   name: string
   amount: number
-  currency: string
+  currency: string | null
 }
 
 interface CreateVaultModalProps {

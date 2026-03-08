@@ -21,6 +21,8 @@ import {
   RiFolderLine,
   RiPriceTag3Line,
   RiBankCardLine,
+  RiShieldLine,
+  RiFileChartLine,
 } from "@remixicon/react"
 import { Link, useLocation } from "react-router-dom"
 import * as React from "react"
@@ -37,6 +39,11 @@ const organizationNavigation = [
   { name: "Folders", href: "/folders", icon: RiFolderLine },
   { name: "Tags", href: "/tags", icon: RiPriceTag3Line },
   { name: "Payment Methods", href: "/payment-methods", icon: RiBankCardLine },
+] as const
+
+const algorandNavigation = [
+  { name: "Escrow Vaults", href: "/escrow-vaults", icon: RiShieldLine },
+  { name: "On-Chain Resume", href: "/onchain-resume", icon: RiFileChartLine },
 ] as const
 
 const settingsNavigation = [
@@ -93,6 +100,21 @@ export function DashboardSidebar({
             <p className="mb-2 px-2 text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-500">Organization</p>
             <SidebarMenu className="space-y-1">
               {organizationNavigation.map((item) => (
+                <SidebarMenuItem key={item.name}>
+                  <SidebarLink href={item.href} isActive={isActive(item.href)} icon={item.icon}>
+                    {item.name}
+                  </SidebarLink>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        <div className="px-3"><Divider className="my-0 py-0" /></div>
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <p className="mb-2 px-2 text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-500">Algorand</p>
+            <SidebarMenu className="space-y-1">
+              {algorandNavigation.map((item) => (
                 <SidebarMenuItem key={item.name}>
                   <SidebarLink href={item.href} isActive={isActive(item.href)} icon={item.icon}>
                     {item.name}
