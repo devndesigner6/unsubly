@@ -1,10 +1,9 @@
 import { Button } from "@/components/Button"
 import { Logo } from "@/components/Logo"
-import { RiMailLine } from "@remixicon/react"
+import { RiArrowRightLine } from "@remixicon/react"
 import { Link, useNavigate } from "react-router-dom"
 import { supabase } from "@/integrations/supabase/client"
 import { useState } from "react"
-import { Input } from "@/components/Input"
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -28,68 +27,80 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="w-full max-w-md px-4">
-      <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <div className="mb-8 text-center">
-          <Link to="/" className="mb-6 inline-flex items-center justify-center gap-2.5">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-gray-900 dark:bg-white">
-              <Logo className="size-5 text-white dark:text-gray-900" />
-            </div>
-            <span className="text-lg font-semibold text-gray-900 dark:text-white">
-              Unsubscribely
-            </span>
-          </Link>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-50">
-            Welcome back
-          </h1>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            Sign in to manage your subscriptions
-          </p>
-        </div>
-
-        <form onSubmit={handleEmailSignIn} className="space-y-4">
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-            <Input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              required
-            />
+    <div className="w-full max-w-md px-6">
+      {/* Logo */}
+      <div className="mb-10 text-center">
+        <Link to="/" className="inline-flex items-center gap-3 group">
+          <div className="flex size-10 items-center justify-center rounded-xl bg-foreground transition-transform group-hover:scale-105">
+            <Logo className="size-5 text-background" />
           </div>
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
-            <Input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-            />
-          </div>
+          <span className="font-display text-xl text-foreground">Unsubscribely</span>
+        </Link>
+      </div>
 
-          {error && (
-            <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
-              {error}
-            </div>
-          )}
-
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Signing in..." : "Sign In"}
-          </Button>
-        </form>
-
-        <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-          Don't have an account?{" "}
-          <Link
-            to="/register"
-            className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
-          >
-            Sign up
-          </Link>
+      {/* Heading */}
+      <div className="mb-8 text-center">
+        <h1 className="font-display text-3xl sm:text-4xl text-foreground tracking-tight">
+          Welcome back
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Sign in to manage your subscriptions
         </p>
       </div>
+
+      {/* Form */}
+      <form onSubmit={handleEmailSignIn} className="space-y-5">
+        <div>
+          <label className="mb-2 block text-xs font-medium tracking-wide uppercase text-muted-foreground">
+            Email
+          </label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            required
+            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-colors focus:border-foreground/30 focus:ring-1 focus:ring-foreground/10"
+          />
+        </div>
+        <div>
+          <label className="mb-2 block text-xs font-medium tracking-wide uppercase text-muted-foreground">
+            Password
+          </label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••"
+            required
+            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-colors focus:border-foreground/30 focus:ring-1 focus:ring-foreground/10"
+          />
+        </div>
+
+        {error && (
+          <div className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+            {error}
+          </div>
+        )}
+
+        <Button
+          type="submit"
+          className="w-full rounded-full bg-foreground text-background hover:bg-foreground/90 py-6 text-sm font-medium gap-2 group"
+          disabled={loading}
+        >
+          <div className="flex size-6 items-center justify-center rounded-md bg-background/20">
+            <RiArrowRightLine className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+          </div>
+          {loading ? "Signing in..." : "Sign In"}
+        </Button>
+      </form>
+
+      <p className="mt-8 text-center text-sm text-muted-foreground">
+        Don't have an account?{" "}
+        <Link to="/register" className="font-medium text-foreground hover:underline">
+          Sign up
+        </Link>
+      </p>
     </div>
   )
 }

@@ -1,9 +1,9 @@
 import { Button } from "@/components/Button"
 import { Logo } from "@/components/Logo"
+import { RiArrowRightLine, RiMailCheckLine } from "@remixicon/react"
 import { Link, useNavigate } from "react-router-dom"
 import { supabase } from "@/integrations/supabase/client"
 import { useState } from "react"
-import { Input } from "@/components/Input"
 
 export default function RegisterPage() {
   const navigate = useNavigate()
@@ -39,92 +39,117 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <div className="w-full max-w-md px-4">
-        <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm dark:border-gray-800 dark:bg-gray-900 text-center">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-50">Check your email</h1>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            We've sent you a confirmation link. Please check your email to verify your account.
-          </p>
-          <Button asChild className="mt-6">
-            <Link to="/login">Back to Sign In</Link>
-          </Button>
+      <div className="w-full max-w-md px-6 text-center">
+        <div className="mb-8 flex justify-center">
+          <div className="flex size-16 items-center justify-center rounded-2xl border border-border bg-muted">
+            <RiMailCheckLine className="size-8 text-foreground" />
+          </div>
         </div>
+        <h1 className="font-display text-3xl sm:text-4xl text-foreground tracking-tight">
+          Check your email
+        </h1>
+        <p className="mt-3 text-sm text-muted-foreground max-w-xs mx-auto leading-relaxed">
+          We've sent a confirmation link to <span className="text-foreground font-medium">{email}</span>. Please verify your account to continue.
+        </p>
+        <Button asChild className="mt-8 rounded-full bg-foreground text-background hover:bg-foreground/90 px-7 py-6 text-sm font-medium gap-2 group">
+          <Link to="/login">
+            <div className="flex size-6 items-center justify-center rounded-md bg-background/20">
+              <RiArrowRightLine className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+            </div>
+            Back to Sign In
+          </Link>
+        </Button>
       </div>
     )
   }
 
   return (
-    <div className="w-full max-w-md px-4">
-      <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <div className="mb-8 text-center">
-          <Link to="/" className="mb-6 inline-flex items-center justify-center gap-2.5">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-gray-900 dark:bg-white">
-              <Logo className="size-5 text-white dark:text-gray-900" />
-            </div>
-            <span className="text-lg font-semibold text-gray-900 dark:text-white">
-              Unsubscribely
-            </span>
-          </Link>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-50">
-            Create an account
-          </h1>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            Start tracking your subscriptions for free
-          </p>
-        </div>
-
-        <form onSubmit={handleSignUp} className="space-y-4">
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Your name"
-            />
+    <div className="w-full max-w-md px-6">
+      {/* Logo */}
+      <div className="mb-10 text-center">
+        <Link to="/" className="inline-flex items-center gap-3 group">
+          <div className="flex size-10 items-center justify-center rounded-xl bg-foreground transition-transform group-hover:scale-105">
+            <Logo className="size-5 text-background" />
           </div>
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-            <Input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              required
-            />
-          </div>
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
-            <Input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Min 6 characters"
-              required
-              minLength={6}
-            />
-          </div>
+          <span className="font-display text-xl text-foreground">Unsubscribely</span>
+        </Link>
+      </div>
 
-          {error && (
-            <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
-              {error}
-            </div>
-          )}
-
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Creating account..." : "Create Account"}
-          </Button>
-        </form>
-
-        <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-          Already have an account?{" "}
-          <Link
-            to="/login"
-            className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
-          >
-            Sign in
-          </Link>
+      {/* Heading */}
+      <div className="mb-8 text-center">
+        <h1 className="font-display text-3xl sm:text-4xl text-foreground tracking-tight">
+          Create an account
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Start tracking your subscriptions for free
         </p>
       </div>
+
+      {/* Form */}
+      <form onSubmit={handleSignUp} className="space-y-5">
+        <div>
+          <label className="mb-2 block text-xs font-medium tracking-wide uppercase text-muted-foreground">
+            Name
+          </label>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Your name"
+            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-colors focus:border-foreground/30 focus:ring-1 focus:ring-foreground/10"
+          />
+        </div>
+        <div>
+          <label className="mb-2 block text-xs font-medium tracking-wide uppercase text-muted-foreground">
+            Email
+          </label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            required
+            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-colors focus:border-foreground/30 focus:ring-1 focus:ring-foreground/10"
+          />
+        </div>
+        <div>
+          <label className="mb-2 block text-xs font-medium tracking-wide uppercase text-muted-foreground">
+            Password
+          </label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Min 6 characters"
+            required
+            minLength={6}
+            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-colors focus:border-foreground/30 focus:ring-1 focus:ring-foreground/10"
+          />
+        </div>
+
+        {error && (
+          <div className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+            {error}
+          </div>
+        )}
+
+        <Button
+          type="submit"
+          className="w-full rounded-full bg-foreground text-background hover:bg-foreground/90 py-6 text-sm font-medium gap-2 group"
+          disabled={loading}
+        >
+          <div className="flex size-6 items-center justify-center rounded-md bg-background/20">
+            <RiArrowRightLine className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+          </div>
+          {loading ? "Creating account..." : "Create Account"}
+        </Button>
+      </form>
+
+      <p className="mt-8 text-center text-sm text-muted-foreground">
+        Already have an account?{" "}
+        <Link to="/login" className="font-medium text-foreground hover:underline">
+          Sign in
+        </Link>
+      </p>
     </div>
   )
 }
