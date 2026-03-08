@@ -1,14 +1,19 @@
 import { useAuth } from "@/lib/auth-context"
+import { useAlgorand } from "@/lib/algorand/context"
 import { fetchSubscriptions } from "@/lib/supabase-queries"
 import { fetchProfile } from "@/lib/supabase-queries"
 import { formatCurrency } from "@/lib/currency"
+import { shortenAddress, getAddressExplorerUrl } from "@/lib/algorand/constants"
 import { cx } from "@/lib/utils"
 import { Button } from "@/components/Button"
 import { Link } from "react-router-dom"
+import { supabase } from "@/integrations/supabase/client"
 import {
   RiAddLine, RiArrowUpLine, RiArrowDownLine, RiWalletLine,
   RiCalendarCheckLine, RiAlertLine, RiLoader4Line,
   RiPlayCircleLine, RiBarChartBoxLine,
+  RiShieldLine, RiAlarmWarningLine, RiFileChartLine, RiLockLine,
+  RiExternalLinkLine,
 } from "@remixicon/react"
 import { useState, useEffect, useMemo } from "react"
 
