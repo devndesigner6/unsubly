@@ -22,23 +22,36 @@ export default function RegisterPage() {
 
     const normalizedEmail = email.trim().toLowerCase()
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: normalizedEmail,
       password,
       options: {
-        data: { full_name: name },
+        data: { full_name: name.trim() },
         emailRedirectTo: window.location.origin,
       },
     })
 
+    const isExistingUser =
+      !data?.session &&
+      !!data?.user &&
+      Array.isArray(data.user.identities) &&
+      data.user.identities.length === 0
+
     if (error) {
       setError(error.message)
       setLoading(false)
-    } else {
-      setSubmittedEmail(normalizedEmail)
-      setSuccess(true)
-      setLoading(false)
+      return
     }
+
+    if (isExistingUser) {
+      setError("This email is already registered. Please sign in or use Forgot Password.")
+      setLoading(false)
+      return
+    }
+
+    setSubmittedEmail(normalizedEmail)
+    setSuccess(true)
+    setLoading(false)
   }
 
   if (success) {
