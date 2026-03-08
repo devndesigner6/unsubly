@@ -37,7 +37,7 @@ export function Features() {
   }, [])
 
   return (
-    <section id="features" className="py-24 sm:py-32 lg:py-40 overflow-hidden">
+    <section id="features" className="py-20 sm:py-24 lg:py-32 overflow-hidden">
       <div ref={ref} className="mx-auto max-w-7xl px-6 lg:px-8">
         {/* Main Feature - Large editorial layout */}
         <div className={`transition-all duration-1000 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`}>
