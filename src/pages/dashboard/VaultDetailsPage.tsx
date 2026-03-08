@@ -202,6 +202,23 @@ export default function VaultDetailsPage() {
         </div>
       </div>
 
+      {/* Tabs */}
+      <div className="flex gap-1 rounded-lg bg-muted p-1 mb-4">
+        <button
+          onClick={() => setActiveTab("details")}
+          className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${activeTab === "details" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+        >
+          Vault Details
+        </button>
+        <button
+          onClick={() => setActiveTab("history")}
+          className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${activeTab === "history" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+        >
+          Transaction History {payments.length > 0 && <span className="ml-1 text-xs text-muted-foreground">({payments.length})</span>}
+        </button>
+      </div>
+
+      {activeTab === "details" && (
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Database State */}
         <div className="rounded-xl border border-border bg-card p-5">
