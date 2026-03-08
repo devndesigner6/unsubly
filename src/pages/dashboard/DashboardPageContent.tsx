@@ -216,6 +216,105 @@ export default function DashboardPageContent() {
           </div>
         </div>
 
+        {/* Algorand Blockchain Section */}
+        <div className="mt-6 rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-5 sm:p-6 dark:from-primary/5 dark:to-primary/10">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-xl bg-primary/20">
+                <RiShieldLine className="size-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-foreground">Algorand Blockchain</h2>
+                <p className="text-xs text-muted-foreground">
+                  {walletAddress
+                    ? `Connected: ${shortenAddress(walletAddress)}`
+                    : "Connect your wallet to enable blockchain features"}
+                </p>
+              </div>
+            </div>
+            {!walletAddress ? (
+              <button
+                onClick={connectWallet}
+                disabled={isConnecting}
+                className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+              >
+                <RiWalletLine className="size-4" />
+                {isConnecting ? "Connecting..." : "Connect Pera Wallet"}
+              </button>
+            ) : (
+              <a
+                href={getAddressExplorerUrl(walletAddress)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-xs text-primary hover:underline"
+              >
+                View on Explorer <RiExternalLinkLine className="size-3" />
+              </a>
+            )}
+          </div>
+
+          {walletAddress && (
+            <>
+              <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div className="rounded-xl bg-card/80 p-3 backdrop-blur-sm">
+                  <p className="text-xs text-muted-foreground">Wallet Balance</p>
+                  <p className="mt-1 text-lg font-bold text-foreground">
+                    {isLoadingBalance ? "..." : `${balance.toFixed(2)} ALGO`}
+                  </p>
+                </div>
+                <div className="rounded-xl bg-card/80 p-3 backdrop-blur-sm">
+                  <p className="text-xs text-muted-foreground">Total Vaults</p>
+                  <p className="mt-1 text-lg font-bold text-foreground">{vaultStats.total}</p>
+                </div>
+                <div className="rounded-xl bg-card/80 p-3 backdrop-blur-sm">
+                  <p className="text-xs text-muted-foreground">Locked</p>
+                  <p className="mt-1 text-lg font-bold text-foreground">{vaultStats.totalLocked.toFixed(2)} ALGO</p>
+                </div>
+                <div className="rounded-xl bg-card/80 p-3 backdrop-blur-sm">
+                  <p className="text-xs text-muted-foreground">Kill Switches</p>
+                  <p className="mt-1 text-lg font-bold text-destructive">{vaultStats.killed}</p>
+                </div>
+              </div>
+
+              {/* Quick Actions */}
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Link
+                  to="/escrow-vaults"
+                  className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+                >
+                  <RiLockLine className="size-3.5" />
+                  Manage Vaults
+                </Link>
+                <Link
+                  to="/onchain-resume"
+                  className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+                >
+                  <RiFileChartLine className="size-3.5" />
+                  View Resume
+                </Link>
+              </div>
+
+              {/* Recent On-Chain Activity */}
+              {recentPayments.length > 0 && (
+                <div className="mt-4">
+                  <p className="mb-2 text-xs font-medium text-muted-foreground">Recent On-Chain Activity</p>
+                  <div className="space-y-2">
+                    {recentPayments.map((p: any) => (
+                      <div key={p.id} className="flex items-center justify-between rounded-lg bg-card/80 p-2.5 backdrop-blur-sm">
+                        <div className="flex items-center gap-2">
+                          <RiShieldLine className="size-3.5 text-primary" />
+                          <span className="text-xs text-foreground truncate max-w-[200px]">{p.note || "Transaction"}</span>
+                        </div>
+                        <span className="text-xs font-medium text-foreground">{Number(p.amount).toFixed(2)} ALGO</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
         {/* Recent Subscriptions */}
         <div className="mt-6 rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
           <div className="flex items-center justify-between border-b border-gray-200 p-5 dark:border-gray-800">
