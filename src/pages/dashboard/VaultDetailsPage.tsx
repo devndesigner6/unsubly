@@ -28,12 +28,14 @@ export default function VaultDetailsPage() {
   const { walletAddress, algodClient, peraWallet } = useAlgorand()
   const [vault, setVault] = useState<any>(null)
   const [onChainState, setOnChainState] = useState<OnChainState | null>(null)
+  const [payments, setPayments] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingChain, setLoadingChain] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [actionMsg, setActionMsg] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [chainError, setChainError] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<"details" | "history">("details")
 
   async function loadVault() {
     if (!user || !id) return
@@ -47,6 +49,15 @@ export default function VaultDetailsPage() {
     setVault(data)
     setLoading(false)
     if ((data as any).app_id) fetchOnChainState((data as any).app_id, (data as any).app_address)
+
+    // Fetch related payments
+    const { data: paymentData } = await supabase
+      .from("onchain_payments" as any)
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("subscription_id", (data as any).subscription_id)
+      .order("created_at", { ascending: false })
+    setPayments(paymentData || [])
   }
 
   async function fetchOnChainState(appId: number, appAddress: string | null) {
@@ -191,6 +202,23 @@ export default function VaultDetailsPage() {
         </div>
       </div>
 
+      {/* Tabs */}
+      <div className="flex gap-1 rounded-lg bg-muted p-1 mb-4">
+        <button
+          onClick={() => setActiveTab("details")}
+          className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${activeTab === "details" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+        >
+          Vault Details
+        </button>
+        <button
+          onClick={() => setActiveTab("history")}
+          className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${activeTab === "history" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+        >
+          Transaction History {payments.length > 0 && <span className="ml-1 text-xs text-muted-foreground">({payments.length})</span>}
+        </button>
+      </div>
+
+      {activeTab === "details" && (
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Database State */}
         <div className="rounded-xl border border-border bg-card p-5">
@@ -341,8 +369,63 @@ export default function VaultDetailsPage() {
           ) : null}
         </div>
       </div>
+      )}
 
-      {/* Actions */}
+      {activeTab === "history" && (
+        <div className="rounded-xl border border-border bg-card">
+          <div className="border-b border-border p-4">
+            <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <RiTimeLine className="size-4 text-primary" /> On-Chain Transactions
+            </h2>
+          </div>
+          {payments.length === 0 ? (
+            <div className="p-8 text-center">
+              <RiTimeLine className="mx-auto size-8 text-muted-foreground" />
+              <p className="mt-2 text-sm text-muted-foreground">No transactions recorded yet</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-border">
+              {payments.map((p: any) => (
+                <div key={p.id} className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                      <RiShieldLine className="size-4 text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{p.note || "Transaction"}</p>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>{new Date(p.created_at).toLocaleString()}</span>
+                        {p.algorand_txn_id && (
+                          <a
+                            href={getAlgoExplorerUrl(p.algorand_txn_id)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-0.5 text-primary hover:text-primary/80"
+                          >
+                            {shortenAddress(p.algorand_txn_id, 6)} <RiExternalLinkLine className="size-3" />
+                          </a>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                        <span className="font-mono">From: {shortenAddress(p.sender_address, 4)}</span>
+                        {p.recipient_address && <span className="font-mono">To: {shortenAddress(p.recipient_address, 4)}</span>}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0 ml-3">
+                    <p className="text-sm font-semibold text-foreground">{Number(p.amount).toFixed(4)} ALGO</p>
+                    {p.confirmed_at && (
+                      <span className="text-xs text-green-600 dark:text-green-400">Confirmed</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+
       {actionMsg && (
         <div className="mt-4 rounded-lg bg-primary/5 border border-primary/20 px-4 py-3">
           <p className="text-sm text-primary font-medium">{actionMsg}</p>
