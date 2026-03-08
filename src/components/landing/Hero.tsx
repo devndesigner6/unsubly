@@ -39,7 +39,7 @@ export function Hero() {
           }`}
         >
           TRACK.{" "}
-          <span className="italic inline-block -rotate-3 text-muted-foreground/50">CONTROL.</span>{" "}
+          <span className="italic text-muted-foreground/50">CONTROL.</span>{" "}
           SAVE.
         </h1>
 
