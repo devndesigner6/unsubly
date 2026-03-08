@@ -53,16 +53,32 @@ export default function RegisterPage() {
           Check your email
         </h1>
         <p className="mt-3 text-sm text-muted-foreground max-w-xs mx-auto leading-relaxed">
-          We've sent a confirmation link to <span className="text-foreground font-medium">{email}</span>. Please verify your account to continue.
+          We've sent a confirmation link to <span className="text-foreground font-medium">{submittedEmail}</span>. Please verify your account to continue.
         </p>
-        <Button asChild className="mt-8 rounded-full bg-foreground text-background hover:bg-foreground/90 px-7 py-6 text-sm font-medium gap-2 group">
-          <Link to="/login">
-            <div className="flex size-6 items-center justify-center rounded-md bg-background/20">
-              <RiArrowRightLine className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-            </div>
-            Back to Sign In
-          </Link>
-        </Button>
+        <div className="mt-8 flex items-center justify-center gap-3">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => {
+              setSuccess(false)
+              setSubmittedEmail("")
+              setEmail("")
+              setPassword("")
+              setError("")
+            }}
+            className="rounded-full px-5 py-5 text-sm"
+          >
+            Use another email
+          </Button>
+          <Button asChild className="rounded-full bg-foreground text-background hover:bg-foreground/90 px-7 py-6 text-sm font-medium gap-2 group">
+            <Link to="/login">
+              <div className="flex size-6 items-center justify-center rounded-md bg-background/20">
+                <RiArrowRightLine className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+              </div>
+              Back to Sign In
+            </Link>
+          </Button>
+        </div>
       </div>
     )
   }
