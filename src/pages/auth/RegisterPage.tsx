@@ -20,8 +20,10 @@ export default function RegisterPage() {
     setLoading(true)
     setError("")
 
+    const normalizedEmail = email.trim().toLowerCase()
+
     const { error } = await supabase.auth.signUp({
-      email,
+      email: normalizedEmail,
       password,
       options: {
         data: { full_name: name },
@@ -33,6 +35,7 @@ export default function RegisterPage() {
       setError(error.message)
       setLoading(false)
     } else {
+      setSubmittedEmail(normalizedEmail)
       setSuccess(true)
       setLoading(false)
     }
