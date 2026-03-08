@@ -11,7 +11,7 @@ import {
   RiSearchLine, RiAlertLine, RiFileListLine,
   RiPlayCircleLine, RiPauseCircleLine, RiCloseCircleLine, RiTimerFlashLine,
 } from "@remixicon/react"
-import { useState, useEffect, useMemo, useRef } from "react"
+import { useState, useEffect, useMemo } from "react"
 
 const statusConfig: Record<string, { label: string; icon: any }> = {
   active: { label: "Active", icon: RiPlayCircleLine },
@@ -83,10 +83,10 @@ export default function SubscriptionsPage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
+      <div className="flex h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
-          <RiLoader4Line className="size-10 animate-spin text-blue-500" />
-          <p className="text-gray-500 dark:text-gray-400">Loading subscriptions...</p>
+          <RiLoader4Line className="size-10 animate-spin text-primary" />
+          <p className="text-muted-foreground">Loading subscriptions...</p>
         </div>
       </div>
     )
@@ -95,18 +95,18 @@ export default function SubscriptionsPage() {
   if (error) {
     return (
       <div className="flex h-96 items-center justify-center p-8">
-        <div className="rounded-2xl border border-red-200 bg-red-50 p-8 text-center dark:border-red-800 dark:bg-red-900/20">
-          <RiAlertLine className="mx-auto mb-4 size-12 text-red-400" />
-          <p className="text-lg font-medium text-red-600 dark:text-red-400">{error}</p>
+        <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-8 text-center">
+          <RiAlertLine className="mx-auto mb-4 size-12 text-destructive" />
+          <p className="text-lg font-medium text-destructive">{error}</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="relative overflow-hidden border-b border-gray-200 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 dark:border-gray-800">
+      <div className="relative overflow-hidden border-b border-border bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800">
         <div className="relative mx-auto max-w-7xl px-3 py-6 sm:px-6 sm:py-8 lg:px-8">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="text-white">
@@ -136,7 +136,7 @@ export default function SubscriptionsPage() {
         {/* Search */}
         <div className="mb-4 sm:mb-6">
           <div className="relative">
-            <RiSearchLine className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
+            <RiSearchLine className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
               placeholder="Search subscriptions..."
               value={searchQuery}
@@ -148,11 +148,14 @@ export default function SubscriptionsPage() {
 
         {/* List */}
         {filtered.length === 0 ? (
-          <div className="rounded-xl border border-gray-200 bg-white p-8 text-center dark:border-gray-800 dark:bg-gray-900">
-            <RiFileListLine className="mx-auto mb-4 size-12 text-gray-300" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
+          <div className="rounded-xl border border-border bg-card p-8 text-center">
+            <RiFileListLine className="mx-auto mb-4 size-12 text-muted-foreground/40" />
+            <h3 className="text-lg font-semibold text-foreground">
               {searchQuery ? "No matches found" : "No subscriptions yet"}
             </h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {searchQuery ? "Try a different search term" : "Add your first subscription to get started"}
+            </p>
             {!searchQuery && (
               <Button asChild className="mt-4">
                 <Link to="/subscriptions/new">
@@ -170,24 +173,24 @@ export default function SubscriptionsPage() {
               return (
                 <div
                   key={sub.id}
-                  className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-all hover:shadow-md dark:border-gray-800 dark:bg-gray-900"
+                  className="group relative overflow-hidden rounded-xl border border-border bg-card p-4 shadow-sm transition-all hover:shadow-md"
                 >
                   <div className="flex items-start justify-between">
                     <Link to={`/subscriptions/${sub.id}`} className="flex-1">
-                      <h3 className="font-semibold text-gray-900 dark:text-gray-50">{sub.name}</h3>
-                      <p className="mt-0.5 text-xs text-gray-500">{sub.category || "Uncategorized"}</p>
+                      <h3 className="font-semibold text-foreground">{sub.name}</h3>
+                      <p className="mt-0.5 text-xs text-muted-foreground">{sub.category || "Uncategorized"}</p>
                     </Link>
                     <div className="flex items-center gap-1">
-                      <StatusIcon className="size-4 text-gray-400" />
-                      <span className="text-xs text-gray-500">{status.label}</span>
+                      <StatusIcon className="size-4 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">{status.label}</span>
                     </div>
                   </div>
                   <div className="mt-3 flex items-end justify-between">
                     <div>
-                      <p className="text-lg font-bold text-gray-900 dark:text-gray-50">
+                      <p className="text-lg font-bold text-foreground">
                         {formatCurrency(sub.amount, sub.currency || currency)}
                       </p>
-                      <p className="text-xs capitalize text-gray-500">{sub.billing_cycle}</p>
+                      <p className="text-xs capitalize text-muted-foreground">{sub.billing_cycle}</p>
                     </div>
                     <div className="flex gap-1">
                       <Button asChild variant="ghost" size="sm">
@@ -204,12 +207,12 @@ export default function SubscriptionsPage() {
                         {deleting === sub.id ? (
                           <RiLoader4Line className="size-4 animate-spin" />
                         ) : (
-                          <RiDeleteBinLine className="size-4 text-red-500" />
+                          <RiDeleteBinLine className="size-4 text-destructive" />
                         )}
                       </Button>
                     </div>
                   </div>
-                  <div className="mt-2 text-xs text-gray-400">
+                  <div className="mt-2 text-xs text-muted-foreground">
                     Next: {new Date(sub.next_billing_date).toLocaleDateString()}
                   </div>
                 </div>
