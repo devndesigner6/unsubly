@@ -13,6 +13,7 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
+  const [submittedEmail, setSubmittedEmail] = useState("")
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
