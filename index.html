@@ -12,7 +12,11 @@
     <link rel="manifest" href="/manifest.json" />
   </head>
   <body class="antialiased">
-    <script>if(typeof global==='undefined'){window.global=window;}</script>
+    <script>
+      if(typeof global==='undefined'){window.global=window;}
+      if(typeof process==='undefined'){window.process={env:{},version:'',browser:true};}
+      if(typeof Buffer==='undefined'){window.Buffer={isBuffer:function(){return false;}};}
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
