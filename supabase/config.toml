@@ -9,3 +9,7 @@ project_id = "ipnywrvwszqlaykbkske"
     verify_jwt = false
   [functions.generate-vapid-keys]
     verify_jwt = false
+  [functions.vault-health]
+    verify_jwt = false
+  [functions.public-resume]
+    verify_jwt = false
