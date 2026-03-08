@@ -38,7 +38,7 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 const SITE_NAME = "unsubly"
 const SENDER_DOMAIN = "notify.focuslive.dev"
 const ROOT_DOMAIN = "focuslive.dev"
-const FROM_DOMAIN = "focuslive.dev" // Domain shown in From address (may be root or sender subdomain)
+const FROM_DOMAIN = "notify.focuslive.dev" // Domain shown in From address (may be root or sender subdomain)
 
 // Sample data for preview mode ONLY (not used in actual email sending).
 // URLs are baked in at scaffold time from the project's real data.
