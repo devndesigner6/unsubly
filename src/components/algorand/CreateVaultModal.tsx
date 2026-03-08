@@ -1,3 +1,4 @@
+import algosdk from "algosdk"
 import { useState, useEffect } from "react"
 import { useAlgorand } from "@/lib/algorand/context"
 import { useAuth } from "@/lib/auth-context"
@@ -53,12 +54,35 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
     return await peraWallet.signTransaction([[{ txn }]])
   }
 
+  const isValidAlgorandAddress = (addr: string): boolean => {
+    if (addr.length !== 58) return false
+    try {
+      algosdk.decodeAddress(addr)
+      return true
+    } catch {
+      return false
+    }
+  }
+
   const handleCreate = async () => {
     if (!walletAddress || !user || !amount) return
+
+    const recipient = recipientAddress || walletAddress
+
+    // Validate recipient address before attempting transaction
+    if (recipientAddress && !isValidAlgorandAddress(recipientAddress)) {
+      setStep("❌ Invalid Algorand address. Must be 58 characters.")
+      return
+    }
+
+    const algoAmount = parseFloat(amount)
+    if (algoAmount <= 0) {
+      setStep("❌ Amount must be greater than 0.")
+      return
+    }
+
     setIsCreating(true)
     try {
-      const algoAmount = parseFloat(amount)
-      const recipient = recipientAddress || walletAddress
 
       // Step 1: Deploy the TEAL smart contract
       setStep("Deploying smart contract… (sign txn 1/2)")
