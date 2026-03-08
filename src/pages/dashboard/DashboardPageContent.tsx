@@ -37,6 +37,30 @@ export default function DashboardPageContent() {
         ])
         setSubscriptions(subs)
         setProfile(prof)
+
+        // Fetch vault stats
+        const { data: vaults } = await supabase
+          .from("escrow_vaults" as any)
+          .select("status, amount")
+          .eq("user_id", user!.id)
+        if (vaults) {
+          const v = vaults as any[]
+          setVaultStats({
+            total: v.length,
+            locked: v.filter((x) => x.status === "locked").length,
+            killed: v.filter((x) => x.status === "killed").length,
+            totalLocked: v.filter((x) => x.status === "locked").reduce((s, x) => s + Number(x.amount), 0),
+          })
+        }
+
+        // Fetch recent on-chain payments
+        const { data: payments } = await supabase
+          .from("onchain_payments" as any)
+          .select("*")
+          .eq("user_id", user!.id)
+          .order("created_at", { ascending: false })
+          .limit(3)
+        if (payments) setRecentPayments(payments as any[])
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load")
       } finally {
