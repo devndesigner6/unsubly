@@ -52,8 +52,8 @@ export function AlgorandShowcase() {
         </div>
 
         {/* Decorative dot matrix */}
-        <div className={`mt-20 flex justify-end transition-all duration-1000 delay-500 ${inView ? "opacity-100" : "opacity-0"}`}>
-          <div className="grid grid-cols-20 gap-1.5 opacity-[0.06]">
+        <div className={`mt-16 flex justify-end transition-all duration-1000 delay-500 ${inView ? "opacity-100" : "opacity-0"}`}>
+          <div className="grid gap-1.5 opacity-[0.06]" style={{ gridTemplateColumns: "repeat(20, minmax(0, 1fr))" }}>
             {Array.from({ length: 200 }).map((_, i) => (
               <div
                 key={i}
