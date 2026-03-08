@@ -28,6 +28,7 @@ import TagsPage from "@/pages/dashboard/TagsPage"
 import PaymentMethodsPage from "@/pages/dashboard/PaymentMethodsPage"
 import SettingsPage from "@/pages/dashboard/SettingsPage"
 import EscrowVaultsPage from "@/pages/dashboard/EscrowVaultsPage"
+import VaultDetailsPage from "@/pages/dashboard/VaultDetailsPage"
 import OnChainResumePage from "@/pages/dashboard/OnChainResumePage"
 import NotFoundPage from "@/pages/NotFoundPage"
 
@@ -85,6 +86,7 @@ export default function App() {
                 <Route path="/tags" element={<TagsPage />} />
                 <Route path="/payment-methods" element={<PaymentMethodsPage />} />
                 <Route path="/escrow-vaults" element={<EscrowVaultsPage />} />
+                <Route path="/escrow-vaults/:id" element={<VaultDetailsPage />} />
                 <Route path="/onchain-resume" element={<OnChainResumePage />} />
                 <Route path="/settings" element={<SettingsPage />} />
               </Route>

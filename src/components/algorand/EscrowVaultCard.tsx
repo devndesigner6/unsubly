@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { Link } from "react-router-dom"
 import { useAlgorand } from "@/lib/algorand/context"
 import { shortenAddress, getAlgoExplorerUrl } from "@/lib/algorand/constants"
 import { releaseEscrowFunds, killEscrowContract, deleteEscrowContract } from "@/lib/algorand/contract"
@@ -266,9 +267,14 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
         </div>
       )}
 
-      <div className="mt-3 text-xs text-muted-foreground">
-        Created {new Date(vault.created_at).toLocaleDateString()}
-        {vault.released_at && ` • ${vault.status === "killed" ? "Killed" : "Released"} ${new Date(vault.released_at).toLocaleDateString()}`}
+      <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+        <span>
+          Created {new Date(vault.created_at).toLocaleDateString()}
+          {vault.released_at && ` • ${vault.status === "killed" ? "Killed" : "Released"} ${new Date(vault.released_at).toLocaleDateString()}`}
+        </span>
+        <Link to={`/escrow-vaults/${vault.id}`} className="font-medium text-primary hover:text-primary/80 transition-colors">
+          Details →
+        </Link>
       </div>
     </div>
   )
