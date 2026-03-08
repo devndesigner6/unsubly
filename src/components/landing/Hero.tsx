@@ -48,7 +48,7 @@ export function Hero() {
                 loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
               }`}
             >
-              Unsubscribely is your personal subscription assistant. Track spending, get smart alerts before charges, and save money by identifying unused subscriptions.
+              Your decentralized command center for subscriptions. Lock payments in Algorand escrow vaults, kill unwanted charges instantly, and build a verified on-chain financial resume.
             </p>
 
             <div 
@@ -121,7 +121,7 @@ export function Hero() {
 
         <div className={`mt-12 sm:mt-16 lg:mt-20 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-500 transition-all duration-700 delay-700 dark:text-gray-400 ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
           <RiShieldCheckLine className="size-4 sm:size-5 text-emerald-500" />
-          <span className="text-center">Bank-level security • Your data is encrypted and never shared</span>
+          <span className="text-center">Powered by Algorand • Escrow Vaults • Kill Switch • On-Chain Resume</span>
         </div>
       </div>
     </section>
