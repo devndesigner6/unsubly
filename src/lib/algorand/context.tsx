@@ -110,6 +110,13 @@ export function AlgorandProvider({ children }: { children: ReactNode }) {
   const connectWallet = useCallback(async () => {
     setIsConnecting(true)
     try {
+      // Disconnect any existing session first to avoid "Session currently connected" error
+      try {
+        await peraWallet.disconnect()
+      } catch {
+        // No existing session, that's fine
+      }
+
       const accounts = await peraWallet.connect()
       const address = accounts[0]
       setWalletAddress(address)
