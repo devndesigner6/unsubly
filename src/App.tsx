@@ -15,6 +15,8 @@ import HomePage from "@/pages/HomePage"
 // Auth pages
 import LoginPage from "@/pages/auth/LoginPage"
 import RegisterPage from "@/pages/auth/RegisterPage"
+import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage"
+import ResetPasswordPage from "@/pages/auth/ResetPasswordPage"
 
 // Dashboard pages
 import DashboardPage from "@/pages/dashboard/DashboardPage"
