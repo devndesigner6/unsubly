@@ -11,9 +11,19 @@ export default defineConfig(({ mode }) => {
       port: 8080,
     },
     plugins: [react()],
+    define: {
+      global: 'globalThis',
+    },
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
+      },
+    },
+    optimizeDeps: {
+      esbuildOptions: {
+        define: {
+          global: 'globalThis',
+        },
       },
     },
   };
