@@ -19,10 +19,13 @@ import { useState, useEffect, useMemo } from "react"
 
 export default function DashboardPageContent() {
   const { user } = useAuth()
+  const { walletAddress, balance, isConnecting, connectWallet, isLoadingBalance } = useAlgorand()
   const [subscriptions, setSubscriptions] = useState<any[]>([])
   const [profile, setProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [vaultStats, setVaultStats] = useState({ total: 0, locked: 0, killed: 0, totalLocked: 0 })
+  const [recentPayments, setRecentPayments] = useState<any[]>([])
 
   useEffect(() => {
     if (!user) return
