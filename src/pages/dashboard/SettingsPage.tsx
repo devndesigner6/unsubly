@@ -15,7 +15,7 @@ const CURRENCIES = ["USD", "EUR", "GBP", "INR", "AUD", "CAD", "JPY", "SGD", "AED
 
 export default function SettingsPage() {
   const { user, signOut } = useAuth()
-  const pushNotifications = usePushNotifications()
+  
   const [profile, setProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
