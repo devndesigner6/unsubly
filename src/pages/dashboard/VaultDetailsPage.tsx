@@ -63,7 +63,7 @@ export default function VaultDetailsPage() {
             // bytes -> try to decode as address (32 bytes)
             const bytes = Uint8Array.from(atob(item.value.bytes), c => c.charCodeAt(0))
             if (bytes.length === 32) {
-              globalState[key] = algosdk.encodeAddress(bytes)
+              globalState[key] = algosdk.encodeAddress(bytes).toString()
             } else {
               globalState[key] = item.value.bytes
             }
