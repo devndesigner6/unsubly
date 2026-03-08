@@ -5,7 +5,9 @@ import { supabase } from "@/integrations/supabase/client"
 import { WalletConnect } from "@/components/algorand/WalletConnect"
 import { EscrowVaultCard } from "@/components/algorand/EscrowVaultCard"
 import { CreateVaultModal } from "@/components/algorand/CreateVaultModal"
-import { RiAddLine, RiShieldLine, RiLockLine, RiAlarmWarningLine } from "@remixicon/react"
+import { VaultHealthBanner } from "@/components/algorand/VaultHealthBanner"
+import { VAULT_TYPE_LABELS, type VaultType } from "@/lib/algorand/constants"
+import { RiAddLine, RiShieldLine, RiLockLine, RiAlarmWarningLine, RiFilterLine } from "@remixicon/react"
 
 export default function EscrowVaultsPage() {
   const { user } = useAuth()
@@ -13,6 +15,7 @@ export default function EscrowVaultsPage() {
   const [vaults, setVaults] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [filterType, setFilterType] = useState<VaultType | "all">("all")
 
   const fetchVaults = useCallback(async () => {
     if (!user) return
@@ -30,6 +33,8 @@ export default function EscrowVaultsPage() {
     fetchVaults()
   }, [fetchVaults])
 
+  const filteredVaults = filterType === "all" ? vaults : vaults.filter((v) => v.vault_type === filterType)
+
   const stats = {
     total: vaults.length,
     locked: vaults.filter((v) => v.status === "locked").length,
@@ -38,6 +43,8 @@ export default function EscrowVaultsPage() {
       .filter((v) => v.status === "locked")
       .reduce((sum, v) => sum + Number(v.amount), 0),
   }
+
+  const vaultTypesInUse = [...new Set(vaults.map((v) => v.vault_type || "standard"))] as VaultType[]
 
   return (
     <div className="p-6 lg:p-8">
@@ -48,10 +55,11 @@ export default function EscrowVaultsPage() {
         </p>
       </div>
 
-      {/* Wallet Connection */}
       <div className="mb-6">
         <WalletConnect />
       </div>
+
+      <VaultHealthBanner />
 
       {/* Stats */}
       <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -85,9 +93,26 @@ export default function EscrowVaultsPage() {
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-foreground">Your Vaults</h2>
+      {/* Actions & Filter */}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-foreground">Your Vaults</h2>
+          {vaultTypesInUse.length > 1 && (
+            <div className="flex items-center gap-1 ml-3">
+              <RiFilterLine className="size-3.5 text-muted-foreground" />
+              <select
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value as VaultType | "all")}
+                className="rounded-md border border-input bg-background px-2 py-1 text-xs text-foreground"
+              >
+                <option value="all">All Types</option>
+                {vaultTypesInUse.map((type) => (
+                  <option key={type} value={type}>{VAULT_TYPE_LABELS[type]}</option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
         <button
           onClick={() => setShowCreateModal(true)}
           disabled={!walletAddress}
@@ -103,10 +128,12 @@ export default function EscrowVaultsPage() {
         <div className="flex items-center justify-center py-12">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
         </div>
-      ) : vaults.length === 0 ? (
+      ) : filteredVaults.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border bg-muted/30 p-12 text-center">
           <RiShieldLine className="mx-auto size-12 text-muted-foreground/50" />
-          <h3 className="mt-4 text-sm font-medium text-foreground">No vaults yet</h3>
+          <h3 className="mt-4 text-sm font-medium text-foreground">
+            {vaults.length > 0 ? "No vaults match this filter" : "No vaults yet"}
+          </h3>
           <p className="mt-1 text-sm text-muted-foreground">
             {walletAddress
               ? "Create your first escrow vault to lock a subscription payment"
@@ -115,7 +142,7 @@ export default function EscrowVaultsPage() {
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {vaults.map((vault) => (
+          {filteredVaults.map((vault) => (
             <EscrowVaultCard key={vault.id} vault={vault} onUpdate={fetchVaults} />
           ))}
         </div>

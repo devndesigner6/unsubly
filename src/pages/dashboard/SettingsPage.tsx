@@ -1,21 +1,24 @@
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
+import { useAlgorand } from "@/lib/algorand/context"
 import { fetchProfile, updateProfile } from "@/lib/supabase-queries"
 import { supabase } from "@/integrations/supabase/client"
+import algosdk from "algosdk"
 
 import { Button } from "@/components/Button"
 import {
   RiLoader4Line, RiSaveLine, RiLogoutBoxLine, RiAlertLine,
   RiUserLine, RiMoneyDollarCircleLine, RiNotification3Line,
   RiShieldLine, RiCheckLine, RiLockPasswordLine,
-  
+  RiArrowLeftRightLine, RiWalletLine,
 } from "@remixicon/react"
 
 const CURRENCIES = ["USD", "EUR", "GBP", "INR", "AUD", "CAD", "JPY", "SGD", "AED"]
 
 export default function SettingsPage() {
   const { user, signOut } = useAuth()
-  
+  const { walletAddress, network, switchNetwork } = useAlgorand()
+
   const [profile, setProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -29,6 +32,7 @@ export default function SettingsPage() {
   const [emailAlerts, setEmailAlerts] = useState(true)
   const [weeklyDigest, setWeeklyDigest] = useState(false)
   const [algorandAddress, setAlgorandAddress] = useState("")
+  const [addressError, setAddressError] = useState("")
 
   // Password change
   const [newPassword, setNewPassword] = useState("")
@@ -59,8 +63,33 @@ export default function SettingsPage() {
     load()
   }, [user])
 
+  // Sync wallet address from Pera when connected
+  useEffect(() => {
+    if (walletAddress && walletAddress !== algorandAddress) {
+      setAlgorandAddress(walletAddress)
+      setAddressError("")
+    }
+  }, [walletAddress])
+
+  const validateAlgorandAddress = (addr: string): boolean => {
+    if (!addr) return true // empty is valid
+    if (addr.length !== 58) {
+      setAddressError("Address must be 58 characters")
+      return false
+    }
+    try {
+      algosdk.decodeAddress(addr)
+      setAddressError("")
+      return true
+    } catch {
+      setAddressError("Invalid Algorand address checksum")
+      return false
+    }
+  }
+
   async function handleSave() {
     if (!user) return
+    if (algorandAddress && !validateAlgorandAddress(algorandAddress)) return
     setSaving(true)
     setSaved(false)
     try {
@@ -223,23 +252,55 @@ export default function SettingsPage() {
           </div>
         </section>
 
-
         {/* Algorand */}
         <section className="mb-6 rounded-xl border border-border bg-card p-5 sm:p-6">
-          <div className="mb-4 flex items-center gap-2">
-            <RiShieldLine className="size-5 text-foreground" />
-            <h2 className="text-lg font-semibold text-foreground">Algorand Wallet</h2>
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <RiShieldLine className="size-5 text-foreground" />
+              <h2 className="text-lg font-semibold text-foreground">Algorand Wallet</h2>
+            </div>
+            <button
+              onClick={() => switchNetwork(network === "testnet" ? "mainnet" : "testnet")}
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                network === "mainnet"
+                  ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                  : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+              }`}
+            >
+              <RiArrowLeftRightLine className="size-3" />
+              {network === "mainnet" ? "Mainnet" : "Testnet"}
+            </button>
           </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-foreground">Wallet Address</label>
-            <input
-              type="text"
-              value={algorandAddress}
-              onChange={(e) => setAlgorandAddress(e.target.value)}
-              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="ALGO..."
-            />
-            <p className="mt-1 text-xs text-muted-foreground">Your Algorand Testnet address for on-chain features</p>
+          <div className="space-y-3">
+            <div>
+              <label className="mb-1 block text-sm font-medium text-foreground">Wallet Address</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={algorandAddress}
+                  onChange={(e) => {
+                    setAlgorandAddress(e.target.value)
+                    if (e.target.value) validateAlgorandAddress(e.target.value)
+                    else setAddressError("")
+                  }}
+                  className={`w-full rounded-lg border bg-background px-3 py-2 text-sm font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring ${
+                    addressError ? "border-destructive" : "border-input"
+                  }`}
+                  placeholder="ALGO..."
+                />
+                {walletAddress && walletAddress === algorandAddress && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-xs text-green-600">
+                    <RiWalletLine className="size-3" /> Pera
+                  </span>
+                )}
+              </div>
+              {addressError && <p className="mt-1 text-xs text-destructive">{addressError}</p>}
+              <p className="mt-1 text-xs text-muted-foreground">
+                {walletAddress
+                  ? "Synced from your connected Pera Wallet"
+                  : "Your Algorand address for on-chain features"}
+              </p>
+            </div>
           </div>
         </section>
 

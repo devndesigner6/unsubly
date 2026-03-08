@@ -3,9 +3,12 @@ import { useState, useEffect } from "react"
 import { useAlgorand } from "@/lib/algorand/context"
 import { useAuth } from "@/lib/auth-context"
 import { supabase } from "@/integrations/supabase/client"
-import { algoToMicroalgos } from "@/lib/algorand/constants"
-import { deployEscrowContract, fundEscrowContract } from "@/lib/algorand/contract"
-import { RiCloseLine, RiLockLine } from "@remixicon/react"
+import { algoToMicroalgos, VAULT_TYPE_LABELS, type VaultType } from "@/lib/algorand/constants"
+import {
+  deployEscrowContract, deployTimeLockContract, deployMultiSigContract,
+  deployDisputeContract, deployASAContract, fundEscrowContract,
+} from "@/lib/algorand/contract"
+import { RiCloseLine, RiLockLine, RiTimeLine, RiGroupLine, RiShieldLine, RiCoinLine } from "@remixicon/react"
 import { toast } from "sonner"
 
 interface Subscription {
@@ -21,6 +24,22 @@ interface CreateVaultModalProps {
   onCreated: () => void
 }
 
+const VAULT_TYPE_ICONS: Record<VaultType, typeof RiLockLine> = {
+  standard: RiLockLine,
+  time_locked: RiTimeLine,
+  multi_sig: RiGroupLine,
+  dispute: RiShieldLine,
+  asa: RiCoinLine,
+}
+
+const VAULT_TYPE_DESCRIPTIONS: Record<VaultType, string> = {
+  standard: "Basic escrow with kill switch",
+  time_locked: "Auto-releases after a set date",
+  multi_sig: "Requires co-signer approval",
+  dispute: "Arbitrator can resolve disputes",
+  asa: "Lock ASA tokens instead of ALGO",
+}
+
 export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModalProps) {
   const { user } = useAuth()
   const { walletAddress, algodClient, peraWallet, balance, refreshBalance } = useAlgorand()
@@ -28,6 +47,11 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
   const [selectedSubscription, setSelectedSubscription] = useState("")
   const [amount, setAmount] = useState("")
   const [recipientAddress, setRecipientAddress] = useState("")
+  const [vaultType, setVaultType] = useState<VaultType>("standard")
+  const [unlockDate, setUnlockDate] = useState("")
+  const [coSignerAddress, setCoSignerAddress] = useState("")
+  const [arbitratorAddress, setArbitratorAddress] = useState("")
+  const [assetId, setAssetId] = useState("")
   const [isCreating, setIsCreating] = useState(false)
   const [step, setStep] = useState("")
   const [errorMsg, setErrorMsg] = useState("")
@@ -75,7 +99,32 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
     setErrorMsg("")
 
     if (recipientAddress && !isValidAlgorandAddress(recipientAddress)) {
-      setErrorMsg("Invalid Algorand address. Must be 58 characters.")
+      setErrorMsg("Invalid recipient address.")
+      return
+    }
+
+    if (vaultType === "multi_sig" && (!coSignerAddress || !isValidAlgorandAddress(coSignerAddress))) {
+      setErrorMsg("Invalid co-signer address.")
+      return
+    }
+
+    if (vaultType === "dispute" && (!arbitratorAddress || !isValidAlgorandAddress(arbitratorAddress))) {
+      setErrorMsg("Invalid arbitrator address.")
+      return
+    }
+
+    if (vaultType === "time_locked" && !unlockDate) {
+      setErrorMsg("Please select an unlock date.")
+      return
+    }
+
+    if (vaultType === "time_locked" && new Date(unlockDate).getTime() <= Date.now()) {
+      setErrorMsg("Unlock date must be in the future.")
+      return
+    }
+
+    if (vaultType === "asa" && (!assetId || isNaN(Number(assetId)))) {
+      setErrorMsg("Please enter a valid ASA ID.")
       return
     }
 
@@ -85,7 +134,6 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
       return
     }
 
-    // Refresh balance before checking
     await refreshBalance()
 
     if (balance <= 0) {
@@ -101,26 +149,43 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
 
     setIsCreating(true)
     try {
-      // Step 1: Deploy the TEAL smart contract
       setStep("Deploying smart contract… (sign txn 1/2 in Pera Wallet)")
-      const { appId, appAddress, txnId: deployTxnId } = await deployEscrowContract(
-        algodClient,
-        walletAddress,
-        recipient,
-        signTransaction
-      )
 
-      // Step 2: Fund the contract with escrowed ALGO
+      let deployResult: { appId: number; appAddress: string; txnId: string }
+
+      switch (vaultType) {
+        case "time_locked":
+          deployResult = await deployTimeLockContract(
+            algodClient, walletAddress, recipient,
+            Math.floor(new Date(unlockDate).getTime() / 1000), signTransaction
+          )
+          break
+        case "multi_sig":
+          deployResult = await deployMultiSigContract(
+            algodClient, walletAddress, recipient, coSignerAddress, signTransaction
+          )
+          break
+        case "dispute":
+          deployResult = await deployDisputeContract(
+            algodClient, walletAddress, recipient, arbitratorAddress, signTransaction
+          )
+          break
+        case "asa":
+          deployResult = await deployASAContract(
+            algodClient, walletAddress, recipient, Number(assetId), signTransaction
+          )
+          break
+        default:
+          deployResult = await deployEscrowContract(algodClient, walletAddress, recipient, signTransaction)
+      }
+
+      const { appId, appAddress, txnId: deployTxnId } = deployResult
+
       setStep("Funding escrow vault… (sign txn 2/2 in Pera Wallet)")
       const fundTxnId = await fundEscrowContract(
-        algodClient,
-        walletAddress,
-        appAddress,
-        algoToMicroalgos(algoAmount),
-        signTransaction
+        algodClient, walletAddress, appAddress, algoToMicroalgos(algoAmount), signTransaction
       )
 
-      // Step 3: Save vault to database
       const { error: insertError } = await supabase.from("escrow_vaults" as any).insert({
         user_id: user.id,
         subscription_id: selectedSubscription || null,
@@ -132,6 +197,11 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
         escrow_address: recipient,
         app_id: appId,
         app_address: appAddress,
+        vault_type: vaultType,
+        unlock_time: vaultType === "time_locked" ? new Date(unlockDate).toISOString() : null,
+        co_signer_address: vaultType === "multi_sig" ? coSignerAddress : null,
+        arbitrator_address: vaultType === "dispute" ? arbitratorAddress : null,
+        asset_id: vaultType === "asa" ? Number(assetId) : null,
       } as any)
 
       if (insertError) {
@@ -141,7 +211,6 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
         })
       }
 
-      // Record on-chain payment
       await supabase.from("onchain_payments" as any).insert({
         user_id: user.id,
         subscription_id: selectedSubscription || null,
@@ -149,11 +218,11 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
         amount: algoAmount,
         sender_address: walletAddress,
         recipient_address: appAddress,
-        note: `Escrow vault created (App ID: ${appId})`,
+        note: `${VAULT_TYPE_LABELS[vaultType]} vault created (App ID: ${appId})`,
       } as any)
 
       toast.success("Escrow vault created!", {
-        description: `${algoAmount} ALGO locked in smart contract (App ID: ${appId})`,
+        description: `${algoAmount} ALGO locked in ${VAULT_TYPE_LABELS[vaultType]} contract (App ID: ${appId})`,
       })
 
       onCreated()
@@ -161,6 +230,11 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
       setAmount("")
       setSelectedSubscription("")
       setRecipientAddress("")
+      setVaultType("standard")
+      setUnlockDate("")
+      setCoSignerAddress("")
+      setArbitratorAddress("")
+      setAssetId("")
       setStep("")
       setErrorMsg("")
     } catch (err: any) {
@@ -182,7 +256,7 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl">
+      <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-border bg-card p-6 shadow-xl">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-semibold text-foreground">Create Escrow Vault</h2>
           <button onClick={onClose} disabled={isCreating} className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted transition-colors disabled:opacity-50">
@@ -191,6 +265,34 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
         </div>
 
         <div className="space-y-4">
+          {/* Vault Type Selection */}
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">Vault Type</label>
+            <div className="grid grid-cols-2 gap-2">
+              {(Object.keys(VAULT_TYPE_LABELS) as VaultType[]).map((type) => {
+                const Icon = VAULT_TYPE_ICONS[type]
+                return (
+                  <button
+                    key={type}
+                    onClick={() => setVaultType(type)}
+                    disabled={isCreating}
+                    className={`flex items-start gap-2 rounded-lg border p-3 text-left transition-colors ${
+                      vaultType === type
+                        ? "border-primary bg-primary/5 text-foreground"
+                        : "border-border bg-background text-muted-foreground hover:border-primary/30"
+                    }`}
+                  >
+                    <Icon className="size-4 mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-xs font-medium">{VAULT_TYPE_LABELS[type]}</p>
+                      <p className="text-[10px] opacity-70">{VAULT_TYPE_DESCRIPTIONS[type]}</p>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-foreground mb-1.5">
               Link to Subscription (optional)
@@ -248,9 +350,86 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
             </p>
           </div>
 
+          {/* Conditional fields based on vault type */}
+          {vaultType === "time_locked" && (
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1.5">
+                Unlock Date & Time
+              </label>
+              <input
+                type="datetime-local"
+                value={unlockDate}
+                onChange={(e) => setUnlockDate(e.target.value)}
+                disabled={isCreating}
+                min={new Date().toISOString().slice(0, 16)}
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Funds cannot be released before this date
+              </p>
+            </div>
+          )}
+
+          {vaultType === "multi_sig" && (
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1.5">
+                Co-Signer Address
+              </label>
+              <input
+                type="text"
+                value={coSignerAddress}
+                onChange={(e) => setCoSignerAddress(e.target.value)}
+                placeholder="Co-signer's Algorand address"
+                disabled={isCreating}
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground font-mono text-xs"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Both you and the co-signer must approve release
+              </p>
+            </div>
+          )}
+
+          {vaultType === "dispute" && (
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1.5">
+                Arbitrator Address
+              </label>
+              <input
+                type="text"
+                value={arbitratorAddress}
+                onChange={(e) => setArbitratorAddress(e.target.value)}
+                placeholder="Arbitrator's Algorand address"
+                disabled={isCreating}
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground font-mono text-xs"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Arbitrator can resolve disputes and force release/kill
+              </p>
+            </div>
+          )}
+
+          {vaultType === "asa" && (
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1.5">
+                ASA Token ID
+              </label>
+              <input
+                type="number"
+                value={assetId}
+                onChange={(e) => setAssetId(e.target.value)}
+                placeholder="e.g. 10458941 (USDC)"
+                disabled={isCreating}
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                The Algorand Standard Asset to lock in the vault
+              </p>
+            </div>
+          )}
+
           <div className="rounded-lg bg-muted/50 border border-border p-3">
             <p className="text-xs text-muted-foreground">
-              <strong className="text-foreground">Real Smart Contract:</strong> This deploys a TEAL escrow contract on Algorand Testnet. You'll sign 2 transactions in Pera Wallet: one to deploy the contract, one to fund it.
+              <strong className="text-foreground">Real Smart Contract:</strong> This deploys a {VAULT_TYPE_LABELS[vaultType]} TEAL contract on Algorand. You'll sign 2 transactions in Pera Wallet.
             </p>
           </div>
 
@@ -272,7 +451,7 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
             className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
           >
             <RiLockLine className="size-4" />
-            {isCreating ? "Deploying Contract..." : "Deploy & Lock Funds"}
+            {isCreating ? "Deploying Contract..." : `Deploy ${VAULT_TYPE_LABELS[vaultType]} Vault`}
           </button>
         </div>
       </div>

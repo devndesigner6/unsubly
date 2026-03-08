@@ -6,32 +6,69 @@ import { WalletConnect } from "@/components/algorand/WalletConnect"
 import { OnChainResumeCard } from "@/components/algorand/OnChainResumeCard"
 import { getAddressExplorerUrl } from "@/lib/algorand/constants"
 import {
-  RiFileListLine,
-  RiExternalLinkLine,
-  RiShieldCheckLine,
-  RiCoinLine,
+  RiFileListLine, RiExternalLinkLine, RiShieldCheckLine,
+  RiCoinLine, RiShareLine, RiCheckLine, RiFileCopyLine,
 } from "@remixicon/react"
+import { toast } from "sonner"
 
 export default function OnChainResumePage() {
   const { user } = useAuth()
   const { walletAddress } = useAlgorand()
   const [payments, setPayments] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [shareToken, setShareToken] = useState<string | null>(null)
+  const [isSharing, setIsSharing] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     if (!user) return
-    const fetchPayments = async () => {
+    const fetchData = async () => {
       setIsLoading(true)
-      const { data } = await supabase
-        .from("onchain_payments" as any)
-        .select("*, subscription:subscriptions(name, logo)")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-      if (data) setPayments(data as any[])
+      const [paymentsRes, shareRes] = await Promise.all([
+        supabase.from("onchain_payments" as any).select("*, subscription:subscriptions(name, logo)").eq("user_id", user.id).order("created_at", { ascending: false }),
+        supabase.from("resume_shares" as any).select("*").eq("user_id", user.id).eq("is_active", true).maybeSingle(),
+      ])
+      if (paymentsRes.data) setPayments(paymentsRes.data as any[])
+      if (shareRes.data) setShareToken((shareRes.data as any).share_token)
       setIsLoading(false)
     }
-    fetchPayments()
+    fetchData()
   }, [user])
+
+  const handleCreateShare = async () => {
+    if (!user) return
+    setIsSharing(true)
+    try {
+      const { data, error } = await supabase.from("resume_shares" as any)
+        .insert({ user_id: user.id } as any)
+        .select("share_token")
+        .single()
+      if (error) throw error
+      setShareToken((data as any).share_token)
+      toast.success("Share link created!")
+    } catch (err: any) {
+      toast.error("Failed to create share link", { description: err?.message })
+    } finally {
+      setIsSharing(false)
+    }
+  }
+
+  const handleDeactivateShare = async () => {
+    if (!user) return
+    await supabase.from("resume_shares" as any).update({ is_active: false } as any).eq("user_id", user.id).eq("is_active", true)
+    setShareToken(null)
+    toast.info("Share link deactivated")
+  }
+
+  const shareUrl = shareToken ? `${window.location.origin}/resume/${shareToken}` : null
+
+  const handleCopy = () => {
+    if (!shareUrl) return
+    navigator.clipboard.writeText(shareUrl)
+    setCopied(true)
+    toast.success("Link copied!")
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount), 0)
   const totalTransactions = payments.length
@@ -45,9 +82,51 @@ export default function OnChainResumePage() {
         </p>
       </div>
 
-      {/* Wallet */}
       <div className="mb-6">
         <WalletConnect />
+      </div>
+
+      {/* Share Controls */}
+      <div className="mb-6 rounded-xl border border-border bg-card p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <RiShareLine className="size-4 text-primary" />
+            <span className="text-sm font-medium text-foreground">Public Resume Link</span>
+          </div>
+          {!shareToken ? (
+            <button
+              onClick={handleCreateShare}
+              disabled={isSharing}
+              className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            >
+              {isSharing ? "Creating..." : "Generate Link"}
+            </button>
+          ) : (
+            <button
+              onClick={handleDeactivateShare}
+              className="rounded-lg bg-destructive/10 px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/20"
+            >
+              Deactivate
+            </button>
+          )}
+        </div>
+        {shareUrl && (
+          <div className="mt-3 flex items-center gap-2">
+            <input
+              type="text"
+              value={shareUrl}
+              readOnly
+              className="flex-1 rounded-lg border border-input bg-muted px-3 py-1.5 text-xs font-mono text-foreground"
+            />
+            <button
+              onClick={handleCopy}
+              className="flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+            >
+              {copied ? <RiCheckLine className="size-3.5" /> : <RiFileCopyLine className="size-3.5" />}
+              {copied ? "Copied" : "Copy"}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Resume Header */}
