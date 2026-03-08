@@ -4,7 +4,7 @@ import { Footer } from "@/components/landing/Footer"
 
 export default function MarketingLayout() {
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950">
+    <div className="min-h-screen bg-background">
       <Navbar />
       <main>
         <Outlet />

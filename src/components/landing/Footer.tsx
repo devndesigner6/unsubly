@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom"
 import { Logo } from "@/components/Logo"
-import { RiTwitterXLine, RiGithubLine, RiLinkedinLine, RiHeartFill } from "@remixicon/react"
+import { RiTwitterXLine, RiGithubLine, RiLinkedinLine } from "@remixicon/react"
 
 const navigation = {
   product: [
     { name: "Features", href: "#features" },
+    { name: "Blockchain", href: "#blockchain" },
     { name: "How It Works", href: "#how-it-works" },
   ],
   support: [
@@ -20,36 +21,43 @@ const social = [
 
 export function Footer() {
   return (
-    <footer className="border-t border-gray-200 bg-white py-10 sm:py-12 lg:py-16 dark:border-gray-800 dark:bg-gray-950">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 gap-6 sm:gap-8 md:grid-cols-3 lg:grid-cols-4">
-          <div className="col-span-2 md:col-span-3 lg:col-span-2">
-            <Link to="/" className="flex items-center gap-2 sm:gap-2.5 group">
-              <div className="flex size-8 sm:size-10 items-center justify-center rounded-lg sm:rounded-xl bg-gray-900 transition-transform group-hover:scale-105 dark:bg-white">
-                <Logo className="size-4 sm:size-5 text-white dark:text-gray-900" />
+    <footer className="border-t border-border py-12 sm:py-16">
+      <div className="mx-auto max-w-7xl px-6 lg:px-8">
+        <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
+          <div className="col-span-2">
+            <Link to="/" className="flex items-center gap-3 group">
+              <div className="flex size-9 items-center justify-center rounded-xl bg-foreground transition-transform group-hover:scale-105">
+                <Logo className="size-5 text-background" />
               </div>
-              <span className="text-base sm:text-xl font-semibold text-gray-900 dark:text-white">
+              <span className="text-base font-medium tracking-tight text-foreground">
                 Unsubscribely
               </span>
             </Link>
-            <p className="mt-3 sm:mt-4 max-w-xs text-xs sm:text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-              Track all your subscriptions in one place.
+            <p className="mt-4 max-w-xs text-sm text-muted-foreground leading-relaxed">
+              Decentralized subscription management powered by Algorand.
             </p>
-            <div className="mt-4 sm:mt-6 flex gap-2 sm:gap-3">
+            <div className="mt-6 flex gap-2">
               {social.map((item) => (
-                <a key={item.name} href={item.href} target="_blank" rel="noopener noreferrer" aria-label={`Follow us on ${item.name}`} className="flex size-8 sm:size-10 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition-all hover:border-gray-300 hover:text-gray-900 dark:border-gray-800 dark:hover:border-gray-700 dark:hover:text-white">
-                  <item.icon className="size-4 sm:size-5" aria-hidden="true" />
+                <a
+                  key={item.name}
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`Follow us on ${item.name}`}
+                  className="flex size-9 items-center justify-center rounded-full border border-border text-muted-foreground transition-all hover:border-foreground/30 hover:text-foreground"
+                >
+                  <item.icon className="size-4" aria-hidden="true" />
                 </a>
               ))}
             </div>
           </div>
 
           <div>
-            <h3 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">Product</h3>
-            <ul className="mt-3 sm:mt-4 space-y-2 sm:space-y-3">
+            <h3 className="text-xs font-medium tracking-widest uppercase text-muted-foreground">Product</h3>
+            <ul className="mt-4 space-y-3">
               {navigation.product.map((item) => (
                 <li key={item.name}>
-                  <a href={item.href} className="text-xs sm:text-sm text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
+                  <a href={item.href} className="text-sm text-foreground/70 transition-colors hover:text-foreground">
                     {item.name}
                   </a>
                 </li>
@@ -58,11 +66,11 @@ export function Footer() {
           </div>
 
           <div>
-            <h3 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">Support</h3>
-            <ul className="mt-3 sm:mt-4 space-y-2 sm:space-y-3">
+            <h3 className="text-xs font-medium tracking-widest uppercase text-muted-foreground">Support</h3>
+            <ul className="mt-4 space-y-3">
               {navigation.support.map((item) => (
                 <li key={item.name}>
-                  <a href={item.href} className="text-xs sm:text-sm text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
+                  <a href={item.href} className="text-sm text-foreground/70 transition-colors hover:text-foreground">
                     {item.name}
                   </a>
                 </li>
@@ -71,12 +79,12 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-8 sm:mt-12 lg:mt-16 flex flex-col items-center justify-between gap-3 sm:gap-4 border-t border-gray-200 pt-6 sm:pt-8 sm:flex-row dark:border-gray-800">
-          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+        <div className="mt-12 sm:mt-16 flex flex-col items-center justify-between gap-4 border-t border-border pt-8 sm:flex-row">
+          <p className="text-xs text-muted-foreground">
             &copy; {new Date().getFullYear()} Unsubscribely. All rights reserved.
           </p>
-          <p className="flex items-center gap-1.5 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-            Made with <RiHeartFill className="size-3.5 sm:size-4 text-red-500 animate-pulse" /> for subscription sanity
+          <p className="text-xs text-muted-foreground">
+            Built on Algorand
           </p>
         </div>
       </div>
