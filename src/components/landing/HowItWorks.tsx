@@ -35,7 +35,7 @@ export function HowItWorks() {
   }, [])
 
   return (
-    <section id="how-it-works" className="py-24 sm:py-32 lg:py-40 border-t border-border overflow-hidden">
+    <section id="how-it-works" className="py-20 sm:py-24 lg:py-32 border-t border-border overflow-hidden">
       <div ref={ref} className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className={`transition-all duration-1000 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`}>
           <p className="font-display italic text-lg text-muted-foreground">How it works</p>

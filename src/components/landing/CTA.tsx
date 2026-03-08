@@ -17,7 +17,7 @@ export function CTA() {
   }, [])
 
   return (
-    <section className="py-24 sm:py-32 lg:py-40 border-t border-border overflow-hidden">
+    <section className="py-20 sm:py-24 lg:py-32 border-t border-border overflow-hidden">
       <div ref={ref} className="mx-auto max-w-5xl px-6 lg:px-8 text-center">
         <div className={`transition-all duration-1000 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`}>
           <h2 className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-foreground tracking-tight leading-[0.9]">
