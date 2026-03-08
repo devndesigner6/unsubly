@@ -172,12 +172,43 @@ export default function SubscriptionsPage() {
                 </div>
               </div>
             </div>
-            <Button asChild className="bg-white text-blue-700 hover:bg-blue-50 shadow-lg">
-              <Link to="/subscriptions/new">
-                <RiAddLine className="mr-2 size-4" />
-                Add Subscription
-              </Link>
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv"
+                className="hidden"
+                onChange={handleImport}
+              />
+              <Button
+                variant="secondary"
+                className="bg-white/10 text-white hover:bg-white/20 border-0"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={importing}
+              >
+                {importing ? (
+                  <RiLoader4Line className="mr-2 size-4 animate-spin" />
+                ) : (
+                  <RiUploadLine className="mr-2 size-4" />
+                )}
+                Import CSV
+              </Button>
+              <Button
+                variant="secondary"
+                className="bg-white/10 text-white hover:bg-white/20 border-0"
+                onClick={handleExport}
+                disabled={subscriptions.length === 0}
+              >
+                <RiDownloadLine className="mr-2 size-4" />
+                Export CSV
+              </Button>
+              <Button asChild className="bg-white text-blue-700 hover:bg-blue-50 shadow-lg">
+                <Link to="/subscriptions/new">
+                  <RiAddLine className="mr-2 size-4" />
+                  Add Subscription
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
       </div>
