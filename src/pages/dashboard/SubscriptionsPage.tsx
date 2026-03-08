@@ -1,17 +1,19 @@
 import { useAuth } from "@/lib/auth-context"
-import { fetchSubscriptions, deleteSubscription } from "@/lib/supabase-queries"
+import { fetchSubscriptions, deleteSubscription, createSubscription } from "@/lib/supabase-queries"
 import { fetchProfile } from "@/lib/supabase-queries"
 import { formatCurrency } from "@/lib/currency"
 import { cx } from "@/lib/utils"
 import { Button } from "@/components/Button"
 import { Input } from "@/components/Input"
 import { Link } from "react-router-dom"
+import { generateCSV, parseCSV } from "@/lib/csv"
 import {
   RiAddLine, RiDeleteBinLine, RiEditLine, RiLoader4Line,
   RiSearchLine, RiAlertLine, RiFileListLine,
   RiPlayCircleLine, RiPauseCircleLine, RiCloseCircleLine, RiTimerFlashLine,
+  RiDownloadLine, RiUploadLine,
 } from "@remixicon/react"
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 
 const statusConfig: Record<string, { label: string; icon: any }> = {
   active: { label: "Active", icon: RiPlayCircleLine },
