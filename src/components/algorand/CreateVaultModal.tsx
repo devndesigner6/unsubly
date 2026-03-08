@@ -22,7 +22,7 @@ interface CreateVaultModalProps {
 
 export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModalProps) {
   const { user } = useAuth()
-  const { walletAddress, algodClient, peraWallet } = useAlgorand()
+  const { walletAddress, algodClient, peraWallet, balance } = useAlgorand()
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
   const [selectedSubscription, setSelectedSubscription] = useState("")
   const [amount, setAmount] = useState("")
