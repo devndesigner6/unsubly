@@ -53,17 +53,16 @@ export default function VaultDetailsPage() {
     setLoadingChain(true)
     setChainError(null)
     try {
-      const appInfo = await algodClient.getApplicationByID(appId).do()
+      const appInfo = await algodClient.getApplicationByID(appId).do() as any
       const globalState: Record<string, string | number> = {}
 
       if (appInfo.params?.globalState) {
         for (const item of appInfo.params.globalState as any[]) {
           const key = atob(item.key)
           if (item.value.type === 1) {
-            // bytes -> try to decode as address (32 bytes)
             const bytes = Uint8Array.from(atob(item.value.bytes), c => c.charCodeAt(0))
             if (bytes.length === 32) {
-              globalState[key] = (algosdk.encodeAddress(bytes) as any as string)
+              globalState[key] = String(algosdk.encodeAddress(bytes))
             } else {
               globalState[key] = item.value.bytes
             }
@@ -77,14 +76,14 @@ export default function VaultDetailsPage() {
       let balance = 0
       if (appAddress) {
         try {
-          const acctInfo = await algodClient.accountInformation(appAddress).do()
-          balance = Number((acctInfo as any).amount || 0)
+          const acctInfo = await algodClient.accountInformation(appAddress).do() as any
+          balance = Number(acctInfo.amount || 0)
         } catch {}
       }
 
       setOnChainState({
-        creator: appInfo.params?.creator || "",
-        recipient: (globalState["recipient"] as string) || "",
+        creator: String(appInfo.params?.creator || ""),
+        recipient: String(globalState["recipient"] || ""),
         balance,
         appExists: true,
         globalState,
