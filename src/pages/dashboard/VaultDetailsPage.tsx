@@ -49,6 +49,15 @@ export default function VaultDetailsPage() {
     setVault(data)
     setLoading(false)
     if ((data as any).app_id) fetchOnChainState((data as any).app_id, (data as any).app_address)
+
+    // Fetch related payments
+    const { data: paymentData } = await supabase
+      .from("onchain_payments" as any)
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("subscription_id", (data as any).subscription_id)
+      .order("created_at", { ascending: false })
+    setPayments(paymentData || [])
   }
 
   async function fetchOnChainState(appId: number, appAddress: string | null) {
