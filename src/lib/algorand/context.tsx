@@ -85,7 +85,7 @@ export function AlgorandProvider({ children }: { children: ReactNode }) {
         .from("profiles")
         .select("algorand_address")
         .eq("id", user.id)
-        .single()
+        .maybeSingle()
       
       if (data && (data as any).algorand_address) {
         const address = (data as any).algorand_address as string
