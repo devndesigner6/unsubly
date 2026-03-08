@@ -1,3 +1,9 @@
+// Polyfill global for @perawallet/connect compatibility
+if (typeof global === 'undefined') {
+  // @ts-ignore
+  window.global = window;
+}
+
 import React from "react"
 import ReactDOM from "react-dom/client"
 import App from "./App"
