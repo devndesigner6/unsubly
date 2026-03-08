@@ -85,7 +85,7 @@ export function AlgorandProvider({ children }: { children: ReactNode }) {
         .from("profiles")
         .select("algorand_address")
         .eq("id", user.id)
-        .single()
+        .maybeSingle()
       
       if (data && (data as any).algorand_address) {
         const address = (data as any).algorand_address as string
@@ -110,6 +110,13 @@ export function AlgorandProvider({ children }: { children: ReactNode }) {
   const connectWallet = useCallback(async () => {
     setIsConnecting(true)
     try {
+      // Disconnect any existing session first to avoid "Session currently connected" error
+      try {
+        await peraWallet.disconnect()
+      } catch {
+        // No existing session, that's fine
+      }
+
       const accounts = await peraWallet.connect()
       const address = accounts[0]
       setWalletAddress(address)
