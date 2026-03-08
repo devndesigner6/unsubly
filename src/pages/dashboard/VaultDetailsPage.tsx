@@ -28,12 +28,14 @@ export default function VaultDetailsPage() {
   const { walletAddress, algodClient, peraWallet } = useAlgorand()
   const [vault, setVault] = useState<any>(null)
   const [onChainState, setOnChainState] = useState<OnChainState | null>(null)
+  const [payments, setPayments] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingChain, setLoadingChain] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [actionMsg, setActionMsg] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [chainError, setChainError] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<"details" | "history">("details")
 
   async function loadVault() {
     if (!user || !id) return
