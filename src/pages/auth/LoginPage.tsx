@@ -64,9 +64,14 @@ export default function LoginPage() {
           />
         </div>
         <div>
-          <label className="mb-2 block text-xs font-medium tracking-wide uppercase text-muted-foreground">
-            Password
-          </label>
+          <div className="mb-2 flex items-center justify-between">
+            <label className="block text-xs font-medium tracking-wide uppercase text-muted-foreground">
+              Password
+            </label>
+            <Link to="/forgot-password" className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
+              Forgot password?
+            </Link>
+          </div>
           <input
             type="password"
             value={password}
