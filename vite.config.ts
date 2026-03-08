@@ -13,15 +13,6 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       react(),
-      VitePWA({
-        registerType: "autoUpdate",
-        includeAssets: ["logo.svg", "logo-192.png", "logo.png", "apple-touch-icon.png"],
-        workbox: {
-          globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
-          navigateFallbackDenylist: [/^\/~oauth/],
-        },
-        manifest: false, // use existing public/manifest.json
-      }),
     ],
     define: {
       global: 'globalThis',

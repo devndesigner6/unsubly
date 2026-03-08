@@ -223,50 +223,6 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        {/* Push Notifications */}
-        {pushNotifications.isSupported && (
-          <section className="mb-6 rounded-xl border border-border bg-card p-5 sm:p-6">
-            <div className="mb-4 flex items-center gap-2">
-              <RiSmartphoneLine className="size-5 text-foreground" />
-              <h2 className="text-lg font-semibold text-foreground">Push Notifications</h2>
-            </div>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-foreground">Billing Reminders</p>
-                  <p className="text-xs text-muted-foreground">
-                    Get push notifications before upcoming charges
-                  </p>
-                  {pushNotifications.permission === "denied" && (
-                    <p className="mt-1 text-xs text-destructive">
-                      Notifications blocked — enable them in browser settings
-                    </p>
-                  )}
-                </div>
-                <button
-                  onClick={pushNotifications.isSubscribed ? pushNotifications.unsubscribe : pushNotifications.subscribe}
-                  disabled={pushNotifications.isLoading || pushNotifications.permission === "denied"}
-                  className={`relative h-6 w-11 rounded-full transition-colors disabled:opacity-50 ${
-                    pushNotifications.isSubscribed ? "bg-primary" : "bg-muted"
-                  }`}
-                >
-                  <span
-                    className={`absolute left-0.5 top-0.5 size-5 rounded-full bg-primary-foreground transition-transform ${
-                      pushNotifications.isSubscribed ? "translate-x-5" : ""
-                    }`}
-                  />
-                </button>
-              </div>
-              {pushNotifications.isSubscribed && (
-                <div className="rounded-lg bg-primary/5 border border-primary/20 p-3">
-                  <p className="text-xs text-primary font-medium">
-                    ✓ Push notifications active — you'll be notified before upcoming charges
-                  </p>
-                </div>
-              )}
-            </div>
-          </section>
-        )}
 
         {/* Algorand */}
         <section className="mb-6 rounded-xl border border-border bg-card p-5 sm:p-6">
