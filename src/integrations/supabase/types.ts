@@ -20,51 +20,72 @@ export type Database = {
           amount: number
           app_address: string | null
           app_id: number | null
+          arbitrator_address: string | null
+          asset_id: number | null
+          co_signer_address: string | null
+          co_signer_approved: boolean | null
           created_at: string
           currency: string
           escrow_address: string | null
           id: string
           kill_switch_active: boolean
+          nft_asset_id: number | null
           released_at: string | null
           status: string
           subscription_id: string | null
           txn_id: string | null
+          unlock_time: string | null
           updated_at: string
           user_id: string
+          vault_type: string
         }
         Insert: {
           algorand_address: string
           amount: number
           app_address?: string | null
           app_id?: number | null
+          arbitrator_address?: string | null
+          asset_id?: number | null
+          co_signer_address?: string | null
+          co_signer_approved?: boolean | null
           created_at?: string
           currency?: string
           escrow_address?: string | null
           id?: string
           kill_switch_active?: boolean
+          nft_asset_id?: number | null
           released_at?: string | null
           status?: string
           subscription_id?: string | null
           txn_id?: string | null
+          unlock_time?: string | null
           updated_at?: string
           user_id: string
+          vault_type?: string
         }
         Update: {
           algorand_address?: string
           amount?: number
           app_address?: string | null
           app_id?: number | null
+          arbitrator_address?: string | null
+          asset_id?: number | null
+          co_signer_address?: string | null
+          co_signer_approved?: boolean | null
           created_at?: string
           currency?: string
           escrow_address?: string | null
           id?: string
           kill_switch_active?: boolean
+          nft_asset_id?: number | null
           released_at?: string | null
           status?: string
           subscription_id?: string | null
           txn_id?: string | null
+          unlock_time?: string | null
           updated_at?: string
           user_id?: string
+          vault_type?: string
         }
         Relationships: [
           {
@@ -219,6 +240,33 @@ export type Database = {
           name?: string | null
           updated_at?: string
           weekly_digest?: boolean | null
+        }
+        Relationships: []
+      }
+      resume_shares: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          share_token: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          share_token?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          share_token?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
