@@ -19,6 +19,7 @@
         "@vitejs/plugin-react-swc": "^4.2.3",
         "algosdk": "3.2.0",
         "autoprefixer": "^10.4.27",
+        "buffer": "6.0.3",
         "clsx": "^2.1.1",
         "lovable-tagger": "^1.1.13",
         "lucide-react": "^0.473.0",
