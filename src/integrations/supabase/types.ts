@@ -18,6 +18,8 @@ export type Database = {
         Row: {
           algorand_address: string
           amount: number
+          app_address: string | null
+          app_id: number | null
           created_at: string
           currency: string
           escrow_address: string | null
@@ -33,6 +35,8 @@ export type Database = {
         Insert: {
           algorand_address: string
           amount: number
+          app_address?: string | null
+          app_id?: number | null
           created_at?: string
           currency?: string
           escrow_address?: string | null
@@ -48,6 +52,8 @@ export type Database = {
         Update: {
           algorand_address?: string
           amount?: number
+          app_address?: string | null
+          app_id?: number | null
           created_at?: string
           currency?: string
           escrow_address?: string | null
