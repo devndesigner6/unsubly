@@ -6,7 +6,7 @@ import { cx } from "@/lib/utils"
 import { useState, useEffect, useMemo } from "react"
 import {
   RiArrowLeftSLine, RiArrowRightSLine, RiLoader4Line,
-  RiTimeLine, RiFireLine, RiWalletLine, RiCalendarCheckLine
+  RiWalletLine,
 } from "@remixicon/react"
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
@@ -64,11 +64,11 @@ export default function CalendarPageContent() {
     return sum
   }, 0)
 
-  if (loading) return <div className="flex h-screen items-center justify-center"><RiLoader4Line className="animate-spin text-blue-500" /></div>
+  if (loading) return <div className="flex h-screen items-center justify-center"><RiLoader4Line className="animate-spin text-primary" /></div>
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <div className="relative overflow-hidden border-b border-gray-200 bg-gradient-to-br from-cyan-600 via-teal-600 to-emerald-700 dark:border-gray-800">
+    <div className="min-h-screen bg-background">
+      <div className="relative overflow-hidden border-b border-border bg-gradient-to-br from-cyan-600 via-teal-600 to-emerald-700">
         <div className="relative mx-auto max-w-7xl px-3 py-6 sm:px-6 sm:py-8 lg:px-8">
           <div className="flex items-center justify-between text-white">
             <h1 className="text-2xl font-bold">Payment Calendar</h1>
@@ -88,35 +88,35 @@ export default function CalendarPageContent() {
       </div>
 
       <div className="mx-auto max-w-7xl p-3 sm:p-6 lg:p-8">
-        <div className="grid grid-cols-7 gap-px rounded-xl border border-gray-200 bg-gray-200 overflow-hidden dark:border-gray-800 dark:bg-gray-800">
+        <div className="grid grid-cols-7 gap-px rounded-xl border border-border bg-border overflow-hidden">
           {DAYS.map(day => (
-            <div key={day} className="bg-gray-50 py-2 text-center text-xs font-medium text-gray-500 dark:bg-gray-900 dark:text-gray-400">
+            <div key={day} className="bg-muted py-2 text-center text-xs font-medium text-muted-foreground">
               {day}
             </div>
           ))}
           {calendarDays.map((day, i) => {
-            if (!day) return <div key={`empty-${i}`} className="min-h-[100px] bg-white dark:bg-gray-900/50" />
+            if (!day) return <div key={`empty-${i}`} className="min-h-[100px] bg-card" />
             const daySubs = getSubsForDay(day)
             const dayTotal = daySubs.reduce((sum, s) => sum + (s.amount || 0), 0)
             
             return (
-              <div key={day} className="group relative min-h-[100px] bg-white p-2 transition-colors hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800">
+              <div key={day} className="group relative min-h-[100px] bg-card p-2 transition-colors hover:bg-accent/50">
                 <span className={cx(
                   "flex size-6 items-center justify-center rounded-full text-xs font-medium",
                   day === today.getDate() && month === today.getMonth() && year === today.getFullYear() 
-                    ? "bg-blue-600 text-white" 
-                    : "text-gray-700 dark:text-gray-300"
+                    ? "bg-primary text-primary-foreground" 
+                    : "text-foreground"
                 )}>
                   {day}
                 </span>
                 <div className="mt-2 space-y-1">
                   {daySubs.map(sub => (
-                    <div key={sub.id} className="truncate rounded px-1.5 py-0.5 text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                    <div key={sub.id} className="truncate rounded px-1.5 py-0.5 text-xs bg-primary/10 text-primary">
                       {sub.name}
                     </div>
                   ))}
                   {dayTotal > 0 && (
-                    <div className="mt-1 text-xs font-semibold text-gray-900 dark:text-gray-100">
+                    <div className="mt-1 text-xs font-semibold text-foreground">
                       {formatCurrency(dayTotal, currency)}
                     </div>
                   )}
