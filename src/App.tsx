@@ -15,6 +15,8 @@ import HomePage from "@/pages/HomePage"
 // Auth pages
 import LoginPage from "@/pages/auth/LoginPage"
 import RegisterPage from "@/pages/auth/RegisterPage"
+import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage"
+import ResetPasswordPage from "@/pages/auth/ResetPasswordPage"
 
 // Dashboard pages
 import DashboardPage from "@/pages/dashboard/DashboardPage"
@@ -66,6 +68,8 @@ export default function App() {
               <Route element={<AuthLayout />}>
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
               </Route>
 
               {/* Dashboard (Protected) */}

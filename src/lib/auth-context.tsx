@@ -26,10 +26,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
+
+      // Handle session expiry — redirect to login
+      if (event === "TOKEN_REFRESHED" && !session) {
+        window.location.href = "/login"
+      }
+      if (event === "SIGNED_OUT") {
+        window.location.href = "/login"
+      }
     })
 
     supabase.auth.getSession().then(({ data: { session } }) => {

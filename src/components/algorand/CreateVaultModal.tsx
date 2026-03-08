@@ -3,9 +3,9 @@ import { useState, useEffect } from "react"
 import { useAlgorand } from "@/lib/algorand/context"
 import { useAuth } from "@/lib/auth-context"
 import { supabase } from "@/integrations/supabase/client"
-import { algoToMicroalgos } from "@/lib/algorand/constants"
+import { algoToMicroalgos, MIN_BALANCE_MICROALGOS, microalgosToAlgo } from "@/lib/algorand/constants"
 import { deployEscrowContract, fundEscrowContract } from "@/lib/algorand/contract"
-import { RiCloseLine, RiLockLine } from "@remixicon/react"
+import { RiCloseLine, RiLockLine, RiAlertLine } from "@remixicon/react"
 
 interface Subscription {
   id: string
@@ -22,7 +22,7 @@ interface CreateVaultModalProps {
 
 export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModalProps) {
   const { user } = useAuth()
-  const { walletAddress, algodClient, peraWallet } = useAlgorand()
+  const { walletAddress, algodClient, peraWallet, balance } = useAlgorand()
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
   const [selectedSubscription, setSelectedSubscription] = useState("")
   const [amount, setAmount] = useState("")
@@ -78,6 +78,18 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
     const algoAmount = parseFloat(amount)
     if (algoAmount <= 0) {
       setStep("❌ Amount must be greater than 0.")
+      return
+    }
+
+    // Check wallet balance before attempting transaction
+    if (balance <= 0) {
+      setStep("❌ Wallet has 0 ALGO. Fund your testnet wallet first.")
+      return
+    }
+
+    const requiredAlgo = algoAmount + 0.3 // amount + MBR + fees
+    if (balance < requiredAlgo) {
+      setStep(`❌ Insufficient balance. Need ~${requiredAlgo.toFixed(4)} ALGO, have ${balance.toFixed(4)} ALGO.`)
       return
     }
 
