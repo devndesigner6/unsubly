@@ -3,7 +3,7 @@ import { useAlgorand } from "@/lib/algorand/context"
 import { useAuth } from "@/lib/auth-context"
 import { supabase } from "@/integrations/supabase/client"
 import { algoToMicroalgos } from "@/lib/algorand/constants"
-import algosdk from "algosdk"
+import { deployEscrowContract, fundEscrowContract } from "@/lib/algorand/contract"
 import { RiCloseLine, RiLockLine } from "@remixicon/react"
 
 interface Subscription {
@@ -21,12 +21,13 @@ interface CreateVaultModalProps {
 
 export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModalProps) {
   const { user } = useAuth()
-  const { walletAddress, signAndSendTransaction, algodClient } = useAlgorand()
+  const { walletAddress, algodClient, peraWallet } = useAlgorand()
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
   const [selectedSubscription, setSelectedSubscription] = useState("")
   const [amount, setAmount] = useState("")
   const [recipientAddress, setRecipientAddress] = useState("")
   const [isCreating, setIsCreating] = useState(false)
+  const [step, setStep] = useState("")
 
   useEffect(() => {
     if (!user || !isOpen) return
@@ -48,32 +49,37 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
     }
   }, [selectedSubscription, subscriptions])
 
+  const signTransaction = async (txn: any): Promise<Uint8Array[]> => {
+    return await peraWallet.signTransaction([[{ txn }]])
+  }
+
   const handleCreate = async () => {
     if (!walletAddress || !user || !amount) return
     setIsCreating(true)
     try {
       const algoAmount = parseFloat(amount)
-      
-      // Create on-chain escrow transaction (lock funds with a note)
-      const params = await algodClient.getTransactionParams().do()
-      const txn = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-        sender: walletAddress,
-        receiver: recipientAddress || walletAddress, // Self-escrow if no recipient
-        amount: algoToMicroalgos(algoAmount),
-        suggestedParams: params,
-        note: new TextEncoder().encode(
-          JSON.stringify({
-            app: "unsubscribely",
-            action: "create_vault",
-            subscription_id: selectedSubscription || null,
-            timestamp: Date.now(),
-          })
-        ),
-      })
+      const recipient = recipientAddress || walletAddress
 
-      const txnId = await signAndSendTransaction(txn)
+      // Step 1: Deploy the TEAL smart contract
+      setStep("Deploying smart contract… (sign txn 1/2)")
+      const { appId, appAddress, txnId: deployTxnId } = await deployEscrowContract(
+        algodClient,
+        walletAddress,
+        recipient,
+        signTransaction
+      )
 
-      // Save vault to database
+      // Step 2: Fund the contract with escrowed ALGO
+      setStep("Funding escrow vault… (sign txn 2/2)")
+      const fundTxnId = await fundEscrowContract(
+        algodClient,
+        walletAddress,
+        appAddress,
+        algoToMicroalgos(algoAmount),
+        signTransaction
+      )
+
+      // Step 3: Save vault to database with app_id
       await supabase.from("escrow_vaults" as any).insert({
         user_id: user.id,
         subscription_id: selectedSubscription || null,
@@ -81,19 +87,21 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
         amount: algoAmount,
         currency: "ALGO",
         status: "locked",
-        txn_id: txnId,
-        escrow_address: recipientAddress || walletAddress,
+        txn_id: deployTxnId,
+        escrow_address: recipient,
+        app_id: appId,
+        app_address: appAddress,
       } as any)
 
       // Record on-chain payment
       await supabase.from("onchain_payments" as any).insert({
         user_id: user.id,
         subscription_id: selectedSubscription || null,
-        algorand_txn_id: txnId,
+        algorand_txn_id: fundTxnId,
         amount: algoAmount,
         sender_address: walletAddress,
-        recipient_address: recipientAddress || walletAddress,
-        note: "Escrow vault created",
+        recipient_address: appAddress,
+        note: `Escrow vault created (App ID: ${appId})`,
       } as any)
 
       onCreated()
@@ -101,8 +109,10 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
       setAmount("")
       setSelectedSubscription("")
       setRecipientAddress("")
+      setStep("")
     } catch (err) {
       console.error("Create vault error:", err)
+      setStep("")
     } finally {
       setIsCreating(false)
     }
@@ -156,7 +166,7 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
 
           <div>
             <label className="block text-sm font-medium text-foreground mb-1.5">
-              Recipient Address (optional)
+              Recipient Address
             </label>
             <input
               type="text"
@@ -166,9 +176,21 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
               className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground font-mono text-xs"
             />
             <p className="mt-1 text-xs text-muted-foreground">
-              Leave empty for self-escrow (testnet demo)
+              Leave empty for self-escrow (funds release back to you)
             </p>
           </div>
+
+          <div className="rounded-lg bg-muted/50 border border-border p-3">
+            <p className="text-xs text-muted-foreground">
+              <strong className="text-foreground">Real Smart Contract:</strong> This deploys a TEAL escrow contract on Algorand Testnet. You'll sign 2 transactions: one to deploy the contract, one to fund it. The kill switch is enforced on-chain.
+            </p>
+          </div>
+
+          {step && (
+            <div className="rounded-lg bg-primary/5 border border-primary/20 p-3">
+              <p className="text-xs text-primary font-medium">{step}</p>
+            </div>
+          )}
 
           <button
             onClick={handleCreate}
@@ -176,7 +198,7 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
             className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
           >
             <RiLockLine className="size-4" />
-            {isCreating ? "Locking Funds..." : "Lock Payment in Vault"}
+            {isCreating ? "Deploying Contract..." : "Deploy & Lock Funds"}
           </button>
         </div>
       </div>
