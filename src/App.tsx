@@ -32,6 +32,7 @@ import SettingsPage from "@/pages/dashboard/SettingsPage"
 import EscrowVaultsPage from "@/pages/dashboard/EscrowVaultsPage"
 import VaultDetailsPage from "@/pages/dashboard/VaultDetailsPage"
 import OnChainResumePage from "@/pages/dashboard/OnChainResumePage"
+import TransactionHistoryPage from "@/pages/dashboard/TransactionHistoryPage"
 import NotFoundPage from "@/pages/NotFoundPage"
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -92,6 +93,7 @@ export default function App() {
                 <Route path="/escrow-vaults" element={<EscrowVaultsPage />} />
                 <Route path="/escrow-vaults/:id" element={<VaultDetailsPage />} />
                 <Route path="/onchain-resume" element={<OnChainResumePage />} />
+                <Route path="/transactions" element={<TransactionHistoryPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
               </Route>
 

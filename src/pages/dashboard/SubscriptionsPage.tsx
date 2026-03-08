@@ -1,17 +1,19 @@
 import { useAuth } from "@/lib/auth-context"
-import { fetchSubscriptions, deleteSubscription } from "@/lib/supabase-queries"
+import { fetchSubscriptions, deleteSubscription, createSubscription } from "@/lib/supabase-queries"
 import { fetchProfile } from "@/lib/supabase-queries"
 import { formatCurrency } from "@/lib/currency"
 import { cx } from "@/lib/utils"
 import { Button } from "@/components/Button"
 import { Input } from "@/components/Input"
 import { Link } from "react-router-dom"
+import { generateCSV, parseCSV } from "@/lib/csv"
 import {
   RiAddLine, RiDeleteBinLine, RiEditLine, RiLoader4Line,
   RiSearchLine, RiAlertLine, RiFileListLine,
   RiPlayCircleLine, RiPauseCircleLine, RiCloseCircleLine, RiTimerFlashLine,
+  RiDownloadLine, RiUploadLine,
 } from "@remixicon/react"
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 
 const statusConfig: Record<string, { label: string; icon: any }> = {
   active: { label: "Active", icon: RiPlayCircleLine },
@@ -28,6 +30,8 @@ export default function SubscriptionsPage() {
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [deleting, setDeleting] = useState<string | null>(null)
+  const [importing, setImporting] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!user) return
@@ -60,6 +64,52 @@ export default function SubscriptionsPage() {
       alert(err instanceof Error ? err.message : "Failed to delete")
     } finally {
       setDeleting(null)
+    }
+  }
+
+  function handleExport() {
+    const csv = generateCSV(subscriptions)
+    const blob = new Blob([csv], { type: "text/csv" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = "subscriptions.csv"
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !user) return
+    setImporting(true)
+    try {
+      const text = await file.text()
+      const parsed = parseCSV(text)
+      for (const sub of parsed) {
+        await createSubscription({
+          user_id: user.id,
+          name: sub.name,
+          description: sub.description || null,
+          amount: sub.amount,
+          currency: sub.currency,
+          billing_cycle: sub.billingCycle as any,
+          next_billing_date: sub.nextBillingDate.split("T")[0],
+          start_date: sub.startDate.split("T")[0],
+          status: sub.status as any,
+          category: sub.category || null,
+          url: sub.url || null,
+          notes: sub.notes || null,
+          alert_days: sub.alertDays,
+          alert_enabled: sub.alertEnabled,
+        })
+      }
+      await loadData()
+      alert(`Successfully imported ${parsed.length} subscription(s)`)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Import failed")
+    } finally {
+      setImporting(false)
+      if (fileInputRef.current) fileInputRef.current.value = ""
     }
   }
 
@@ -122,12 +172,43 @@ export default function SubscriptionsPage() {
                 </div>
               </div>
             </div>
-            <Button asChild className="bg-white text-blue-700 hover:bg-blue-50 shadow-lg">
-              <Link to="/subscriptions/new">
-                <RiAddLine className="mr-2 size-4" />
-                Add Subscription
-              </Link>
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv"
+                className="hidden"
+                onChange={handleImport}
+              />
+              <Button
+                variant="secondary"
+                className="bg-white/10 text-white hover:bg-white/20 border-0"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={importing}
+              >
+                {importing ? (
+                  <RiLoader4Line className="mr-2 size-4 animate-spin" />
+                ) : (
+                  <RiUploadLine className="mr-2 size-4" />
+                )}
+                Import CSV
+              </Button>
+              <Button
+                variant="secondary"
+                className="bg-white/10 text-white hover:bg-white/20 border-0"
+                onClick={handleExport}
+                disabled={subscriptions.length === 0}
+              >
+                <RiDownloadLine className="mr-2 size-4" />
+                Export CSV
+              </Button>
+              <Button asChild className="bg-white text-blue-700 hover:bg-blue-50 shadow-lg">
+                <Link to="/subscriptions/new">
+                  <RiAddLine className="mr-2 size-4" />
+                  Add Subscription
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
       </div>

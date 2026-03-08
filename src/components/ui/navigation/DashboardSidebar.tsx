@@ -23,6 +23,7 @@ import {
   RiBankCardLine,
   RiShieldLine,
   RiFileChartLine,
+  RiExchangeLine,
 } from "@remixicon/react"
 import { Link, useLocation } from "react-router-dom"
 import * as React from "react"
@@ -44,6 +45,7 @@ const organizationNavigation = [
 const algorandNavigation = [
   { name: "Escrow Vaults", href: "/escrow-vaults", icon: RiShieldLine },
   { name: "On-Chain Resume", href: "/onchain-resume", icon: RiFileChartLine },
+  { name: "Transactions", href: "/transactions", icon: RiExchangeLine },
 ] as const
 
 const settingsNavigation = [
