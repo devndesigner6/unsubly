@@ -81,6 +81,18 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
       return
     }
 
+    // Check wallet balance before attempting transaction
+    if (balance <= 0) {
+      setStep("❌ Wallet has 0 ALGO. Fund your testnet wallet first.")
+      return
+    }
+
+    const requiredAlgo = algoAmount + 0.3 // amount + MBR + fees
+    if (balance < requiredAlgo) {
+      setStep(`❌ Insufficient balance. Need ~${requiredAlgo.toFixed(4)} ALGO, have ${balance.toFixed(4)} ALGO.`)
+      return
+    }
+
     setIsCreating(true)
     try {
 
