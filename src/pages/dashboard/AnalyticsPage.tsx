@@ -1,2 +1,261 @@
-// Stub remaining pages
-export default function AnalyticsPage() { return <div>Analytics (Coming Soon)</div> }
+import { useState, useEffect, useMemo } from "react"
+import { useAuth } from "@/lib/auth-context"
+import { fetchSubscriptions, fetchProfile } from "@/lib/supabase-queries"
+import { formatCurrency } from "@/lib/currency"
+import {
+  RiLoader4Line, RiAlertLine, RiPieChartLine,
+  RiBarChartBoxLine, RiArrowUpLine, RiArrowDownLine,
+} from "@remixicon/react"
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts"
+
+const COLORS = [
+  "hsl(30, 10%, 10%)", "hsl(210, 60%, 50%)", "hsl(150, 50%, 45%)",
+  "hsl(45, 80%, 55%)", "hsl(0, 60%, 50%)", "hsl(270, 50%, 55%)",
+  "hsl(180, 50%, 45%)", "hsl(330, 50%, 55%)",
+]
+
+export default function AnalyticsPage() {
+  const { user } = useAuth()
+  const [subscriptions, setSubscriptions] = useState<any[]>([])
+  const [profile, setProfile] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!user) return
+    async function load() {
+      try {
+        const [subs, prof] = await Promise.all([
+          fetchSubscriptions(user!.id),
+          fetchProfile(user!.id),
+        ])
+        setSubscriptions(subs)
+        setProfile(prof)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load")
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
+  }, [user])
+
+  const currency = profile?.currency || "USD"
+
+  const analytics = useMemo(() => {
+    const active = subscriptions.filter((s) => s.status === "active")
+
+    // Monthly cost per subscription
+    const monthlyCosts = subscriptions.map((sub) => {
+      const amt = sub.amount || 0
+      let monthly = amt
+      if (sub.billing_cycle === "yearly") monthly = amt / 12
+      else if (sub.billing_cycle === "quarterly") monthly = amt / 3
+      else if (sub.billing_cycle === "weekly") monthly = amt * 4.33
+      return { ...sub, monthlyCost: monthly }
+    })
+
+    const totalMonthly = monthlyCosts.reduce((s, x) => s + x.monthlyCost, 0)
+    const totalYearly = totalMonthly * 12
+
+    // By category
+    const categoryMap: Record<string, number> = {}
+    monthlyCosts.forEach((sub) => {
+      const cat = sub.category || "Uncategorized"
+      categoryMap[cat] = (categoryMap[cat] || 0) + sub.monthlyCost
+    })
+    const categoryData = Object.entries(categoryMap)
+      .map(([name, value]) => ({ name, value: Math.round(value * 100) / 100 }))
+      .sort((a, b) => b.value - a.value)
+
+    // By billing cycle
+    const cycleMap: Record<string, number> = {}
+    subscriptions.forEach((sub) => {
+      cycleMap[sub.billing_cycle] = (cycleMap[sub.billing_cycle] || 0) + 1
+    })
+    const cycleData = Object.entries(cycleMap).map(([name, count]) => ({ name, count }))
+
+    // Top subscriptions
+    const topSubs = [...monthlyCosts].sort((a, b) => b.monthlyCost - a.monthlyCost).slice(0, 8)
+    const topSubsData = topSubs.map((s) => ({
+      name: s.name.length > 12 ? s.name.slice(0, 12) + "…" : s.name,
+      amount: Math.round(s.monthlyCost * 100) / 100,
+    }))
+
+    // Monthly projection (12 months)
+    const monthlyProjection = Array.from({ length: 12 }, (_, i) => {
+      const date = new Date()
+      date.setMonth(date.getMonth() + i)
+      return {
+        month: date.toLocaleDateString("en-US", { month: "short" }),
+        amount: Math.round(totalMonthly * 100) / 100,
+      }
+    })
+
+    return {
+      totalMonthly,
+      totalYearly,
+      activeCount: active.length,
+      totalCount: subscriptions.length,
+      categoryData,
+      cycleData,
+      topSubsData,
+      monthlyProjection,
+      avgPerSub: subscriptions.length > 0 ? totalMonthly / subscriptions.length : 0,
+    }
+  }, [subscriptions])
+
+  if (loading) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <RiLoader4Line className="size-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-96 items-center justify-center p-8">
+        <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-8 text-center">
+          <RiAlertLine className="mx-auto mb-4 size-12 text-destructive" />
+          <p className="text-foreground">{error}</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
+        <div className="mb-8">
+          <h1 className="font-display text-3xl font-bold text-foreground sm:text-4xl">Analytics</h1>
+          <p className="mt-2 text-muted-foreground">Insights into your subscription spending</p>
+        </div>
+
+        {/* Summary Cards */}
+        <div className="mb-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+          <div className="rounded-xl border border-border bg-card p-4">
+            <p className="text-xs font-medium text-muted-foreground">Monthly Spend</p>
+            <p className="mt-2 text-2xl font-bold text-foreground">{formatCurrency(analytics.totalMonthly, currency)}</p>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-4">
+            <p className="text-xs font-medium text-muted-foreground">Yearly Projection</p>
+            <p className="mt-2 text-2xl font-bold text-foreground">{formatCurrency(analytics.totalYearly, currency)}</p>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-4">
+            <p className="text-xs font-medium text-muted-foreground">Avg per Subscription</p>
+            <p className="mt-2 text-2xl font-bold text-foreground">{formatCurrency(analytics.avgPerSub, currency)}</p>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-4">
+            <p className="text-xs font-medium text-muted-foreground">Total / Active</p>
+            <p className="mt-2 text-2xl font-bold text-foreground">
+              {analytics.totalCount} / {analytics.activeCount}
+            </p>
+          </div>
+        </div>
+
+        {subscriptions.length === 0 ? (
+          <div className="rounded-xl border border-border bg-card p-12 text-center">
+            <RiPieChartLine className="mx-auto mb-4 size-12 text-muted-foreground" />
+            <p className="text-lg font-medium text-foreground">No subscriptions yet</p>
+            <p className="mt-1 text-sm text-muted-foreground">Add subscriptions to see analytics here</p>
+          </div>
+        ) : (
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Top Subscriptions Bar Chart */}
+            <div className="rounded-xl border border-border bg-card p-5">
+              <div className="mb-4 flex items-center gap-2">
+                <RiBarChartBoxLine className="size-5 text-foreground" />
+                <h2 className="text-lg font-semibold text-foreground">Top Subscriptions</h2>
+              </div>
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={analytics.topSubsData} layout="vertical" margin={{ left: 0, right: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis type="number" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
+                  <YAxis dataKey="name" type="category" width={90} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
+                  <Tooltip
+                    formatter={(value: number) => formatCurrency(value, currency) + "/mo"}
+                    contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }}
+                  />
+                  <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Category Breakdown Pie */}
+            <div className="rounded-xl border border-border bg-card p-5">
+              <div className="mb-4 flex items-center gap-2">
+                <RiPieChartLine className="size-5 text-foreground" />
+                <h2 className="text-lg font-semibold text-foreground">By Category</h2>
+              </div>
+              <ResponsiveContainer width="100%" height={280}>
+                <PieChart>
+                  <Pie
+                    data={analytics.categoryData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={100}
+                    dataKey="value"
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    labelLine={false}
+                  >
+                    {analytics.categoryData.map((_, idx) => (
+                      <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value: number) => formatCurrency(value, currency) + "/mo"} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* 12 Month Projection */}
+            <div className="rounded-xl border border-border bg-card p-5 lg:col-span-2">
+              <h2 className="mb-4 text-lg font-semibold text-foreground">12-Month Spending Projection</h2>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={analytics.monthlyProjection}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="month" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
+                  <YAxis tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
+                  <Tooltip
+                    formatter={(value: number) => formatCurrency(value, currency)}
+                    contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }}
+                  />
+                  <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Category Table */}
+            <div className="rounded-xl border border-border bg-card p-5 lg:col-span-2">
+              <h2 className="mb-4 text-lg font-semibold text-foreground">Category Breakdown</h2>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="pb-2 text-left font-medium text-muted-foreground">Category</th>
+                      <th className="pb-2 text-right font-medium text-muted-foreground">Monthly</th>
+                      <th className="pb-2 text-right font-medium text-muted-foreground">Yearly</th>
+                      <th className="pb-2 text-right font-medium text-muted-foreground">% of Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {analytics.categoryData.map((cat) => (
+                      <tr key={cat.name} className="border-b border-border/50">
+                        <td className="py-3 font-medium text-foreground">{cat.name}</td>
+                        <td className="py-3 text-right text-foreground">{formatCurrency(cat.value, currency)}</td>
+                        <td className="py-3 text-right text-muted-foreground">{formatCurrency(cat.value * 12, currency)}</td>
+                        <td className="py-3 text-right text-muted-foreground">
+                          {analytics.totalMonthly > 0 ? ((cat.value / analytics.totalMonthly) * 100).toFixed(1) : 0}%
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
