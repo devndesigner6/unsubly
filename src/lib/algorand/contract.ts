@@ -64,8 +64,8 @@ export async function deployEscrowContract(
   const { txid } = await algodClient.sendRawTransaction(signedTxns[0]).do()
   const result = await algosdk.waitForConfirmation(algodClient, txid, 4)
 
-  const appId = Number(result["application-index"])
-  const appAddress = algosdk.getApplicationAddress(appId)
+  const appId = Number(result.applicationIndex)
+  const appAddress = algosdk.getApplicationAddress(appId).toString()
 
   return { appId, appAddress, txnId: txid }
 }
