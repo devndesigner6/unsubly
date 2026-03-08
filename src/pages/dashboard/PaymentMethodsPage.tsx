@@ -5,7 +5,7 @@ import { Button } from "@/components/Button"
 import {
   RiAddLine, RiBankCardLine, RiDeleteBinLine, RiEditLine,
   RiLoader4Line, RiCloseLine, RiCheckLine, RiPaypalLine,
-  RiBankLine,
+  RiBankLine, RiAlertLine,
 } from "@remixicon/react"
 import type { Database } from "@/integrations/supabase/types"
 
@@ -27,6 +27,12 @@ const TYPE_OPTIONS: { value: PaymentMethodType; label: string }[] = [
   { value: "other", label: "Other" },
 ]
 
+/** Detects if a string looks like a credit/debit card number */
+function looksLikeCardNumber(value: string): boolean {
+  const digitsOnly = value.replace(/[\s\-]/g, "")
+  return /^\d{8,19}$/.test(digitsOnly)
+}
+
 function TypeIcon({ type }: { type: PaymentMethodType }) {
   switch (type) {
     case "paypal": return <RiPaypalLine className="size-5 text-muted-foreground" />
@@ -42,9 +48,11 @@ export default function PaymentMethodsPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [name, setName] = useState("")
+  const [nameError, setNameError] = useState("")
   const [type, setType] = useState<PaymentMethodType>("credit_card")
   const [lastFour, setLastFour] = useState("")
   const [saving, setSaving] = useState(false)
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
 
   async function load() {
     if (!user) return
@@ -59,8 +67,17 @@ export default function PaymentMethodsPage() {
 
   useEffect(() => { load() }, [user])
 
+  function handleNameChange(value: string) {
+    setName(value)
+    if (looksLikeCardNumber(value)) {
+      setNameError("Don't enter a full card number here — use a label like 'Visa ending 4242'")
+    } else {
+      setNameError("")
+    }
+  }
+
   async function handleSave() {
-    if (!user || !name.trim()) return
+    if (!user || !name.trim() || looksLikeCardNumber(name)) return
     setSaving(true)
     const payload = { name: name.trim(), type, last_four: lastFour || null }
     if (editingId) {
@@ -73,15 +90,16 @@ export default function PaymentMethodsPage() {
 
   async function handleDelete(id: string) {
     await supabase.from("payment_methods").delete().eq("id", id)
+    setDeleteConfirmId(null)
     load()
   }
 
   function startEdit(m: PaymentMethod) {
-    setEditingId(m.id); setName(m.name); setType(m.type); setLastFour(m.last_four || ""); setShowForm(true)
+    setEditingId(m.id); setName(m.name); setType(m.type); setLastFour(m.last_four || ""); setShowForm(true); setNameError("")
   }
 
   function resetForm() {
-    setName(""); setType("credit_card"); setLastFour(""); setShowForm(false); setEditingId(null)
+    setName(""); setType("credit_card"); setLastFour(""); setShowForm(false); setEditingId(null); setNameError("")
   }
 
   if (loading) {
@@ -113,12 +131,20 @@ export default function PaymentMethodsPage() {
             </button>
           </div>
           <div className="space-y-3">
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Name (e.g. Visa ending 4242)"
-              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            />
+            <div>
+              <input
+                value={name}
+                onChange={(e) => handleNameChange(e.target.value)}
+                placeholder="Name (e.g. Visa ending 4242)"
+                maxLength={100}
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+              {nameError && (
+                <p className="mt-1 flex items-center gap-1 text-xs text-destructive">
+                  <RiAlertLine className="size-3" /> {nameError}
+                </p>
+              )}
+            </div>
             <div className="flex gap-3">
               <select
                 value={type}
@@ -140,9 +166,35 @@ export default function PaymentMethodsPage() {
           </div>
           <div className="mt-4 flex justify-end gap-2">
             <Button variant="secondary" onClick={resetForm}>Cancel</Button>
-            <Button onClick={handleSave} disabled={saving || !name.trim()}>
+            <Button onClick={handleSave} disabled={saving || !name.trim() || !!nameError}>
               <RiCheckLine className="mr-1.5 size-4" /> {saving ? "Saving..." : "Save"}
             </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="mx-4 w-full max-w-sm rounded-xl border border-border bg-card p-6 shadow-lg">
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-full bg-destructive/10">
+                <RiDeleteBinLine className="size-5 text-destructive" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground">Delete payment method?</h3>
+                <p className="text-sm text-muted-foreground">This action cannot be undone.</p>
+              </div>
+            </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <Button variant="secondary" onClick={() => setDeleteConfirmId(null)}>Cancel</Button>
+              <Button
+                onClick={() => handleDelete(deleteConfirmId)}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete
+              </Button>
+            </div>
           </div>
         </div>
       )}
@@ -170,7 +222,7 @@ export default function PaymentMethodsPage() {
                 <button onClick={() => startEdit(m)} className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground">
                   <RiEditLine className="size-4" />
                 </button>
-                <button onClick={() => handleDelete(m.id)} className="rounded-lg p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive">
+                <button onClick={() => setDeleteConfirmId(m.id)} className="rounded-lg p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive">
                   <RiDeleteBinLine className="size-4" />
                 </button>
               </div>
