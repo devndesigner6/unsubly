@@ -33,6 +33,7 @@ import EscrowVaultsPage from "@/pages/dashboard/EscrowVaultsPage"
 import VaultDetailsPage from "@/pages/dashboard/VaultDetailsPage"
 import OnChainResumePage from "@/pages/dashboard/OnChainResumePage"
 import TransactionHistoryPage from "@/pages/dashboard/TransactionHistoryPage"
+import PublicResumePage from "@/pages/PublicResumePage"
 import NotFoundPage from "@/pages/NotFoundPage"
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -64,6 +65,9 @@ export default function App() {
               <Route element={<MarketingLayout />}>
                 <Route path="/" element={<HomePage />} />
               </Route>
+
+              {/* Public Resume (no auth required) */}
+              <Route path="/resume/:token" element={<PublicResumePage />} />
 
               {/* Auth */}
               <Route element={<AuthLayout />}>

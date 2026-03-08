@@ -1,10 +1,9 @@
 import { useAuth } from "@/lib/auth-context"
 import { supabase } from "@/integrations/supabase/client"
-import { Button } from "@/components/Button"
 import { Input } from "@/components/Input"
 import {
   RiLoader4Line, RiExchangeLine, RiSearchLine,
-  RiExternalLinkLine, RiAlertLine,
+  RiExternalLinkLine, RiAlertLine, RiArrowLeftLine, RiArrowRightLine,
 } from "@remixicon/react"
 import { useState, useEffect, useMemo } from "react"
 
@@ -21,12 +20,15 @@ interface OnchainPayment {
   subscription_id: string | null
 }
 
+const PAGE_SIZE = 25
+
 export default function TransactionHistoryPage() {
   const { user } = useAuth()
   const [payments, setPayments] = useState<OnchainPayment[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState("")
+  const [page, setPage] = useState(0)
 
   useEffect(() => {
     if (!user) return
@@ -62,6 +64,12 @@ export default function TransactionHistoryPage() {
         p.note?.toLowerCase().includes(q)
     )
   }, [payments, search])
+
+  // Reset page when search changes
+  useEffect(() => { setPage(0) }, [search])
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const paginated = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
 
   function truncate(str: string, len = 12) {
     if (str.length <= len) return str
@@ -133,56 +141,68 @@ export default function TransactionHistoryPage() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-xl border border-border bg-card">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-muted/50">
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Txn ID</th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Amount</th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground hidden sm:table-cell">From</th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground hidden md:table-cell">To</th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground hidden lg:table-cell">Block</th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Date</th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Explorer</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((p) => (
-                  <tr key={p.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
-                    <td className="px-4 py-3 font-mono text-xs text-foreground">
-                      {truncate(p.algorand_txn_id)}
-                    </td>
-                    <td className="px-4 py-3 font-semibold text-foreground">
-                      {p.amount} ALGO
-                    </td>
-                    <td className="px-4 py-3 font-mono text-xs text-muted-foreground hidden sm:table-cell">
-                      {truncate(p.sender_address)}
-                    </td>
-                    <td className="px-4 py-3 font-mono text-xs text-muted-foreground hidden md:table-cell">
-                      {p.recipient_address ? truncate(p.recipient_address) : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">
-                      {p.block_round ?? "—"}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {new Date(p.confirmed_at || p.created_at).toLocaleDateString()}
-                    </td>
-                    <td className="px-4 py-3">
-                      <a
-                        href={`https://testnet.explorer.perawallet.app/tx/${p.algorand_txn_id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-primary hover:underline"
-                      >
-                        <RiExternalLinkLine className="size-3.5" />
-                        View
-                      </a>
-                    </td>
+          <>
+            <div className="overflow-x-auto rounded-xl border border-border bg-card">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/50">
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">Txn ID</th>
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">Amount</th>
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground hidden sm:table-cell">From</th>
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground hidden md:table-cell">To</th>
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground hidden lg:table-cell">Block</th>
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">Date</th>
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">Explorer</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {paginated.map((p) => (
+                    <tr key={p.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                      <td className="px-4 py-3 font-mono text-xs text-foreground">{truncate(p.algorand_txn_id)}</td>
+                      <td className="px-4 py-3 font-semibold text-foreground">{p.amount} ALGO</td>
+                      <td className="px-4 py-3 font-mono text-xs text-muted-foreground hidden sm:table-cell">{truncate(p.sender_address)}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-muted-foreground hidden md:table-cell">{p.recipient_address ? truncate(p.recipient_address) : "—"}</td>
+                      <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">{p.block_round ?? "—"}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{new Date(p.confirmed_at || p.created_at).toLocaleDateString()}</td>
+                      <td className="px-4 py-3">
+                        <a href={`https://testnet.explorer.perawallet.app/tx/${p.algorand_txn_id}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">
+                          <RiExternalLinkLine className="size-3.5" /> View
+                        </a>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-4 flex items-center justify-between">
+                <p className="text-xs text-muted-foreground">
+                  Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, filtered.length)} of {filtered.length}
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setPage((p) => Math.max(0, p - 1))}
+                    disabled={page === 0}
+                    className="flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-50 transition-colors"
+                  >
+                    <RiArrowLeftLine className="size-3" /> Previous
+                  </button>
+                  <span className="text-xs text-muted-foreground">
+                    Page {page + 1} of {totalPages}
+                  </span>
+                  <button
+                    onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                    disabled={page >= totalPages - 1}
+                    className="flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-50 transition-colors"
+                  >
+                    Next <RiArrowRightLine className="size-3" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
