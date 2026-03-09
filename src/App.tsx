@@ -33,6 +33,7 @@ import EscrowVaultsPage from "@/pages/dashboard/EscrowVaultsPage"
 import VaultDetailsPage from "@/pages/dashboard/VaultDetailsPage"
 import OnChainResumePage from "@/pages/dashboard/OnChainResumePage"
 import TransactionHistoryPage from "@/pages/dashboard/TransactionHistoryPage"
+import AIOptimizerPage from "@/pages/dashboard/AIOptimizerPage"
 import PublicResumePage from "@/pages/PublicResumePage"
 import NotFoundPage from "@/pages/NotFoundPage"
 
@@ -98,6 +99,7 @@ export default function App() {
                 <Route path="/escrow-vaults/:id" element={<VaultDetailsPage />} />
                 <Route path="/onchain-resume" element={<OnChainResumePage />} />
                 <Route path="/transactions" element={<TransactionHistoryPage />} />
+                <Route path="/ai-optimizer" element={<AIOptimizerPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
               </Route>
 
