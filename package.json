@@ -1,33 +1,24 @@
 {
   "name": "unsubscribely",
   "version": "1.0.0",
-  "description": "A free, open-source subscription management app. Track all your subscriptions, get payment reminders, visualize spending analytics, and discover services through 100k+ programmatic SEO pages.",
+  "description": "DeFi subscription management on Algorand — escrow vaults, ARC-3 NFT receipts, and AI spending optimization",
   "author": "Kalash Vasaniya <kalashvasaniya@gmail.com>",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/kalashvasaniya/unsubscribely.git"
   },
-  "homepage": "https://unsubscribely.com",
-  "bugs": {
-    "url": "https://github.com/kalashvasaniya/unsubscribely/issues"
-  },
   "keywords": [
-    "subscription",
-    "tracker",
-    "finance",
-    "budgeting",
-    "nextjs",
-    "mongodb",
-    "open-source",
-    "seo",
-    "programmatic-seo",
-    "pseo",
-    "subscription-comparison",
-    "subscription-alternatives",
-    "saas-glossary",
-    "structured-data",
-    "json-ld"
+    "algorand",
+    "defi",
+    "escrow",
+    "subscription-management",
+    "smart-contracts",
+    "teal",
+    "arc-3",
+    "nft",
+    "ai-agent",
+    "algobharat"
   ],
   "scripts": {
     "dev": "vite",
