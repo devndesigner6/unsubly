@@ -33,6 +33,7 @@ import EscrowVaultsPage from "@/pages/dashboard/EscrowVaultsPage"
 import VaultDetailsPage from "@/pages/dashboard/VaultDetailsPage"
 import OnChainResumePage from "@/pages/dashboard/OnChainResumePage"
 import TransactionHistoryPage from "@/pages/dashboard/TransactionHistoryPage"
+import AIOptimizerPage from "@/pages/dashboard/AIOptimizerPage"
 import PublicResumePage from "@/pages/PublicResumePage"
 import NotFoundPage from "@/pages/NotFoundPage"
 
