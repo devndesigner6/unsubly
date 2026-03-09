@@ -27,7 +27,7 @@ export default function VaultDetailsPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { walletAddress, algodClient, peraWallet } = useAlgorand()
+  const { walletAddress, algodClient, peraWallet, network } = useAlgorand()
   const [vault, setVault] = useState<any>(null)
   const [onChainState, setOnChainState] = useState<OnChainState | null>(null)
   const [payments, setPayments] = useState<any[]>([])
