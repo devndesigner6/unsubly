@@ -3,14 +3,14 @@ import { useParams, Link, useNavigate } from "react-router-dom"
 import { useAuth } from "@/lib/auth-context"
 import { useAlgorand } from "@/lib/algorand/context"
 import { supabase } from "@/integrations/supabase/client"
-import { shortenAddress, getAddressExplorerUrl, getAlgoExplorerUrl, microalgosToAlgo } from "@/lib/algorand/constants"
-import { releaseEscrowFunds, killEscrowContract, deleteEscrowContract } from "@/lib/algorand/contract"
+import { shortenAddress, getAddressExplorerUrl, getAlgoExplorerUrl, microalgosToAlgo, VAULT_TYPE_LABELS, type VaultType } from "@/lib/algorand/constants"
+import { releaseEscrowFunds, killEscrowContract, deleteEscrowContract, approveMultiSig, mintNFTReceipt } from "@/lib/algorand/contract"
 import { Button } from "@/components/Button"
 import {
   RiArrowLeftLine, RiLoader4Line, RiShieldLine, RiExternalLinkLine,
   RiCodeLine, RiLockLine, RiLockUnlockLine, RiAlarmWarningLine,
   RiDeleteBinLine, RiRefreshLine, RiWalletLine, RiTimeLine,
-  RiUserLine, RiCoinLine,
+  RiUserLine, RiCoinLine, RiGroupLine, RiNftLine, RiCheckDoubleLine,
 } from "@remixicon/react"
 import algosdk from "algosdk"
 import { toast } from "sonner"
@@ -27,7 +27,7 @@ export default function VaultDetailsPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { walletAddress, algodClient, peraWallet } = useAlgorand()
+  const { walletAddress, algodClient, peraWallet, network } = useAlgorand()
   const [vault, setVault] = useState<any>(null)
   const [onChainState, setOnChainState] = useState<OnChainState | null>(null)
   const [payments, setPayments] = useState<any[]>([])
@@ -68,10 +68,7 @@ export default function VaultDetailsPage() {
     try {
       const appInfo = await algodClient.getApplicationByID(appId).do() as any
       const globalState: Record<string, string | number> = {}
-
-      // Handle both v2 and v3 response formats
-      const stateArray = appInfo.params?.globalState ?? appInfo.params?.["global-state"] ?? appInfo?.["global-state-schema"] ?? []
-
+      const stateArray = appInfo.params?.globalState ?? appInfo.params?.["global-state"] ?? []
       if (Array.isArray(stateArray)) {
         for (const item of stateArray) {
           const key = atob(item.key)
@@ -92,7 +89,7 @@ export default function VaultDetailsPage() {
       if (appAddress) {
         try {
           const acctInfo = await algodClient.accountInformation(appAddress).do() as any
-          balance = Number(acctInfo.amount ?? acctInfo?.amount ?? 0)
+          balance = Number(acctInfo.amount ?? 0)
         } catch {}
       }
 
@@ -128,7 +125,7 @@ export default function VaultDetailsPage() {
     try {
       const txnId = await releaseEscrowFunds(algodClient, walletAddress, vault.app_id, signTransaction)
       await supabase.from("escrow_vaults" as any).update({ status: "released", txn_id: txnId, released_at: new Date().toISOString() } as any).eq("id", vault.id)
-      await supabase.from("onchain_payments" as any).insert({ user_id: user!.id, subscription_id: vault.subscription_id, algorand_txn_id: txnId, amount: vault.amount, sender_address: vault.app_address || walletAddress, recipient_address: vault.escrow_address || walletAddress, note: `Released from App ${vault.app_id}` } as any)
+      await supabase.from("onchain_payments" as any).insert({ user_id: user!.id, subscription_id: vault.subscription_id, algorand_txn_id: txnId, amount: vault.amount, sender_address: vault.app_address || walletAddress, recipient_address: vault.escrow_address || walletAddress, note: `Released from ${VAULT_TYPE_LABELS[(vault.vault_type || "standard") as VaultType]} App ${vault.app_id}` } as any)
       toast.success("Funds released!", { description: `${vault.amount} ALGO sent to recipient` })
       loadVault()
     } catch (err: any) {
@@ -176,6 +173,47 @@ export default function VaultDetailsPage() {
     }
   }
 
+  const handleApproveMultiSig = async () => {
+    if (!walletAddress || !vault?.app_id) return
+    setIsProcessing(true)
+    setActionMsg("Approving multi-sig… (sign in Pera)")
+    try {
+      const txnId = await approveMultiSig(algodClient, walletAddress, vault.app_id, signTransaction)
+      await supabase.from("escrow_vaults" as any).update({ co_signer_approved: true, txn_id: txnId } as any).eq("id", vault.id)
+      await supabase.from("onchain_payments" as any).insert({ user_id: user!.id, subscription_id: vault.subscription_id, algorand_txn_id: txnId, amount: 0, sender_address: walletAddress, recipient_address: vault.app_address, note: `Multi-sig approval on App ${vault.app_id}` } as any)
+      toast.success("Multi-sig approved!", { description: "If both parties approved, funds will auto-release" })
+      loadVault()
+    } catch (err: any) {
+      toast.error("Approval failed", { description: err?.message || "Transaction failed" })
+    } finally {
+      setIsProcessing(false)
+      setActionMsg("")
+    }
+  }
+
+  const handleMintReceipt = async () => {
+    if (!walletAddress || !vault?.app_id) return
+    setIsProcessing(true)
+    setActionMsg("Minting ARC-3 NFT receipt… (sign in Pera)")
+    try {
+      const vType = (vault.vault_type || "standard") as VaultType
+      const { assetId, txnId } = await mintNFTReceipt(
+        algodClient, walletAddress, vault.app_id,
+        vault.amount, vault.escrow_address || walletAddress,
+        vType, network, signTransaction
+      )
+      await supabase.from("escrow_vaults" as any).update({ nft_asset_id: assetId } as any).eq("id", vault.id)
+      await supabase.from("onchain_payments" as any).insert({ user_id: user!.id, subscription_id: vault.subscription_id, algorand_txn_id: txnId, amount: 0, sender_address: walletAddress, recipient_address: walletAddress, note: `ARC-3 Receipt minted (ASA ${assetId}) for App ${vault.app_id}` } as any)
+      toast.success("NFT Receipt minted!", { description: `ASA ID: ${assetId}` })
+      loadVault()
+    } catch (err: any) {
+      toast.error("Minting failed", { description: err?.message || "Transaction failed" })
+    } finally {
+      setIsProcessing(false)
+      setActionMsg("")
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
@@ -194,6 +232,11 @@ export default function VaultDetailsPage() {
   }
 
   const isSmartContract = !!vault.app_id
+  const vType = (vault.vault_type || "standard") as VaultType
+  const isMultiSig = vType === "multi_sig"
+  const hasNFTReceipt = !!vault.nft_asset_id
+  const canMintReceipt = (vault.status === "released" || vault.status === "killed") && !hasNFTReceipt
+
   const statusColor: Record<string, string> = {
     locked: "text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400",
     released: "text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400",
@@ -218,11 +261,16 @@ export default function VaultDetailsPage() {
               {vault.status === "killed" && <RiAlarmWarningLine className="size-3" />}
               {vault.status.charAt(0).toUpperCase() + vault.status.slice(1)}
             </span>
+            {hasNFTReceipt && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+                <RiNftLine className="size-3" /> NFT #{vault.nft_asset_id}
+              </span>
+            )}
           </div>
           {isSmartContract && (
             <div className="flex items-center gap-1.5 mt-1 text-xs text-primary">
               <RiCodeLine className="size-3" />
-              <span className="font-medium">TEAL v10 Smart Contract</span>
+              <span className="font-medium">{VAULT_TYPE_LABELS[vType]} Contract (TEAL v10)</span>
               <span className="text-muted-foreground">• App ID: {vault.app_id}</span>
             </div>
           )}
@@ -258,9 +306,13 @@ export default function VaultDetailsPage() {
               <dd className="font-medium text-foreground">{vault.amount} {vault.currency}</dd>
             </div>
             <div className="flex justify-between text-sm">
+              <dt className="text-muted-foreground">Type</dt>
+              <dd className="font-medium text-foreground">{VAULT_TYPE_LABELS[vType]}</dd>
+            </div>
+            <div className="flex justify-between text-sm">
               <dt className="text-muted-foreground">Wallet</dt>
               <dd className="font-mono text-xs text-foreground">
-                <a href={getAddressExplorerUrl(vault.algorand_address)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
+                <a href={getAddressExplorerUrl(vault.algorand_address, network)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
                   {shortenAddress(vault.algorand_address)} <RiExternalLinkLine className="size-3" />
                 </a>
               </dd>
@@ -269,17 +321,58 @@ export default function VaultDetailsPage() {
               <div className="flex justify-between text-sm">
                 <dt className="text-muted-foreground">App Address</dt>
                 <dd className="font-mono text-xs text-foreground">
-                  <a href={getAddressExplorerUrl(vault.app_address)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
+                  <a href={getAddressExplorerUrl(vault.app_address, network)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
                     {shortenAddress(vault.app_address)} <RiExternalLinkLine className="size-3" />
                   </a>
                 </dd>
+              </div>
+            )}
+            {/* Type-specific info */}
+            {vType === "time_locked" && vault.unlock_time && (
+              <div className="flex justify-between text-sm">
+                <dt className="text-muted-foreground flex items-center gap-1"><RiTimeLine className="size-3.5" /> Unlock Time</dt>
+                <dd className="text-foreground">{new Date(vault.unlock_time).toLocaleString()}</dd>
+              </div>
+            )}
+            {isMultiSig && vault.co_signer_address && (
+              <div className="flex justify-between text-sm">
+                <dt className="text-muted-foreground flex items-center gap-1"><RiGroupLine className="size-3.5" /> Co-Signer</dt>
+                <dd className="font-mono text-xs text-foreground">
+                  <a href={getAddressExplorerUrl(vault.co_signer_address, network)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
+                    {shortenAddress(vault.co_signer_address)} <RiExternalLinkLine className="size-3" />
+                  </a>
+                </dd>
+              </div>
+            )}
+            {isMultiSig && (
+              <div className="flex justify-between text-sm">
+                <dt className="text-muted-foreground">Co-Signer Approved</dt>
+                <dd className={vault.co_signer_approved ? "text-green-600 dark:text-green-400 font-medium" : "text-muted-foreground"}>
+                  {vault.co_signer_approved ? "✓ Yes" : "✗ Pending"}
+                </dd>
+              </div>
+            )}
+            {vType === "dispute" && vault.arbitrator_address && (
+              <div className="flex justify-between text-sm">
+                <dt className="text-muted-foreground flex items-center gap-1"><RiShieldLine className="size-3.5" /> Arbitrator</dt>
+                <dd className="font-mono text-xs text-foreground">
+                  <a href={getAddressExplorerUrl(vault.arbitrator_address, network)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
+                    {shortenAddress(vault.arbitrator_address)} <RiExternalLinkLine className="size-3" />
+                  </a>
+                </dd>
+              </div>
+            )}
+            {vType === "asa" && vault.asset_id && (
+              <div className="flex justify-between text-sm">
+                <dt className="text-muted-foreground flex items-center gap-1"><RiCoinLine className="size-3.5" /> ASA ID</dt>
+                <dd className="font-medium text-foreground">{vault.asset_id}</dd>
               </div>
             )}
             {vault.txn_id && (
               <div className="flex justify-between text-sm">
                 <dt className="text-muted-foreground">Last Txn</dt>
                 <dd className="font-mono text-xs text-foreground">
-                  <a href={getAlgoExplorerUrl(vault.txn_id)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
+                  <a href={getAlgoExplorerUrl(vault.txn_id, network)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
                     {shortenAddress(vault.txn_id, 8)} <RiExternalLinkLine className="size-3" />
                   </a>
                 </dd>
@@ -342,7 +435,7 @@ export default function VaultDetailsPage() {
                   Status
                 </dt>
                 <dd className={`font-medium ${onChainState.appExists ? "text-green-600 dark:text-green-400" : "text-destructive"}`}>
-                  {onChainState.appExists ? "Live on Testnet" : "Deleted"}
+                  {onChainState.appExists ? `Live on ${network === "mainnet" ? "Mainnet" : "Testnet"}` : "Deleted"}
                 </dd>
               </div>
 
@@ -356,7 +449,7 @@ export default function VaultDetailsPage() {
                   <div className="flex justify-between text-sm">
                     <dt className="text-muted-foreground flex items-center gap-1.5"><RiUserLine className="size-3.5" /> Creator</dt>
                     <dd className="font-mono text-xs text-foreground">
-                      <a href={getAddressExplorerUrl(onChainState.creator)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
+                      <a href={getAddressExplorerUrl(onChainState.creator, network)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
                         {shortenAddress(onChainState.creator)} <RiExternalLinkLine className="size-3" />
                       </a>
                     </dd>
@@ -366,7 +459,7 @@ export default function VaultDetailsPage() {
                     <div className="flex justify-between text-sm">
                       <dt className="text-muted-foreground flex items-center gap-1.5"><RiWalletLine className="size-3.5" /> Recipient</dt>
                       <dd className="font-mono text-xs text-foreground">
-                        <a href={getAddressExplorerUrl(onChainState.recipient)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
+                        <a href={getAddressExplorerUrl(onChainState.recipient, network)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
                           {shortenAddress(onChainState.recipient)} <RiExternalLinkLine className="size-3" />
                         </a>
                       </dd>
@@ -423,12 +516,7 @@ export default function VaultDetailsPage() {
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <span>{new Date(p.created_at).toLocaleString()}</span>
                         {p.algorand_txn_id && (
-                          <a
-                            href={getAlgoExplorerUrl(p.algorand_txn_id)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-0.5 text-primary hover:text-primary/80"
-                          >
+                          <a href={getAlgoExplorerUrl(p.algorand_txn_id, network)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-0.5 text-primary hover:text-primary/80">
                             {shortenAddress(p.algorand_txn_id, 6)} <RiExternalLinkLine className="size-3" />
                           </a>
                         )}
@@ -475,12 +563,22 @@ export default function VaultDetailsPage() {
         </div>
       )}
 
+      {/* Action buttons */}
       {vault.status === "locked" && isSmartContract && !confirmAction && (
         <div className="mt-6 flex flex-wrap gap-3">
           <Button onClick={handleRelease} disabled={isProcessing || !walletAddress}>
             <RiLockUnlockLine className="mr-1.5 size-4" />
             {isProcessing ? "Processing…" : "Release Payment"}
           </Button>
+
+          {/* Multi-sig approve button */}
+          {isMultiSig && !vault.co_signer_approved && (
+            <Button variant="secondary" onClick={handleApproveMultiSig} disabled={isProcessing || !walletAddress}>
+              <RiCheckDoubleLine className="mr-1.5 size-4" />
+              Approve (Multi-Sig)
+            </Button>
+          )}
+
           <Button variant="destructive" onClick={() => setConfirmAction("kill")} disabled={isProcessing || !walletAddress}>
             <RiAlarmWarningLine className="mr-1.5 size-4" />
             Kill Switch
@@ -489,7 +587,15 @@ export default function VaultDetailsPage() {
       )}
 
       {(vault.status === "released" || vault.status === "killed") && isSmartContract && !confirmAction && (
-        <div className="mt-6">
+        <div className="mt-6 flex flex-wrap items-center gap-3">
+          {/* NFT Receipt Mint Button */}
+          {canMintReceipt && (
+            <Button variant="secondary" onClick={handleMintReceipt} disabled={isProcessing || !walletAddress}>
+              <RiNftLine className="mr-1.5 size-4" />
+              {isProcessing ? "Minting…" : "Mint ARC-3 Receipt"}
+            </Button>
+          )}
+
           <button
             onClick={() => setConfirmAction("delete")}
             disabled={isProcessing || !walletAddress}
