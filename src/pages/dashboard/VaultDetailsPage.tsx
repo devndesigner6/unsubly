@@ -199,11 +199,10 @@ export default function VaultDetailsPage() {
     setIsProcessing(true)
     setActionMsg("Minting ARC-3 NFT receipt… (sign in Pera)")
     try {
-      const vType = (vault.vault_type || "standard") as VaultType
       const { assetId, txnId } = await mintNFTReceipt(
         algodClient, walletAddress, vault.app_id,
         vault.amount, vault.escrow_address || walletAddress,
-        vType, network, signTransaction
+        signTransaction
       )
       await supabase.from("escrow_vaults" as any).update({ nft_asset_id: assetId } as any).eq("id", vault.id)
       await supabase.from("onchain_payments" as any).insert({ user_id: user!.id, subscription_id: vault.subscription_id, algorand_txn_id: txnId, amount: 0, sender_address: walletAddress, recipient_address: walletAddress, note: `ARC-3 Receipt minted (ASA ${assetId}) for App ${vault.app_id}` } as any)
