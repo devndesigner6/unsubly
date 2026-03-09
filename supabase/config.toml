@@ -13,3 +13,5 @@ project_id = "ipnywrvwszqlaykbkske"
     verify_jwt = false
   [functions.public-resume]
     verify_jwt = false
+  [functions.ai-optimizer]
+    verify_jwt = false
