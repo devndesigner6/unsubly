@@ -1,50 +1,13 @@
 /**
  * AlgoKit Utils integration layer
  * Wraps @algorandfoundation/algokit-utils for standardized Algorand interactions
- * Compatible with AlgoBharat Hack Series 3.0 requirements
  */
 import algosdk from "algosdk"
-import { AlgorandClient } from "@algorandfoundation/algokit-utils"
 import type { AlgorandNetwork } from "./constants"
 import { getNetworkConfig } from "./constants"
 
-let cachedClients: Map<AlgorandNetwork, AlgorandClient> = new Map()
-
 /**
- * Get or create an AlgorandClient instance for the given network
- */
-export function getAlgorandClient(network: AlgorandNetwork): AlgorandClient {
-  const existing = cachedClients.get(network)
-  if (existing) return existing
-
-  const config = getNetworkConfig(network)
-
-  const client = AlgorandClient.fromConfig({
-    algodConfig: {
-      server: config.algodServer,
-      port: config.algodPort,
-      token: config.algodToken,
-    },
-    indexerConfig: {
-      server: config.indexerServer,
-      port: config.indexerPort,
-      token: "",
-    },
-  })
-
-  cachedClients.set(network, client)
-  return client
-}
-
-/**
- * Clear cached clients (useful on network switch)
- */
-export function clearClientCache() {
-  cachedClients.clear()
-}
-
-/**
- * Get account info using AlgoKit patterns
+ * Get account info
  */
 export async function getAccountInfo(
   algodClient: algosdk.Algodv2,
@@ -72,7 +35,6 @@ export async function verifyApplication(
   try {
     const appInfo = await algodClient.getApplicationByID(appId).do() as any
     const globalState: Record<string, string | number> = {}
-
     const stateArray = appInfo.params?.globalState ?? appInfo.params?.["global-state"] ?? []
     if (Array.isArray(stateArray)) {
       for (const item of stateArray) {
@@ -89,36 +51,10 @@ export async function verifyApplication(
         }
       }
     }
-
-    return {
-      exists: true,
-      creator: String(appInfo.params?.creator ?? ""),
-      globalState,
-    }
+    return { exists: true, creator: String(appInfo.params?.creator ?? ""), globalState }
   } catch {
     return { exists: false }
   }
-}
-
-/**
- * Ensure minimum balance for a transaction
- */
-export function validateTransactionPrereqs(
-  balance: number,
-  requiredAmount: number,
-  minFee: number = 300_000 // 0.3 ALGO for MBR + fees
-): { valid: boolean; message?: string } {
-  if (balance <= 0) {
-    return { valid: false, message: "Wallet has 0 ALGO. Fund your wallet first." }
-  }
-  const total = requiredAmount + minFee
-  if (balance < total) {
-    return {
-      valid: false,
-      message: `Insufficient balance. Need ~${(total / 1_000_000).toFixed(4)} ALGO, have ${(balance / 1_000_000).toFixed(4)} ALGO.`
-    }
-  }
-  return { valid: true }
 }
 
 /**
@@ -146,9 +82,6 @@ export function createARC3Metadata(params: {
     standard: "arc3",
     name: `Payment Receipt #${params.appId}`,
     description: `Escrow vault payment receipt for ${params.amount} ALGO via ${params.vaultType} contract`,
-    image: "",
-    image_integrity: "",
-    image_mimetype: "",
     properties: {
       app_id: params.appId,
       amount: params.amount,
@@ -157,7 +90,27 @@ export function createARC3Metadata(params: {
       network: params.network,
       timestamp: new Date().toISOString(),
       platform: "Unsubscribely",
-      standard: "ARC-3",
     },
   }
+}
+
+/**
+ * Validate transaction prerequisites
+ */
+export function validateTransactionPrereqs(
+  balance: number,
+  requiredAmount: number,
+  minFee: number = 300_000
+): { valid: boolean; message?: string } {
+  if (balance <= 0) {
+    return { valid: false, message: "Wallet has 0 ALGO. Fund your wallet first." }
+  }
+  const total = requiredAmount + minFee
+  if (balance < total) {
+    return {
+      valid: false,
+      message: `Insufficient balance. Need ~${(total / 1_000_000).toFixed(4)} ALGO, have ${(balance / 1_000_000).toFixed(4)} ALGO.`
+    }
+  }
+  return { valid: true }
 }
