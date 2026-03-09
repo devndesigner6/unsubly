@@ -525,6 +525,14 @@ export default function VaultDetailsPage() {
             <RiLockUnlockLine className="mr-1.5 size-4" />
             {isProcessing ? "Processing…" : "Release Payment"}
           </Button>
+
+          {isMultiSig && !vault.co_signer_approved && (
+            <Button variant="secondary" onClick={handleApproveMultiSig} disabled={isProcessing || !walletAddress}>
+              <RiCheckboxMultipleLine className="mr-1.5 size-4" />
+              Approve (Multi-Sig)
+            </Button>
+          )}
+
           <Button variant="destructive" onClick={() => setConfirmAction("kill")} disabled={isProcessing || !walletAddress}>
             <RiAlarmWarningLine className="mr-1.5 size-4" />
             Kill Switch
@@ -533,7 +541,14 @@ export default function VaultDetailsPage() {
       )}
 
       {(vault.status === "released" || vault.status === "killed") && isSmartContract && !confirmAction && (
-        <div className="mt-6">
+        <div className="mt-6 flex flex-wrap items-center gap-3">
+          {canMintReceipt && (
+            <Button variant="secondary" onClick={handleMintReceipt} disabled={isProcessing || !walletAddress}>
+              <RiAwardLine className="mr-1.5 size-4" />
+              {isProcessing ? "Minting…" : "Mint ARC-3 Receipt"}
+            </Button>
+          )}
+
           <button
             onClick={() => setConfirmAction("delete")}
             disabled={isProcessing || !walletAddress}
