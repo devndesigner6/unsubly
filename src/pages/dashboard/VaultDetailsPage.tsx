@@ -176,6 +176,47 @@ export default function VaultDetailsPage() {
     }
   }
 
+  const handleApproveMultiSig = async () => {
+    if (!walletAddress || !vault?.app_id) return
+    setIsProcessing(true)
+    setActionMsg("Approving multi-sig… (sign in Pera)")
+    try {
+      const txnId = await approveMultiSig(algodClient, walletAddress, vault.app_id, signTransaction)
+      await supabase.from("escrow_vaults" as any).update({ co_signer_approved: true, txn_id: txnId } as any).eq("id", vault.id)
+      await supabase.from("onchain_payments" as any).insert({ user_id: user!.id, subscription_id: vault.subscription_id, algorand_txn_id: txnId, amount: 0, sender_address: walletAddress, recipient_address: vault.app_address, note: `Multi-sig approval on App ${vault.app_id}` } as any)
+      toast.success("Multi-sig approved!", { description: "If both parties approved, funds will auto-release" })
+      loadVault()
+    } catch (err: any) {
+      toast.error("Approval failed", { description: err?.message || "Transaction failed" })
+    } finally {
+      setIsProcessing(false)
+      setActionMsg("")
+    }
+  }
+
+  const handleMintReceipt = async () => {
+    if (!walletAddress || !vault?.app_id) return
+    setIsProcessing(true)
+    setActionMsg("Minting ARC-3 NFT receipt… (sign in Pera)")
+    try {
+      const vType = (vault.vault_type || "standard") as VaultType
+      const { assetId, txnId } = await mintNFTReceipt(
+        algodClient, walletAddress, vault.app_id,
+        vault.amount, vault.escrow_address || walletAddress,
+        vType, network, signTransaction
+      )
+      await supabase.from("escrow_vaults" as any).update({ nft_asset_id: assetId } as any).eq("id", vault.id)
+      await supabase.from("onchain_payments" as any).insert({ user_id: user!.id, subscription_id: vault.subscription_id, algorand_txn_id: txnId, amount: 0, sender_address: walletAddress, recipient_address: walletAddress, note: `ARC-3 Receipt minted (ASA ${assetId}) for App ${vault.app_id}` } as any)
+      toast.success("NFT Receipt minted!", { description: `ASA ID: ${assetId}` })
+      loadVault()
+    } catch (err: any) {
+      toast.error("Minting failed", { description: err?.message || "Transaction failed" })
+    } finally {
+      setIsProcessing(false)
+      setActionMsg("")
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
@@ -194,6 +235,10 @@ export default function VaultDetailsPage() {
   }
 
   const isSmartContract = !!vault.app_id
+  const vType = (vault.vault_type || "standard") as VaultType
+  const isMultiSig = vType === "multi_sig"
+  const hasNFTReceipt = !!vault.nft_asset_id
+  const canMintReceipt = (vault.status === "released" || vault.status === "killed") && !hasNFTReceipt
   const statusColor: Record<string, string> = {
     locked: "text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400",
     released: "text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400",
