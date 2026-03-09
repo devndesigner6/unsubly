@@ -16,6 +16,8 @@ export default defineConfig(({ mode }) => {
     ],
     define: {
       global: 'globalThis',
+      'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL),
+      'import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY': JSON.stringify(env.VITE_SUPABASE_PUBLISHABLE_KEY),
     },
     resolve: {
       alias: {
