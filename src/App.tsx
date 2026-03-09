@@ -99,6 +99,7 @@ export default function App() {
                 <Route path="/escrow-vaults/:id" element={<VaultDetailsPage />} />
                 <Route path="/onchain-resume" element={<OnChainResumePage />} />
                 <Route path="/transactions" element={<TransactionHistoryPage />} />
+                <Route path="/ai-optimizer" element={<AIOptimizerPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
               </Route>
 
