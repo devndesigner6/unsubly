@@ -47,6 +47,7 @@ const algorandNavigation = [
   { name: "Escrow Vaults", href: "/escrow-vaults", icon: RiShieldLine },
   { name: "On-Chain Resume", href: "/onchain-resume", icon: RiFileChartLine },
   { name: "Transactions", href: "/transactions", icon: RiExchangeLine },
+  { name: "AI Optimizer", href: "/ai-optimizer", icon: RiSparklingLine },
 ] as const
 
 const settingsNavigation = [
