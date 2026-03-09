@@ -3,14 +3,14 @@ import { useParams, Link, useNavigate } from "react-router-dom"
 import { useAuth } from "@/lib/auth-context"
 import { useAlgorand } from "@/lib/algorand/context"
 import { supabase } from "@/integrations/supabase/client"
-import { shortenAddress, getAddressExplorerUrl, getAlgoExplorerUrl, microalgosToAlgo } from "@/lib/algorand/constants"
-import { releaseEscrowFunds, killEscrowContract, deleteEscrowContract } from "@/lib/algorand/contract"
+import { shortenAddress, getAddressExplorerUrl, getAlgoExplorerUrl, microalgosToAlgo, VAULT_TYPE_LABELS, type VaultType } from "@/lib/algorand/constants"
+import { releaseEscrowFunds, killEscrowContract, deleteEscrowContract, approveMultiSig, mintNFTReceipt } from "@/lib/algorand/contract"
 import { Button } from "@/components/Button"
 import {
   RiArrowLeftLine, RiLoader4Line, RiShieldLine, RiExternalLinkLine,
   RiCodeLine, RiLockLine, RiLockUnlockLine, RiAlarmWarningLine,
   RiDeleteBinLine, RiRefreshLine, RiWalletLine, RiTimeLine,
-  RiUserLine, RiCoinLine,
+  RiUserLine, RiCoinLine, RiGroupLine, RiAwardLine, RiCheckboxMultipleLine,
 } from "@remixicon/react"
 import algosdk from "algosdk"
 import { toast } from "sonner"
