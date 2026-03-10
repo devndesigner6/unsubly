@@ -34,8 +34,15 @@ export default function RegisterPage() {
   const [success, setSuccess] = useState(false)
   const [submittedEmail, setSubmittedEmail] = useState("")
 
+  const strength = useMemo(() => getPasswordStrength(password), [password])
+  const isPasswordSecure = strength.passed >= 5
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!isPasswordSecure) {
+      setError("Please choose a stronger password.")
+      return
+    }
     setLoading(true)
     setError("")
 
