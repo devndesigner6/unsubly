@@ -1,9 +1,28 @@
 import { Button } from "@/components/Button"
 import { Logo } from "@/components/Logo"
-import { RiArrowRightLine, RiMailCheckLine } from "@remixicon/react"
+import { RiArrowRightLine, RiMailCheckLine, RiCheckLine, RiCloseLine } from "@remixicon/react"
 import { Link, useNavigate } from "react-router-dom"
 import { supabase } from "@/integrations/supabase/client"
-import { useState } from "react"
+import { useState, useMemo } from "react"
+
+const COMMON_PASSWORDS = new Set([
+  "password", "123456", "12345678", "qwerty", "abc123", "monkey", "master",
+  "dragon", "111111", "baseball", "iloveyou", "trustno1", "sunshine", "letmein",
+  "password1", "superman", "princess", "welcome", "shadow", "123456789",
+])
+
+function getPasswordStrength(pw: string) {
+  const checks = {
+    minLength: pw.length >= 8,
+    hasUpper: /[A-Z]/.test(pw),
+    hasLower: /[a-z]/.test(pw),
+    hasNumber: /\d/.test(pw),
+    hasSpecial: /[^A-Za-z0-9]/.test(pw),
+    notCommon: !COMMON_PASSWORDS.has(pw.toLowerCase()),
+  }
+  const passed = Object.values(checks).filter(Boolean).length
+  return { checks, passed, total: 6 }
+}
 
 export default function RegisterPage() {
   const navigate = useNavigate()
