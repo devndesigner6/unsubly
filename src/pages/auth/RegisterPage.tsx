@@ -180,12 +180,45 @@ export default function RegisterPage() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Min 6 characters"
+            placeholder="Min 8 characters, mixed case + number"
             required
-            minLength={6}
+            minLength={8}
             autoComplete="new-password"
             className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-colors focus:border-foreground/30 focus:ring-1 focus:ring-foreground/10"
           />
+          {password.length > 0 && (
+            <div className="mt-3 space-y-2">
+              {/* Strength bar */}
+              <div className="flex gap-1">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className={`h-1 flex-1 rounded-full transition-colors ${
+                      i < strength.passed
+                        ? strength.passed <= 2 ? "bg-destructive" : strength.passed <= 4 ? "bg-amber-500" : "bg-emerald-500"
+                        : "bg-muted"
+                    }`}
+                  />
+                ))}
+              </div>
+              {/* Checklist */}
+              <ul className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                {([
+                  ["minLength", "8+ characters"],
+                  ["hasUpper", "Uppercase letter"],
+                  ["hasLower", "Lowercase letter"],
+                  ["hasNumber", "A number"],
+                  ["hasSpecial", "Special character"],
+                  ["notCommon", "Not a common password"],
+                ] as const).map(([key, label]) => (
+                  <li key={key} className={`flex items-center gap-1.5 ${strength.checks[key] ? "text-emerald-600" : "text-muted-foreground"}`}>
+                    {strength.checks[key] ? <RiCheckLine className="size-3" /> : <RiCloseLine className="size-3" />}
+                    {label}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
 
         {error && (
@@ -197,7 +230,7 @@ export default function RegisterPage() {
         <Button
           type="submit"
           className="w-full rounded-full bg-foreground text-background hover:bg-foreground/90 py-6 text-sm font-medium gap-2 group"
-          disabled={loading}
+          disabled={loading || (password.length > 0 && !isPasswordSecure)}
         >
           <div className="flex size-6 items-center justify-center rounded-md bg-background/20">
             <RiArrowRightLine className="size-3.5 transition-transform group-hover:translate-x-0.5" />
