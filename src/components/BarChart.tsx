@@ -277,9 +277,9 @@ const Legend = React.forwardRef<HTMLOListElement, LegendProps>((props, ref) => {
         keyDownHandler(isKeyDowned)
       }, 300)
     } else {
-      clearInterval(intervalRef.current as NodeJS.Timeout)
+      if (intervalRef.current) clearInterval(intervalRef.current)
     }
-    return () => clearInterval(intervalRef.current as NodeJS.Timeout)
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
   }, [isKeyDowned, scrollToTest])
 
   const keyDown = (e: KeyboardEvent) => {
