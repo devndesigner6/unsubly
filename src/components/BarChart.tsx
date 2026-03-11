@@ -227,7 +227,7 @@ const Legend = React.forwardRef<HTMLOListElement, LegendProps>((props, ref) => {
   const scrollButtonsRef = React.useRef<HTMLDivElement>(null)
   const [hasScroll, setHasScroll] = React.useState<HasScrollProps | null>(null)
   const [isKeyDowned, setIsKeyDowned] = React.useState<string | null>(null)
-  const intervalRef = React.useRef<NodeJS.Timeout | null>(null)
+  const intervalRef = React.useRef<ReturnType<typeof setInterval> | null>(null)
 
   const checkScroll = React.useCallback(() => {
     const scrollable = scrollableRef?.current
