@@ -200,7 +200,7 @@ Create → Fund → [Time Lock / Co-Sign / Arbitrate] → Release → Mint Recei
 
 ## Team
 
-- **Kalash Vasaniya** — Full-stack development, smart contract design, AI integration
+- **Surya** — Full-stack development, smart contract design, AI integration
 
 ---
 
