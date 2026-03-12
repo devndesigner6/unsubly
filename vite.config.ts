@@ -14,6 +14,8 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     define: {
       global: "globalThis",
+      "process.env": {},
+      "process.browser": true,
       "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(env.VITE_SUPABASE_URL),
       "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(env.VITE_SUPABASE_PUBLISHABLE_KEY),
     },
