@@ -55,6 +55,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  // App root
   return (
     <BrowserRouter>
       <ThemeProvider defaultTheme="light" disableTransitionOnChange attribute="class">
