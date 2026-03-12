@@ -1,7 +1,7 @@
+import { Suspense, lazy } from "react"
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 import { ThemeProvider } from "next-themes"
 import { AuthProvider, useAuth } from "@/lib/auth-context"
-import { AlgorandProvider } from "@/lib/algorand/context"
 import { Toaster } from "@/components/ui/toaster"
 
 // Layouts
@@ -36,15 +36,29 @@ import TransactionHistoryPage from "@/pages/dashboard/TransactionHistoryPage"
 import PublicResumePage from "@/pages/PublicResumePage"
 import NotFoundPage from "@/pages/NotFoundPage"
 
+const AlgorandProviderLazy = lazy(async () => {
+  const { AlgorandProvider } = await import("@/lib/algorand/context")
+
+  return {
+    default: function AlgorandProviderWrapper({ children }: { children: React.ReactNode }) {
+      return <AlgorandProvider>{children}</AlgorandProvider>
+    },
+  }
+})
+
+function FullScreenLoader() {
+  return (
+    <div className="flex h-screen items-center justify-center bg-background">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+    </div>
+  )
+}
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
 
   if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    )
+    return <FullScreenLoader />
   }
 
   if (!user) {
@@ -55,58 +69,61 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  // App root
   return (
     <BrowserRouter>
       <ThemeProvider defaultTheme="light" disableTransitionOnChange attribute="class">
         <AuthProvider>
-          <AlgorandProvider>
-            <Routes>
-              {/* Marketing */}
-              <Route element={<MarketingLayout />}>
-                <Route path="/" element={<HomePage />} />
-              </Route>
+          <Routes>
+            {/* Marketing */}
+            <Route element={<MarketingLayout />}>
+              <Route path="/" element={<HomePage />} />
+            </Route>
 
-              {/* Public Resume (no auth required) */}
-              <Route path="/resume/:token" element={<PublicResumePage />} />
+            {/* Public Resume (no auth required) */}
+            <Route path="/resume/:token" element={<PublicResumePage />} />
 
-              {/* Auth */}
-              <Route element={<AuthLayout />}>
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
-                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                <Route path="/reset-password" element={<ResetPasswordPage />} />
-              </Route>
+            {/* Auth */}
+            <Route element={<AuthLayout />}>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
+            </Route>
 
-              {/* Dashboard (Protected) */}
-              <Route
-                element={
-                  <ProtectedRoute>
-                    <DashboardLayout />
-                  </ProtectedRoute>
-                }
-              >
-                <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/subscriptions" element={<SubscriptionsPage />} />
-                <Route path="/subscriptions/new" element={<NewSubscriptionPage />} />
-                <Route path="/subscriptions/:id" element={<EditSubscriptionPage />} />
-                <Route path="/calendar" element={<CalendarPage />} />
-                <Route path="/analytics" element={<AnalyticsPage />} />
-                <Route path="/folders" element={<FoldersPage />} />
-                <Route path="/tags" element={<TagsPage />} />
-                <Route path="/payment-methods" element={<PaymentMethodsPage />} />
-                <Route path="/escrow-vaults" element={<EscrowVaultsPage />} />
-                <Route path="/escrow-vaults/:id" element={<VaultDetailsPage />} />
-                <Route path="/onchain-resume" element={<OnChainResumePage />} />
-                <Route path="/transactions" element={<TransactionHistoryPage />} />
-                <Route path="/settings" element={<SettingsPage />} />
-              </Route>
+            {/* Dashboard (Protected) */}
+            <Route
+              element={
+                <ProtectedRoute>
+                  <Suspense fallback={<FullScreenLoader />}>
+                    <AlgorandProviderLazy>
+                      <DashboardLayout />
+                    </AlgorandProviderLazy>
+                  </Suspense>
+                </ProtectedRoute>
+              }
+            >
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/subscriptions" element={<SubscriptionsPage />} />
+              <Route path="/subscriptions/new" element={<NewSubscriptionPage />} />
+              <Route path="/subscriptions/:id" element={<EditSubscriptionPage />} />
+              <Route path="/calendar" element={<CalendarPage />} />
+              <Route path="/analytics" element={<AnalyticsPage />} />
+              <Route path="/folders" element={<FoldersPage />} />
+              <Route path="/tags" element={<TagsPage />} />
+              <Route path="/payment-methods" element={<PaymentMethodsPage />} />
+              <Route path="/escrow-vaults" element={<EscrowVaultsPage />} />
+              <Route path="/escrow-vaults/:id" element={<VaultDetailsPage />} />
+              <Route path="/onchain-resume" element={<OnChainResumePage />} />
+              <Route path="/transactions" element={<TransactionHistoryPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+            </Route>
 
-              <Route path="*" element={<NotFoundPage />} />
-            </Routes>
-          </AlgorandProvider>
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+          <Toaster />
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>
   )
 }
+
