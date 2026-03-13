@@ -1,9 +1,10 @@
 import { Button } from "@/components/Button"
 import { Logo } from "@/components/Logo"
-import { RiArrowRightLine, RiMailCheckLine, RiCheckLine, RiCloseLine } from "@remixicon/react"
+import { RiArrowRightLine, RiCheckLine, RiCloseLine } from "@remixicon/react"
 import { Link, useNavigate } from "react-router-dom"
 import { supabase } from "@/integrations/supabase/client"
 import { useState, useMemo } from "react"
+import { toast } from "sonner"
 
 const COMMON_PASSWORDS = new Set([
   "password", "123456", "12345678", "qwerty", "abc123", "monkey", "master",
@@ -31,8 +32,6 @@ export default function RegisterPage() {
   const [name, setName] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-  const [success, setSuccess] = useState(false)
-  const [submittedEmail, setSubmittedEmail] = useState("")
 
   const strength = useMemo(() => getPasswordStrength(password), [password])
   const isPasswordSecure = strength.passed >= 5
@@ -75,51 +74,9 @@ export default function RegisterPage() {
       return
     }
 
-    setSubmittedEmail(normalizedEmail)
-    setSuccess(true)
+    toast.success("Account created. You can sign in now.")
     setLoading(false)
-  }
-
-  if (success) {
-    return (
-      <div className="w-full max-w-md px-6 text-center">
-        <div className="mb-8 flex justify-center">
-          <div className="flex size-16 items-center justify-center rounded-2xl border border-border bg-muted">
-            <RiMailCheckLine className="size-8 text-foreground" />
-          </div>
-        </div>
-        <h1 className="font-display text-3xl sm:text-4xl text-foreground tracking-tight">
-          Check your email
-        </h1>
-        <p className="mt-3 text-sm text-muted-foreground max-w-xs mx-auto leading-relaxed">
-          We've sent a confirmation link to <span className="text-foreground font-medium">{submittedEmail}</span>. Please verify your account to continue.
-        </p>
-        <div className="mt-8 flex items-center justify-center gap-3">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => {
-              setSuccess(false)
-              setSubmittedEmail("")
-              setEmail("")
-              setPassword("")
-              setError("")
-            }}
-            className="rounded-full px-5 py-5 text-sm"
-          >
-            Use another email
-          </Button>
-          <Button asChild className="rounded-full bg-foreground text-background hover:bg-foreground/90 px-7 py-6 text-sm font-medium gap-2 group">
-            <Link to="/login">
-              <div className="flex size-6 items-center justify-center rounded-md bg-background/20">
-                <RiArrowRightLine className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-              </div>
-              Back to Sign In
-            </Link>
-          </Button>
-        </div>
-      </div>
-    )
+    navigate("/login")
   }
 
   return (
