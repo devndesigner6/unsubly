@@ -1,0 +1,33 @@
+I have an existing Lovable project (React + Vite + TypeScript) that uses Algorand blockchain for escrow vaults. Currently the smart contracts are written as raw TEAL strings inside a Supabase Edge Function. I need to restructure this into a proper AlgoKit-based Algorand project. Here's what I need:
+
+1. Install & Configure AlgoKit:
+
+Install algokit, algorand-python, algokit-utils, py-algorand-sdk via pip
+Create .algokit.toml config pointing to Testnet (https://testnet-api.algonode.cloud) since we can't run LocalNet/Docker in Replit
+2. Create 5 Smart Contracts using Algorand Python (ARC-4 compliant): All contracts should be in smart_contracts/ directory as proper ARC4Contract classes:
+
+smart_contracts/escrow/contract.py — Standard Escrow: GlobalState for creator, recipient, status. ABI methods: create(recipient), release(), kill(), delete(). Release pays recipient via inner transaction, kill refunds creator.
+
+smart_contracts/time_locked/contract.py — Time-Locked Escrow: Same as standard but adds unlock_time GlobalState. Release checks Global.latest_timestamp >= unlock_time.
+
+smart_contracts/multi_sig/contract.py — Multi-Sig Escrow: Adds co_signer, creator_approved, cosigner_approved states. Has approve() method — when both approve, auto-releases to recipient.
+
+smart_contracts/dispute/contract.py — Dispute Escrow: Adds arbitrator state. Both creator AND arbitrator can call release() or kill().
+
+smart_contracts/asa_escrow/contract.py — ASA Token Escrow: Handles Algorand Standard Assets instead of ALGO. Has optin() for app to opt into the ASA, release/kill use InnerTransaction.AssetTransfer.
+
+3. Create Tests:
+
+tests/test_escrow.py — Test create, fund, release, kill, unauthorized access rejection for each vault type
+Use algokit_utils testing helpers with Testnet
+4. Create Deployment Script:
+
+scripts/deploy.py — Deploy all 5 contracts to Testnet, print app IDs and addresses
+5. Generate TypeScript Clients:
+
+After building, generate TypeScript clients from ARC-32 artifacts using algokit generate client
+Output to frontend_integration/clients/ so I can copy them back to my Lovable frontend
+6. Build Configuration:
+
+Set up algokit project run build to compile all contracts and generate ARC-32 app specs in smart_contracts/artifacts/
+Important: Don't modify any existing frontend files (src/, public/, etc). This is purely adding the AlgoKit backend layer alongside the existing React app. The existing supabase/functions/algorand-compile/ edge function should remain untouched for now.
