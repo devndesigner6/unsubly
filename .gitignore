@@ -55,8 +55,8 @@ venv/
 .mypy_cache/
 .ruff_cache/
 
-# AlgoKit artifacts (compiled — regenerate with python scripts/build.py)
-smart_contracts/artifacts/
+# AlgoKit debug maps (large binary files, regenerate via python scripts/build.py)
+smart_contracts/artifacts/**/*.puya.map
 
 # Deployment secrets
 .env

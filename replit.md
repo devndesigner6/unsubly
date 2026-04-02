@@ -10,7 +10,7 @@ Unsubscribely allows users to manage recurring payments using on-chain escrow va
 
 - **Frontend**: React 19 + TypeScript + Tailwind CSS
 - **Build Tool**: Vite 7
-- **Blockchain**: Algorand (TEAL smart contracts, algosdk, Pera Wallet Connect)
+- **Blockchain**: Algorand (TEAL smart contracts, algosdk, multi-wallet via @txnlab/use-wallet-react v4)
 - **Smart Contracts**: Algorand Python (ARC-4 compliant, via AlgoKit)
 - **Backend/BaaS**: Supabase (PostgreSQL, Row Level Security, Auth, Edge Functions)
 - **AI**: Google Gemini 2.5 Flash (via Supabase Edge Functions)

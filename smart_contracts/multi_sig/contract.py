@@ -49,22 +49,23 @@ class MultiSigEscrow(ARC4Contract):
         """Record approval from creator or co-signer. Auto-releases when both approve."""
         assert self.status.value == UInt64(0), "Vault is not locked"
 
-        sender_bytes = Txn.sender
+        sender_addr = arc4.Address(Txn.sender)
 
-        if sender_bytes == self.creator.value.bytes:
+        if sender_addr == self.creator.value:
             self.creator_approved.value = UInt64(1)
-        elif sender_bytes == self.co_signer.value.bytes:
+        elif sender_addr == self.co_signer.value:
             self.cosigner_approved.value = UInt64(1)
         else:
             assert False, "Unauthorized approver"
 
         if self.creator_approved.value == UInt64(1) and self.cosigner_approved.value == UInt64(1):
-            balance = op.balance(Global.current_application_address)
-            min_balance = op.min_balance(Global.current_application_address)
+            app_addr = Global.current_application_address
+            balance = op.balance(app_addr)
+            min_balance = op.min_balance(app_addr)
             payout = balance - min_balance
 
             itxn.Payment(
-                receiver=self.recipient.value.bytes,
+                receiver=self.recipient.value.native,
                 amount=payout,
                 fee=0,
             ).submit()
@@ -74,15 +75,16 @@ class MultiSigEscrow(ARC4Contract):
     @arc4.abimethod(allow_actions=["NoOp"])
     def kill(self) -> None:
         """Creator can kill the vault and reclaim funds."""
-        assert Txn.sender == self.creator.value.bytes, "Only creator can kill"
+        assert arc4.Address(Txn.sender) == self.creator.value, "Only creator can kill"
         assert self.status.value == UInt64(0), "Vault is not locked"
 
-        balance = op.balance(Global.current_application_address)
-        min_balance = op.min_balance(Global.current_application_address)
+        app_addr = Global.current_application_address
+        balance = op.balance(app_addr)
+        min_balance = op.min_balance(app_addr)
         payout = balance - min_balance
 
         itxn.Payment(
-            receiver=self.creator.value.bytes,
+            receiver=self.creator.value.native,
             amount=payout,
             fee=0,
         ).submit()
@@ -92,12 +94,12 @@ class MultiSigEscrow(ARC4Contract):
     @arc4.abimethod(allow_actions=["DeleteApplication"])
     def delete(self) -> None:
         """Delete the application after it is no longer locked."""
-        assert Txn.sender == self.creator.value.bytes, "Only creator can delete"
+        assert arc4.Address(Txn.sender) == self.creator.value, "Only creator can delete"
         assert self.status.value != UInt64(0), "Vault still locked"
 
         itxn.Payment(
-            receiver=self.creator.value.bytes,
+            receiver=self.creator.value.native,
             amount=0,
-            close_remainder_to=self.creator.value.bytes,
+            close_remainder_to=self.creator.value.native,
             fee=0,
         ).submit()

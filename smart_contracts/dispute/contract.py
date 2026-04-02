@@ -42,18 +42,19 @@ class DisputeEscrow(ARC4Contract):
     @arc4.abimethod(allow_actions=["NoOp"])
     def release(self) -> None:
         """Release funds to recipient. Callable by creator or arbitrator."""
-        sender_bytes = Txn.sender
-        is_creator = sender_bytes == self.creator.value.bytes
-        is_arbitrator = sender_bytes == self.arbitrator.value.bytes
+        sender_addr = arc4.Address(Txn.sender)
+        is_creator = sender_addr == self.creator.value
+        is_arbitrator = sender_addr == self.arbitrator.value
         assert is_creator or is_arbitrator, "Only creator or arbitrator can release"
         assert self.status.value == UInt64(0), "Vault is not locked"
 
-        balance = op.balance(Global.current_application_address)
-        min_balance = op.min_balance(Global.current_application_address)
+        app_addr = Global.current_application_address
+        balance = op.balance(app_addr)
+        min_balance = op.min_balance(app_addr)
         payout = balance - min_balance
 
         itxn.Payment(
-            receiver=self.recipient.value.bytes,
+            receiver=self.recipient.value.native,
             amount=payout,
             fee=0,
         ).submit()
@@ -63,18 +64,19 @@ class DisputeEscrow(ARC4Contract):
     @arc4.abimethod(allow_actions=["NoOp"])
     def kill(self) -> None:
         """Reclaim funds to creator. Callable by creator or arbitrator."""
-        sender_bytes = Txn.sender
-        is_creator = sender_bytes == self.creator.value.bytes
-        is_arbitrator = sender_bytes == self.arbitrator.value.bytes
+        sender_addr = arc4.Address(Txn.sender)
+        is_creator = sender_addr == self.creator.value
+        is_arbitrator = sender_addr == self.arbitrator.value
         assert is_creator or is_arbitrator, "Only creator or arbitrator can kill"
         assert self.status.value == UInt64(0), "Vault is not locked"
 
-        balance = op.balance(Global.current_application_address)
-        min_balance = op.min_balance(Global.current_application_address)
+        app_addr = Global.current_application_address
+        balance = op.balance(app_addr)
+        min_balance = op.min_balance(app_addr)
         payout = balance - min_balance
 
         itxn.Payment(
-            receiver=self.creator.value.bytes,
+            receiver=self.creator.value.native,
             amount=payout,
             fee=0,
         ).submit()
@@ -84,12 +86,12 @@ class DisputeEscrow(ARC4Contract):
     @arc4.abimethod(allow_actions=["DeleteApplication"])
     def delete(self) -> None:
         """Delete the application after it is no longer locked."""
-        assert Txn.sender == self.creator.value.bytes, "Only creator can delete"
+        assert arc4.Address(Txn.sender) == self.creator.value, "Only creator can delete"
         assert self.status.value != UInt64(0), "Vault still locked"
 
         itxn.Payment(
-            receiver=self.creator.value.bytes,
+            receiver=self.creator.value.native,
             amount=0,
-            close_remainder_to=self.creator.value.bytes,
+            close_remainder_to=self.creator.value.native,
             fee=0,
         ).submit()

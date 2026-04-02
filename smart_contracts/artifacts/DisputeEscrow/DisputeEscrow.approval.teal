@@ -1,0 +1,313 @@
+#pragma version 11
+#pragma typetrack false
+
+// algopy.arc4.ARC4Contract.approval_program() -> uint64:
+main:
+    intcblock 0 1 32
+    bytecblock "status" "creator" "arbitrator" "recipient"
+    // smart_contracts/dispute/contract.py:13
+    // class DisputeEscrow(ARC4Contract):
+    pushbytes 0x24378d3c // method "delete()void"
+    txna ApplicationArgs 0
+    match main_delete_route@4
+
+main_switch_case_next@5:
+    // smart_contracts/dispute/contract.py:13
+    // class DisputeEscrow(ARC4Contract):
+    txn OnCompletion
+    !
+    assert
+    txn ApplicationID
+    bz main_create_NoOp@10
+    pushbytess 0x076bbd4d 0xb9c21155 // method "release()void", method "kill()void"
+    txna ApplicationArgs 0
+    match release kill
+    err
+
+main_create_NoOp@10:
+    // smart_contracts/dispute/contract.py:13
+    // class DisputeEscrow(ARC4Contract):
+    pushbytes 0x8a96980e // method "create(address,address)void"
+    txna ApplicationArgs 0
+    match create
+    err
+
+main_delete_route@4:
+    // smart_contracts/dispute/contract.py:86
+    // @arc4.abimethod(allow_actions=["DeleteApplication"])
+    txn OnCompletion
+    pushint 5 // DeleteApplication
+    ==
+    txn ApplicationID
+    &&
+    assert
+    b delete
+
+
+// smart_contracts.dispute.contract.DisputeEscrow.create[routing]() -> void:
+create:
+    // smart_contracts/dispute/contract.py:34
+    // @arc4.abimethod(allow_actions=["NoOp"], create="require")
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_2 // 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    txna ApplicationArgs 2
+    dup
+    len
+    intc_2 // 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    // smart_contracts/dispute/contract.py:37
+    // self.creator.value = arc4.Address(Txn.sender)
+    bytec_1 // "creator"
+    txn Sender
+    app_global_put
+    // smart_contracts/dispute/contract.py:38
+    // self.recipient.value = recipient
+    bytec_3 // "recipient"
+    uncover 2
+    app_global_put
+    // smart_contracts/dispute/contract.py:39
+    // self.arbitrator.value = arbitrator
+    bytec_2 // "arbitrator"
+    swap
+    app_global_put
+    // smart_contracts/dispute/contract.py:40
+    // self.status.value = UInt64(0)
+    bytec_0 // "status"
+    intc_0 // 0
+    app_global_put
+    // smart_contracts/dispute/contract.py:34
+    // @arc4.abimethod(allow_actions=["NoOp"], create="require")
+    intc_1 // 1
+    return
+
+
+// smart_contracts.dispute.contract.DisputeEscrow.release[routing]() -> void:
+release:
+    // smart_contracts/dispute/contract.py:45
+    // sender_addr = arc4.Address(Txn.sender)
+    txn Sender
+    // smart_contracts/dispute/contract.py:46
+    // is_creator = sender_addr == self.creator.value
+    intc_0 // 0
+    bytec_1 // "creator"
+    app_global_get_ex
+    assert // check self.creator exists
+    dig 1
+    ==
+    // smart_contracts/dispute/contract.py:47
+    // is_arbitrator = sender_addr == self.arbitrator.value
+    intc_0 // 0
+    bytec_2 // "arbitrator"
+    app_global_get_ex
+    assert // check self.arbitrator exists
+    uncover 2
+    ==
+    // smart_contracts/dispute/contract.py:48
+    // assert is_creator or is_arbitrator, "Only creator or arbitrator can release"
+    ||
+    assert // Only creator or arbitrator can release
+    // smart_contracts/dispute/contract.py:49
+    // assert self.status.value == UInt64(0), "Vault is not locked"
+    intc_0 // 0
+    bytec_0 // "status"
+    app_global_get_ex
+    assert // check self.status exists
+    !
+    assert // Vault is not locked
+    // smart_contracts/dispute/contract.py:51
+    // app_addr = Global.current_application_address
+    global CurrentApplicationAddress
+    // smart_contracts/dispute/contract.py:52
+    // balance = op.balance(app_addr)
+    dup
+    balance
+    // smart_contracts/dispute/contract.py:53
+    // min_balance = op.min_balance(app_addr)
+    swap
+    min_balance
+    // smart_contracts/dispute/contract.py:54
+    // payout = balance - min_balance
+    -
+    // smart_contracts/dispute/contract.py:56-60
+    // itxn.Payment(
+    //     receiver=self.recipient.value.native,
+    //     amount=payout,
+    //     fee=0,
+    // ).submit()
+    itxn_begin
+    // smart_contracts/dispute/contract.py:57
+    // receiver=self.recipient.value.native,
+    intc_0 // 0
+    bytec_3 // "recipient"
+    app_global_get_ex
+    assert // check self.recipient exists
+    itxn_field Receiver
+    itxn_field Amount
+    // smart_contracts/dispute/contract.py:56
+    // itxn.Payment(
+    intc_1 // pay
+    itxn_field TypeEnum
+    // smart_contracts/dispute/contract.py:59
+    // fee=0,
+    intc_0 // 0
+    itxn_field Fee
+    // smart_contracts/dispute/contract.py:56-60
+    // itxn.Payment(
+    //     receiver=self.recipient.value.native,
+    //     amount=payout,
+    //     fee=0,
+    // ).submit()
+    itxn_submit
+    // smart_contracts/dispute/contract.py:62
+    // self.status.value = UInt64(1)
+    bytec_0 // "status"
+    intc_1 // 1
+    app_global_put
+    // smart_contracts/dispute/contract.py:42
+    // @arc4.abimethod(allow_actions=["NoOp"])
+    intc_1 // 1
+    return
+
+
+// smart_contracts.dispute.contract.DisputeEscrow.kill[routing]() -> void:
+kill:
+    // smart_contracts/dispute/contract.py:67
+    // sender_addr = arc4.Address(Txn.sender)
+    txn Sender
+    // smart_contracts/dispute/contract.py:68
+    // is_creator = sender_addr == self.creator.value
+    intc_0 // 0
+    bytec_1 // "creator"
+    app_global_get_ex
+    assert // check self.creator exists
+    dup2
+    ==
+    // smart_contracts/dispute/contract.py:69
+    // is_arbitrator = sender_addr == self.arbitrator.value
+    intc_0 // 0
+    bytec_2 // "arbitrator"
+    app_global_get_ex
+    assert // check self.arbitrator exists
+    uncover 3
+    ==
+    // smart_contracts/dispute/contract.py:70
+    // assert is_creator or is_arbitrator, "Only creator or arbitrator can kill"
+    ||
+    assert // Only creator or arbitrator can kill
+    // smart_contracts/dispute/contract.py:71
+    // assert self.status.value == UInt64(0), "Vault is not locked"
+    intc_0 // 0
+    bytec_0 // "status"
+    app_global_get_ex
+    assert // check self.status exists
+    !
+    assert // Vault is not locked
+    // smart_contracts/dispute/contract.py:73
+    // app_addr = Global.current_application_address
+    global CurrentApplicationAddress
+    // smart_contracts/dispute/contract.py:74
+    // balance = op.balance(app_addr)
+    dup
+    balance
+    // smart_contracts/dispute/contract.py:75
+    // min_balance = op.min_balance(app_addr)
+    swap
+    min_balance
+    // smart_contracts/dispute/contract.py:76
+    // payout = balance - min_balance
+    -
+    // smart_contracts/dispute/contract.py:78-82
+    // itxn.Payment(
+    //     receiver=self.creator.value.native,
+    //     amount=payout,
+    //     fee=0,
+    // ).submit()
+    itxn_begin
+    itxn_field Amount
+    itxn_field Receiver
+    // smart_contracts/dispute/contract.py:78
+    // itxn.Payment(
+    intc_1 // pay
+    itxn_field TypeEnum
+    // smart_contracts/dispute/contract.py:81
+    // fee=0,
+    intc_0 // 0
+    itxn_field Fee
+    // smart_contracts/dispute/contract.py:78-82
+    // itxn.Payment(
+    //     receiver=self.creator.value.native,
+    //     amount=payout,
+    //     fee=0,
+    // ).submit()
+    itxn_submit
+    // smart_contracts/dispute/contract.py:84
+    // self.status.value = UInt64(2)
+    bytec_0 // "status"
+    pushint 2
+    app_global_put
+    // smart_contracts/dispute/contract.py:64
+    // @arc4.abimethod(allow_actions=["NoOp"])
+    intc_1 // 1
+    return
+
+
+// smart_contracts.dispute.contract.DisputeEscrow.delete[routing]() -> void:
+delete:
+    // smart_contracts/dispute/contract.py:89
+    // assert arc4.Address(Txn.sender) == self.creator.value, "Only creator can delete"
+    txn Sender
+    intc_0 // 0
+    bytec_1 // "creator"
+    app_global_get_ex
+    assert // check self.creator exists
+    swap
+    dig 1
+    ==
+    assert // Only creator can delete
+    // smart_contracts/dispute/contract.py:90
+    // assert self.status.value != UInt64(0), "Vault still locked"
+    intc_0 // 0
+    bytec_0 // "status"
+    app_global_get_ex
+    assert // check self.status exists
+    assert // Vault still locked
+    // smart_contracts/dispute/contract.py:92-97
+    // itxn.Payment(
+    //     receiver=self.creator.value.native,
+    //     amount=0,
+    //     close_remainder_to=self.creator.value.native,
+    //     fee=0,
+    // ).submit()
+    itxn_begin
+    dup
+    itxn_field CloseRemainderTo
+    // smart_contracts/dispute/contract.py:94
+    // amount=0,
+    intc_0 // 0
+    itxn_field Amount
+    itxn_field Receiver
+    // smart_contracts/dispute/contract.py:92
+    // itxn.Payment(
+    intc_1 // pay
+    itxn_field TypeEnum
+    // smart_contracts/dispute/contract.py:96
+    // fee=0,
+    intc_0 // 0
+    itxn_field Fee
+    // smart_contracts/dispute/contract.py:92-97
+    // itxn.Payment(
+    //     receiver=self.creator.value.native,
+    //     amount=0,
+    //     close_remainder_to=self.creator.value.native,
+    //     fee=0,
+    // ).submit()
+    itxn_submit
+    // smart_contracts/dispute/contract.py:86
+    // @arc4.abimethod(allow_actions=["DeleteApplication"])
+    intc_1 // 1
+    return

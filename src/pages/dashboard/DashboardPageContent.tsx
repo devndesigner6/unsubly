@@ -218,12 +218,12 @@ export default function DashboardPageContent() {
             </div>
             {!walletAddress ? (
               <button
-                onClick={connectWallet}
+                onClick={() => connectWallet()}
                 disabled={isConnecting}
                 className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
               >
                 <RiWalletLine className="size-4" />
-                {isConnecting ? "Connecting..." : "Connect Pera Wallet"}
+                {isConnecting ? "Connecting..." : "Connect Wallet"}
               </button>
             ) : (
               <a

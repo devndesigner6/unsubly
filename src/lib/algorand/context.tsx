@@ -1,6 +1,10 @@
-import { createContext, useContext, useEffect, useState, useCallback, useRef, type ReactNode } from "react"
-import { PeraWalletConnect } from "@perawallet/connect"
+import {
+  createContext, useContext, useEffect, useState, useCallback, useRef,
+  type ReactNode,
+} from "react"
 import algosdk from "algosdk"
+import { WalletManager, WalletId, NetworkId } from "@txnlab/use-wallet"
+import { WalletProvider, useWallet, useNetwork } from "@txnlab/use-wallet-react"
 import {
   getNetworkConfig, getStoredNetwork, setStoredNetwork, microalgosToAlgo,
   type AlgorandNetwork,
@@ -9,16 +13,25 @@ import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/lib/auth-context"
 import { toast } from "sonner"
 
+export type WalletType = "pera" | "defly" | "lute" | null
+
 interface AlgorandContextType {
   walletAddress: string | null
+  walletType: WalletType
   isConnecting: boolean
   balance: number
   isLoadingBalance: boolean
   network: AlgorandNetwork
-  connectWallet: () => Promise<void>
+  showWalletSelector: boolean
+  setShowWalletSelector: (show: boolean) => void
+  connectWallet: (walletId?: WalletId) => Promise<void>
   disconnectWallet: () => Promise<void>
   algodClient: algosdk.Algodv2
-  peraWallet: PeraWalletConnect
+  peraWallet: {
+    signTransaction: (
+      txnGroups: { txn: algosdk.Transaction }[][]
+    ) => Promise<Uint8Array[]>
+  }
   signAndSendTransaction: (txn: algosdk.Transaction) => Promise<string>
   refreshBalance: () => Promise<void>
   switchNetwork: (network: AlgorandNetwork) => void
@@ -32,28 +45,46 @@ export function useAlgorand() {
   return ctx
 }
 
-let peraInstance: PeraWalletConnect | null = null
-function getPeraWallet() {
-  if (!peraInstance) peraInstance = new PeraWalletConnect()
-  return peraInstance
-}
-
 function createAlgodClient(network: AlgorandNetwork) {
   const config = getNetworkConfig(network)
   return new algosdk.Algodv2(config.algodToken, config.algodServer, config.algodPort)
 }
 
-export function AlgorandProvider({ children }: { children: ReactNode }) {
+function toNetworkId(network: AlgorandNetwork): NetworkId {
+  return network === "mainnet" ? NetworkId.MAINNET : NetworkId.TESTNET
+}
+
+function createManager(network: AlgorandNetwork): WalletManager {
+  return new WalletManager({
+    wallets: [WalletId.PERA, WalletId.DEFLY, WalletId.LUTE],
+    defaultNetwork: toNetworkId(network),
+  })
+}
+
+function AlgorandBridge({
+  children,
+  network,
+  setNetworkState,
+}: {
+  children: ReactNode
+  network: AlgorandNetwork
+  setNetworkState: (n: AlgorandNetwork) => void
+}) {
   const { user } = useAuth()
-  const [network, setNetwork] = useState<AlgorandNetwork>(getStoredNetwork)
-  const [walletAddress, setWalletAddress] = useState<string | null>(null)
+  const { wallets, activeAddress, signTransactions } = useWallet()
+  const { setActiveNetwork } = useNetwork()
+
   const [isConnecting, setIsConnecting] = useState(false)
   const [balance, setBalance] = useState(0)
   const [isLoadingBalance, setIsLoadingBalance] = useState(false)
+  const [showWalletSelector, setShowWalletSelector] = useState(false)
   const algodClientRef = useRef(createAlgodClient(network))
   const hasMounted = useRef(false)
 
-  const algodClient = algodClientRef.current
+  const activeWallet = wallets.find((w) => w.isActive) ?? null
+  const walletType: WalletType = activeWallet
+    ? (activeWallet.id as WalletType)
+    : null
 
   const fetchBalance = useCallback(async (address: string) => {
     setIsLoadingBalance(true)
@@ -68,96 +99,165 @@ export function AlgorandProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const refreshBalance = useCallback(async () => {
-    if (walletAddress) await fetchBalance(walletAddress)
-  }, [walletAddress, fetchBalance])
+    if (activeAddress) await fetchBalance(activeAddress)
+  }, [activeAddress, fetchBalance])
 
-  const saveWalletToProfile = useCallback(async (address: string | null) => {
-    if (!user) return
-    await supabase.from("profiles").update({ algorand_address: address } as any).eq("id", user.id)
-  }, [user])
+  const saveWalletToProfile = useCallback(
+    async (address: string | null) => {
+      if (!user) return
+      await supabase
+        .from("profiles")
+        .update({ algorand_address: address } as any)
+        .eq("id", user.id)
+    },
+    [user]
+  )
 
   useEffect(() => {
     if (!user || hasMounted.current) return
     hasMounted.current = true
     const loadSaved = async () => {
-      const { data } = await supabase.from("profiles").select("algorand_address").eq("id", user.id).maybeSingle()
+      const { data } = await supabase
+        .from("profiles")
+        .select("algorand_address")
+        .eq("id", user.id)
+        .maybeSingle()
       if (data && (data as any).algorand_address) {
         const addr = (data as any).algorand_address as string
-        setWalletAddress(addr)
         fetchBalance(addr)
-        try {
-          const pera = getPeraWallet()
-          const accounts = await pera.reconnectSession()
-          if (accounts.length > 0 && accounts[0] === addr) {
-            pera.connector?.on("disconnect", () => setWalletAddress(null))
-          }
-        } catch {}
       }
     }
     loadSaved()
   }, [user, fetchBalance])
 
-  const connectWallet = useCallback(async () => {
-    setIsConnecting(true)
-    try {
-      const pera = getPeraWallet()
-      try { await pera.disconnect() } catch {}
-      const accounts = await pera.connect()
-      const addr = accounts[0]
-      setWalletAddress(addr)
-      await saveWalletToProfile(addr)
-      await fetchBalance(addr)
-      toast.success("Wallet connected", { description: `${addr.slice(0, 8)}...${addr.slice(-4)}` })
-      pera.connector?.on("disconnect", () => {
-        setWalletAddress(null)
-        saveWalletToProfile(null)
-        toast.info("Wallet disconnected")
-      })
-    } catch (err: any) {
-      if (err?.data?.type !== "CONNECT_MODAL_CLOSED") {
-        toast.error("Failed to connect wallet", { description: err?.message || "Please try again" })
-      }
-    } finally {
-      setIsConnecting(false)
+  useEffect(() => {
+    if (activeAddress) {
+      fetchBalance(activeAddress)
+      saveWalletToProfile(activeAddress)
     }
-  }, [fetchBalance, saveWalletToProfile])
+  }, [activeAddress, fetchBalance, saveWalletToProfile])
+
+  const connectWallet = useCallback(
+    async (walletId?: WalletId) => {
+      if (!walletId) {
+        setShowWalletSelector(true)
+        return
+      }
+      setIsConnecting(true)
+      try {
+        const wallet = wallets.find((w) => w.id === walletId)
+        if (!wallet) throw new Error(`Wallet ${walletId} not available`)
+        await wallet.connect()
+        wallet.setActive()
+        toast.success("Wallet connected", {
+          description: wallet.metadata.name,
+        })
+        setShowWalletSelector(false)
+      } catch (err: any) {
+        if (!err?.message?.toLowerCase().includes("cancel")) {
+          toast.error("Failed to connect wallet", {
+            description: err?.message || "Please try again",
+          })
+        }
+      } finally {
+        setIsConnecting(false)
+      }
+    },
+    [wallets]
+  )
 
   const disconnectWallet = useCallback(async () => {
-    try { await getPeraWallet().disconnect() } catch {}
-    setWalletAddress(null)
+    if (activeWallet) {
+      try {
+        await activeWallet.disconnect()
+      } catch {}
+    }
     setBalance(0)
     await saveWalletToProfile(null)
     toast.info("Wallet disconnected")
-  }, [saveWalletToProfile])
+  }, [activeWallet, saveWalletToProfile])
 
-  const signAndSendTransaction = useCallback(async (txn: algosdk.Transaction): Promise<string> => {
-    if (!walletAddress) throw new Error("Wallet not connected")
-    const pera = getPeraWallet()
-    const signedTxns = await pera.signTransaction([[{ txn }]])
-    const response = await algodClientRef.current.sendRawTransaction(signedTxns[0]).do()
-    const txid = typeof response === "object" && response !== null
-      ? String((response as any).txid ?? (response as any).txId ?? "")
-      : String(response)
-    await algosdk.waitForConfirmation(algodClientRef.current, txid, 4)
-    await refreshBalance()
-    return txid
-  }, [walletAddress, refreshBalance])
+  const peraWallet = {
+    signTransaction: async (
+      txnGroups: { txn: algosdk.Transaction }[][]
+    ): Promise<Uint8Array[]> => {
+      if (!activeAddress) throw new Error("Wallet not connected")
+      const txns = txnGroups.flat().map((t) => t.txn)
+      const signed = await signTransactions(txns)
+      return signed.filter((s): s is Uint8Array => s !== null)
+    },
+  }
 
-  const switchNetwork = useCallback((net: AlgorandNetwork) => {
-    setNetwork(net)
-    setStoredNetwork(net)
-    algodClientRef.current = createAlgodClient(net)
-    if (walletAddress) fetchBalance(walletAddress)
-    toast.info(`Switched to ${net === "mainnet" ? "Mainnet" : "Testnet"}`)
-  }, [walletAddress, fetchBalance])
+  const signAndSendTransaction = useCallback(
+    async (txn: algosdk.Transaction): Promise<string> => {
+      if (!activeAddress) throw new Error("Wallet not connected")
+      const signed = await signTransactions([txn])
+      const signedTxn = signed[0]
+      if (!signedTxn) throw new Error("Transaction signing failed")
+      const response = await algodClientRef.current
+        .sendRawTransaction(signedTxn)
+        .do()
+      const txid =
+        typeof response === "object" && response !== null
+          ? String(
+              (response as any).txid ??
+                (response as any).txId ??
+                ""
+            )
+          : String(response)
+      await algosdk.waitForConfirmation(algodClientRef.current, txid, 4)
+      await refreshBalance()
+      return txid
+    },
+    [activeAddress, signTransactions, refreshBalance]
+  )
+
+  const switchNetwork = useCallback(
+    (net: AlgorandNetwork) => {
+      setNetworkState(net)
+      setStoredNetwork(net)
+      algodClientRef.current = createAlgodClient(net)
+      setActiveNetwork(toNetworkId(net))
+      if (activeAddress) fetchBalance(activeAddress)
+      toast.info(`Switched to ${net === "mainnet" ? "Mainnet" : "Testnet"}`)
+    },
+    [activeAddress, fetchBalance, setNetworkState, setActiveNetwork]
+  )
 
   return (
-    <AlgorandContext.Provider value={{
-      walletAddress, isConnecting, balance, isLoadingBalance, network,
-      connectWallet, disconnectWallet, algodClient, peraWallet: getPeraWallet(),
-      signAndSendTransaction, refreshBalance, switchNetwork,
-    }}>
+    <AlgorandContext.Provider
+      value={{
+        walletAddress: activeAddress,
+        walletType,
+        isConnecting,
+        balance,
+        isLoadingBalance,
+        network,
+        showWalletSelector,
+        setShowWalletSelector,
+        connectWallet,
+        disconnectWallet,
+        algodClient: algodClientRef.current,
+        peraWallet,
+        signAndSendTransaction,
+        refreshBalance,
+        switchNetwork,
+      }}
+    >
       {children}
     </AlgorandContext.Provider>
+  )
+}
+
+export function AlgorandProvider({ children }: { children: ReactNode }) {
+  const [network, setNetwork] = useState<AlgorandNetwork>(getStoredNetwork)
+  const [manager] = useState(() => createManager(network))
+
+  return (
+    <WalletProvider manager={manager}>
+      <AlgorandBridge network={network} setNetworkState={setNetwork}>
+        {children}
+      </AlgorandBridge>
+    </WalletProvider>
   )
 }

@@ -1,0 +1,297 @@
+#pragma version 11
+#pragma typetrack false
+
+// algopy.arc4.ARC4Contract.approval_program() -> uint64:
+main:
+    intcblock 0 1
+    bytecblock "status" "creator" "recipient" "unlock_time"
+    // smart_contracts/time_locked/contract.py:13
+    // class TimeLockEscrow(ARC4Contract):
+    pushbytes 0x24378d3c // method "delete()void"
+    txna ApplicationArgs 0
+    match main_delete_route@4
+
+main_switch_case_next@5:
+    // smart_contracts/time_locked/contract.py:13
+    // class TimeLockEscrow(ARC4Contract):
+    txn OnCompletion
+    !
+    assert
+    txn ApplicationID
+    bz main_create_NoOp@10
+    pushbytess 0x076bbd4d 0xb9c21155 // method "release()void", method "kill()void"
+    txna ApplicationArgs 0
+    match release kill
+    err
+
+main_create_NoOp@10:
+    // smart_contracts/time_locked/contract.py:13
+    // class TimeLockEscrow(ARC4Contract):
+    pushbytes 0xc0b64352 // method "create(address,uint64)void"
+    txna ApplicationArgs 0
+    match create
+    err
+
+main_delete_route@4:
+    // smart_contracts/time_locked/contract.py:80
+    // @arc4.abimethod(allow_actions=["DeleteApplication"])
+    txn OnCompletion
+    pushint 5 // DeleteApplication
+    ==
+    txn ApplicationID
+    &&
+    assert
+    b delete
+
+
+// smart_contracts.time_locked.contract.TimeLockEscrow.create[routing]() -> void:
+create:
+    // smart_contracts/time_locked/contract.py:33
+    // @arc4.abimethod(allow_actions=["NoOp"], create="require")
+    txna ApplicationArgs 1
+    dup
+    len
+    pushint 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    txna ApplicationArgs 2
+    dup
+    len
+    pushint 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    btoi
+    // smart_contracts/time_locked/contract.py:36
+    // self.creator.value = arc4.Address(Txn.sender)
+    bytec_1 // "creator"
+    txn Sender
+    app_global_put
+    // smart_contracts/time_locked/contract.py:37
+    // self.recipient.value = recipient
+    bytec_2 // "recipient"
+    uncover 2
+    app_global_put
+    // smart_contracts/time_locked/contract.py:38
+    // self.status.value = UInt64(0)
+    bytec_0 // "status"
+    intc_0 // 0
+    app_global_put
+    // smart_contracts/time_locked/contract.py:39
+    // self.unlock_time.value = unlock_time
+    bytec_3 // "unlock_time"
+    swap
+    app_global_put
+    // smart_contracts/time_locked/contract.py:33
+    // @arc4.abimethod(allow_actions=["NoOp"], create="require")
+    intc_1 // 1
+    return
+
+
+// smart_contracts.time_locked.contract.TimeLockEscrow.release[routing]() -> void:
+release:
+    // smart_contracts/time_locked/contract.py:44
+    // assert arc4.Address(Txn.sender) == self.creator.value, "Only creator can release"
+    txn Sender
+    intc_0 // 0
+    bytec_1 // "creator"
+    app_global_get_ex
+    assert // check self.creator exists
+    ==
+    assert // Only creator can release
+    // smart_contracts/time_locked/contract.py:45
+    // assert self.status.value == UInt64(0), "Vault is not locked"
+    intc_0 // 0
+    bytec_0 // "status"
+    app_global_get_ex
+    assert // check self.status exists
+    !
+    assert // Vault is not locked
+    // smart_contracts/time_locked/contract.py:46
+    // assert Global.latest_timestamp >= self.unlock_time.value, "Time-lock not expired yet"
+    global LatestTimestamp
+    intc_0 // 0
+    bytec_3 // "unlock_time"
+    app_global_get_ex
+    assert // check self.unlock_time exists
+    >=
+    assert // Time-lock not expired yet
+    // smart_contracts/time_locked/contract.py:48
+    // app_addr = Global.current_application_address
+    global CurrentApplicationAddress
+    // smart_contracts/time_locked/contract.py:49
+    // balance = op.balance(app_addr)
+    dup
+    balance
+    // smart_contracts/time_locked/contract.py:50
+    // min_balance = op.min_balance(app_addr)
+    swap
+    min_balance
+    // smart_contracts/time_locked/contract.py:51
+    // payout = balance - min_balance
+    -
+    // smart_contracts/time_locked/contract.py:53-57
+    // itxn.Payment(
+    //     receiver=self.recipient.value.native,
+    //     amount=payout,
+    //     fee=0,
+    // ).submit()
+    itxn_begin
+    // smart_contracts/time_locked/contract.py:54
+    // receiver=self.recipient.value.native,
+    intc_0 // 0
+    bytec_2 // "recipient"
+    app_global_get_ex
+    assert // check self.recipient exists
+    itxn_field Receiver
+    itxn_field Amount
+    // smart_contracts/time_locked/contract.py:53
+    // itxn.Payment(
+    intc_1 // pay
+    itxn_field TypeEnum
+    // smart_contracts/time_locked/contract.py:56
+    // fee=0,
+    intc_0 // 0
+    itxn_field Fee
+    // smart_contracts/time_locked/contract.py:53-57
+    // itxn.Payment(
+    //     receiver=self.recipient.value.native,
+    //     amount=payout,
+    //     fee=0,
+    // ).submit()
+    itxn_submit
+    // smart_contracts/time_locked/contract.py:59
+    // self.status.value = UInt64(1)
+    bytec_0 // "status"
+    intc_1 // 1
+    app_global_put
+    // smart_contracts/time_locked/contract.py:41
+    // @arc4.abimethod(allow_actions=["NoOp"])
+    intc_1 // 1
+    return
+
+
+// smart_contracts.time_locked.contract.TimeLockEscrow.kill[routing]() -> void:
+kill:
+    // smart_contracts/time_locked/contract.py:64
+    // assert arc4.Address(Txn.sender) == self.creator.value, "Only creator can kill"
+    txn Sender
+    intc_0 // 0
+    bytec_1 // "creator"
+    app_global_get_ex
+    assert // check self.creator exists
+    swap
+    dig 1
+    ==
+    assert // Only creator can kill
+    // smart_contracts/time_locked/contract.py:65
+    // assert self.status.value == UInt64(0), "Vault is not locked"
+    intc_0 // 0
+    bytec_0 // "status"
+    app_global_get_ex
+    assert // check self.status exists
+    !
+    assert // Vault is not locked
+    // smart_contracts/time_locked/contract.py:67
+    // app_addr = Global.current_application_address
+    global CurrentApplicationAddress
+    // smart_contracts/time_locked/contract.py:68
+    // balance = op.balance(app_addr)
+    dup
+    balance
+    // smart_contracts/time_locked/contract.py:69
+    // min_balance = op.min_balance(app_addr)
+    swap
+    min_balance
+    // smart_contracts/time_locked/contract.py:70
+    // payout = balance - min_balance
+    -
+    // smart_contracts/time_locked/contract.py:72-76
+    // itxn.Payment(
+    //     receiver=self.creator.value.native,
+    //     amount=payout,
+    //     fee=0,
+    // ).submit()
+    itxn_begin
+    itxn_field Amount
+    itxn_field Receiver
+    // smart_contracts/time_locked/contract.py:72
+    // itxn.Payment(
+    intc_1 // pay
+    itxn_field TypeEnum
+    // smart_contracts/time_locked/contract.py:75
+    // fee=0,
+    intc_0 // 0
+    itxn_field Fee
+    // smart_contracts/time_locked/contract.py:72-76
+    // itxn.Payment(
+    //     receiver=self.creator.value.native,
+    //     amount=payout,
+    //     fee=0,
+    // ).submit()
+    itxn_submit
+    // smart_contracts/time_locked/contract.py:78
+    // self.status.value = UInt64(2)
+    bytec_0 // "status"
+    pushint 2
+    app_global_put
+    // smart_contracts/time_locked/contract.py:61
+    // @arc4.abimethod(allow_actions=["NoOp"])
+    intc_1 // 1
+    return
+
+
+// smart_contracts.time_locked.contract.TimeLockEscrow.delete[routing]() -> void:
+delete:
+    // smart_contracts/time_locked/contract.py:83
+    // assert arc4.Address(Txn.sender) == self.creator.value, "Only creator can delete"
+    txn Sender
+    intc_0 // 0
+    bytec_1 // "creator"
+    app_global_get_ex
+    assert // check self.creator exists
+    swap
+    dig 1
+    ==
+    assert // Only creator can delete
+    // smart_contracts/time_locked/contract.py:84
+    // assert self.status.value != UInt64(0), "Vault still locked"
+    intc_0 // 0
+    bytec_0 // "status"
+    app_global_get_ex
+    assert // check self.status exists
+    assert // Vault still locked
+    // smart_contracts/time_locked/contract.py:86-91
+    // itxn.Payment(
+    //     receiver=self.creator.value.native,
+    //     amount=0,
+    //     close_remainder_to=self.creator.value.native,
+    //     fee=0,
+    // ).submit()
+    itxn_begin
+    dup
+    itxn_field CloseRemainderTo
+    // smart_contracts/time_locked/contract.py:88
+    // amount=0,
+    intc_0 // 0
+    itxn_field Amount
+    itxn_field Receiver
+    // smart_contracts/time_locked/contract.py:86
+    // itxn.Payment(
+    intc_1 // pay
+    itxn_field TypeEnum
+    // smart_contracts/time_locked/contract.py:90
+    // fee=0,
+    intc_0 // 0
+    itxn_field Fee
+    // smart_contracts/time_locked/contract.py:86-91
+    // itxn.Payment(
+    //     receiver=self.creator.value.native,
+    //     amount=0,
+    //     close_remainder_to=self.creator.value.native,
+    //     fee=0,
+    // ).submit()
+    itxn_submit
+    // smart_contracts/time_locked/contract.py:80
+    // @arc4.abimethod(allow_actions=["DeleteApplication"])
+    intc_1 // 1
+    return

@@ -1,0 +1,358 @@
+#pragma version 11
+#pragma typetrack false
+
+// algopy.arc4.ARC4Contract.approval_program() -> uint64:
+main:
+    intcblock 0 1 4
+    bytecblock "status" "creator" "asa_id" "recipient"
+    // smart_contracts/asa_escrow/contract.py:14
+    // class ASAEscrow(ARC4Contract):
+    pushbytes 0x24378d3c // method "delete()void"
+    txna ApplicationArgs 0
+    match main_delete_route@4
+
+main_switch_case_next@5:
+    // smart_contracts/asa_escrow/contract.py:14
+    // class ASAEscrow(ARC4Contract):
+    txn OnCompletion
+    !
+    assert
+    txn ApplicationID
+    bz main_create_NoOp@11
+    pushbytess 0xdc0de7eb 0x076bbd4d 0xb9c21155 // method "optin()void", method "release()void", method "kill()void"
+    txna ApplicationArgs 0
+    match optin release kill
+    err
+
+main_create_NoOp@11:
+    // smart_contracts/asa_escrow/contract.py:14
+    // class ASAEscrow(ARC4Contract):
+    pushbytes 0xc0b64352 // method "create(address,uint64)void"
+    txna ApplicationArgs 0
+    match create
+    err
+
+main_delete_route@4:
+    // smart_contracts/asa_escrow/contract.py:99
+    // @arc4.abimethod(allow_actions=["DeleteApplication"])
+    txn OnCompletion
+    pushint 5 // DeleteApplication
+    ==
+    txn ApplicationID
+    &&
+    assert
+    b delete
+
+
+// smart_contracts.asa_escrow.contract.ASAEscrow.create[routing]() -> void:
+create:
+    // smart_contracts/asa_escrow/contract.py:34
+    // @arc4.abimethod(allow_actions=["NoOp"], create="require")
+    txna ApplicationArgs 1
+    dup
+    len
+    pushint 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    txna ApplicationArgs 2
+    dup
+    len
+    pushint 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    btoi
+    // smart_contracts/asa_escrow/contract.py:37
+    // self.creator.value = arc4.Address(Txn.sender)
+    bytec_1 // "creator"
+    txn Sender
+    app_global_put
+    // smart_contracts/asa_escrow/contract.py:38
+    // self.recipient.value = recipient
+    bytec_3 // "recipient"
+    uncover 2
+    app_global_put
+    // smart_contracts/asa_escrow/contract.py:39
+    // self.asa_id.value = asa_id
+    bytec_2 // "asa_id"
+    swap
+    app_global_put
+    // smart_contracts/asa_escrow/contract.py:40
+    // self.status.value = UInt64(0)
+    bytec_0 // "status"
+    intc_0 // 0
+    app_global_put
+    // smart_contracts/asa_escrow/contract.py:34
+    // @arc4.abimethod(allow_actions=["NoOp"], create="require")
+    intc_1 // 1
+    return
+
+
+// smart_contracts.asa_escrow.contract.ASAEscrow.optin[routing]() -> void:
+optin:
+    // smart_contracts/asa_escrow/contract.py:48
+    // assert arc4.Address(Txn.sender) == self.creator.value, "Only creator can opt in"
+    txn Sender
+    intc_0 // 0
+    bytec_1 // "creator"
+    app_global_get_ex
+    assert // check self.creator exists
+    ==
+    assert // Only creator can opt in
+    // smart_contracts/asa_escrow/contract.py:50
+    // asset = Asset(self.asa_id.value)
+    intc_0 // 0
+    bytec_2 // "asa_id"
+    app_global_get_ex
+    assert // check self.asa_id exists
+    // smart_contracts/asa_escrow/contract.py:52-57
+    // itxn.AssetTransfer(
+    //     xfer_asset=asset,
+    //     asset_receiver=Global.current_application_address,
+    //     asset_amount=UInt64(0),
+    //     fee=0,
+    // ).submit()
+    itxn_begin
+    // smart_contracts/asa_escrow/contract.py:54
+    // asset_receiver=Global.current_application_address,
+    global CurrentApplicationAddress
+    // smart_contracts/asa_escrow/contract.py:55
+    // asset_amount=UInt64(0),
+    intc_0 // 0
+    itxn_field AssetAmount
+    itxn_field AssetReceiver
+    itxn_field XferAsset
+    // smart_contracts/asa_escrow/contract.py:52
+    // itxn.AssetTransfer(
+    intc_2 // axfer
+    itxn_field TypeEnum
+    // smart_contracts/asa_escrow/contract.py:56
+    // fee=0,
+    intc_0 // 0
+    itxn_field Fee
+    // smart_contracts/asa_escrow/contract.py:52-57
+    // itxn.AssetTransfer(
+    //     xfer_asset=asset,
+    //     asset_receiver=Global.current_application_address,
+    //     asset_amount=UInt64(0),
+    //     fee=0,
+    // ).submit()
+    itxn_submit
+    // smart_contracts/asa_escrow/contract.py:42
+    // @arc4.abimethod(allow_actions=["NoOp"])
+    intc_1 // 1
+    return
+
+
+// smart_contracts.asa_escrow.contract.ASAEscrow.release[routing]() -> void:
+release:
+    // smart_contracts/asa_escrow/contract.py:62
+    // assert arc4.Address(Txn.sender) == self.creator.value, "Only creator can release"
+    txn Sender
+    intc_0 // 0
+    bytec_1 // "creator"
+    app_global_get_ex
+    assert // check self.creator exists
+    ==
+    assert // Only creator can release
+    // smart_contracts/asa_escrow/contract.py:63
+    // assert self.status.value == UInt64(0), "Vault is not locked"
+    intc_0 // 0
+    bytec_0 // "status"
+    app_global_get_ex
+    assert // check self.status exists
+    !
+    assert // Vault is not locked
+    // smart_contracts/asa_escrow/contract.py:65
+    // asset = Asset(self.asa_id.value)
+    intc_0 // 0
+    bytec_2 // "asa_id"
+    app_global_get_ex
+    assert // check self.asa_id exists
+    // smart_contracts/asa_escrow/contract.py:66
+    // app_address = Global.current_application_address
+    global CurrentApplicationAddress
+    // smart_contracts/asa_escrow/contract.py:67
+    // token_balance, asset_exists = op.AssetHoldingGet.asset_balance(app_address, asset)
+    dig 1
+    asset_holding_get AssetBalance
+    pop
+    // smart_contracts/asa_escrow/contract.py:69-75
+    // itxn.AssetTransfer(
+    //     xfer_asset=asset,
+    //     asset_receiver=self.recipient.value.native,
+    //     asset_amount=token_balance,
+    //     asset_close_to=self.recipient.value.native,
+    //     fee=0,
+    // ).submit()
+    itxn_begin
+    // smart_contracts/asa_escrow/contract.py:71
+    // asset_receiver=self.recipient.value.native,
+    intc_0 // 0
+    bytec_3 // "recipient"
+    app_global_get_ex
+    assert // check self.recipient exists
+    dup
+    itxn_field AssetCloseTo
+    itxn_field AssetReceiver
+    itxn_field AssetAmount
+    itxn_field XferAsset
+    // smart_contracts/asa_escrow/contract.py:69
+    // itxn.AssetTransfer(
+    intc_2 // axfer
+    itxn_field TypeEnum
+    // smart_contracts/asa_escrow/contract.py:74
+    // fee=0,
+    intc_0 // 0
+    itxn_field Fee
+    // smart_contracts/asa_escrow/contract.py:69-75
+    // itxn.AssetTransfer(
+    //     xfer_asset=asset,
+    //     asset_receiver=self.recipient.value.native,
+    //     asset_amount=token_balance,
+    //     asset_close_to=self.recipient.value.native,
+    //     fee=0,
+    // ).submit()
+    itxn_submit
+    // smart_contracts/asa_escrow/contract.py:77
+    // self.status.value = UInt64(1)
+    bytec_0 // "status"
+    intc_1 // 1
+    app_global_put
+    // smart_contracts/asa_escrow/contract.py:59
+    // @arc4.abimethod(allow_actions=["NoOp"])
+    intc_1 // 1
+    return
+
+
+// smart_contracts.asa_escrow.contract.ASAEscrow.kill[routing]() -> void:
+kill:
+    // smart_contracts/asa_escrow/contract.py:82
+    // assert arc4.Address(Txn.sender) == self.creator.value, "Only creator can kill"
+    txn Sender
+    intc_0 // 0
+    bytec_1 // "creator"
+    app_global_get_ex
+    assert // check self.creator exists
+    swap
+    dig 1
+    ==
+    assert // Only creator can kill
+    // smart_contracts/asa_escrow/contract.py:83
+    // assert self.status.value == UInt64(0), "Vault is not locked"
+    intc_0 // 0
+    bytec_0 // "status"
+    app_global_get_ex
+    assert // check self.status exists
+    !
+    assert // Vault is not locked
+    // smart_contracts/asa_escrow/contract.py:85
+    // asset = Asset(self.asa_id.value)
+    intc_0 // 0
+    bytec_2 // "asa_id"
+    app_global_get_ex
+    assert // check self.asa_id exists
+    // smart_contracts/asa_escrow/contract.py:86
+    // app_address = Global.current_application_address
+    global CurrentApplicationAddress
+    // smart_contracts/asa_escrow/contract.py:87
+    // token_balance, asset_exists = op.AssetHoldingGet.asset_balance(app_address, asset)
+    dig 1
+    asset_holding_get AssetBalance
+    pop
+    // smart_contracts/asa_escrow/contract.py:89-95
+    // itxn.AssetTransfer(
+    //     xfer_asset=asset,
+    //     asset_receiver=self.creator.value.native,
+    //     asset_amount=token_balance,
+    //     asset_close_to=self.creator.value.native,
+    //     fee=0,
+    // ).submit()
+    itxn_begin
+    dig 2
+    itxn_field AssetCloseTo
+    itxn_field AssetAmount
+    itxn_field XferAsset
+    itxn_field AssetReceiver
+    // smart_contracts/asa_escrow/contract.py:89
+    // itxn.AssetTransfer(
+    intc_2 // axfer
+    itxn_field TypeEnum
+    // smart_contracts/asa_escrow/contract.py:94
+    // fee=0,
+    intc_0 // 0
+    itxn_field Fee
+    // smart_contracts/asa_escrow/contract.py:89-95
+    // itxn.AssetTransfer(
+    //     xfer_asset=asset,
+    //     asset_receiver=self.creator.value.native,
+    //     asset_amount=token_balance,
+    //     asset_close_to=self.creator.value.native,
+    //     fee=0,
+    // ).submit()
+    itxn_submit
+    // smart_contracts/asa_escrow/contract.py:97
+    // self.status.value = UInt64(2)
+    bytec_0 // "status"
+    pushint 2
+    app_global_put
+    // smart_contracts/asa_escrow/contract.py:79
+    // @arc4.abimethod(allow_actions=["NoOp"])
+    intc_1 // 1
+    return
+
+
+// smart_contracts.asa_escrow.contract.ASAEscrow.delete[routing]() -> void:
+delete:
+    // smart_contracts/asa_escrow/contract.py:102
+    // assert arc4.Address(Txn.sender) == self.creator.value, "Only creator can delete"
+    txn Sender
+    intc_0 // 0
+    bytec_1 // "creator"
+    app_global_get_ex
+    assert // check self.creator exists
+    swap
+    dig 1
+    ==
+    assert // Only creator can delete
+    // smart_contracts/asa_escrow/contract.py:103
+    // assert self.status.value != UInt64(0), "Vault still locked"
+    intc_0 // 0
+    bytec_0 // "status"
+    app_global_get_ex
+    assert // check self.status exists
+    assert // Vault still locked
+    // smart_contracts/asa_escrow/contract.py:105-110
+    // itxn.Payment(
+    //     receiver=self.creator.value.native,
+    //     amount=0,
+    //     close_remainder_to=self.creator.value.native,
+    //     fee=0,
+    // ).submit()
+    itxn_begin
+    dup
+    itxn_field CloseRemainderTo
+    // smart_contracts/asa_escrow/contract.py:107
+    // amount=0,
+    intc_0 // 0
+    itxn_field Amount
+    itxn_field Receiver
+    // smart_contracts/asa_escrow/contract.py:105
+    // itxn.Payment(
+    intc_1 // pay
+    itxn_field TypeEnum
+    // smart_contracts/asa_escrow/contract.py:109
+    // fee=0,
+    intc_0 // 0
+    itxn_field Fee
+    // smart_contracts/asa_escrow/contract.py:105-110
+    // itxn.Payment(
+    //     receiver=self.creator.value.native,
+    //     amount=0,
+    //     close_remainder_to=self.creator.value.native,
+    //     fee=0,
+    // ).submit()
+    itxn_submit
+    // smart_contracts/asa_escrow/contract.py:99
+    // @arc4.abimethod(allow_actions=["DeleteApplication"])
+    intc_1 // 1
+    return

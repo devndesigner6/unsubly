@@ -45,7 +45,7 @@ class ASAEscrow(ARC4Contract):
         Opt the application account into the ASA so it can receive tokens.
         Must be called (and funded) by creator before transferring tokens.
         """
-        assert Txn.sender == self.creator.value.bytes, "Only creator can opt in"
+        assert arc4.Address(Txn.sender) == self.creator.value, "Only creator can opt in"
 
         asset = Asset(self.asa_id.value)
 
@@ -59,18 +59,18 @@ class ASAEscrow(ARC4Contract):
     @arc4.abimethod(allow_actions=["NoOp"])
     def release(self) -> None:
         """Transfer all held ASA tokens to recipient. Only callable by creator."""
-        assert Txn.sender == self.creator.value.bytes, "Only creator can release"
+        assert arc4.Address(Txn.sender) == self.creator.value, "Only creator can release"
         assert self.status.value == UInt64(0), "Vault is not locked"
 
         asset = Asset(self.asa_id.value)
         app_address = Global.current_application_address
-        token_balance, _ = op.AssetHoldingGet.asset_balance(app_address, asset)
+        token_balance, asset_exists = op.AssetHoldingGet.asset_balance(app_address, asset)
 
         itxn.AssetTransfer(
             xfer_asset=asset,
-            asset_receiver=self.recipient.value.bytes,
+            asset_receiver=self.recipient.value.native,
             asset_amount=token_balance,
-            asset_close_to=self.recipient.value.bytes,
+            asset_close_to=self.recipient.value.native,
             fee=0,
         ).submit()
 
@@ -79,18 +79,18 @@ class ASAEscrow(ARC4Contract):
     @arc4.abimethod(allow_actions=["NoOp"])
     def kill(self) -> None:
         """Return all held ASA tokens to creator. Only callable by creator."""
-        assert Txn.sender == self.creator.value.bytes, "Only creator can kill"
+        assert arc4.Address(Txn.sender) == self.creator.value, "Only creator can kill"
         assert self.status.value == UInt64(0), "Vault is not locked"
 
         asset = Asset(self.asa_id.value)
         app_address = Global.current_application_address
-        token_balance, _ = op.AssetHoldingGet.asset_balance(app_address, asset)
+        token_balance, asset_exists = op.AssetHoldingGet.asset_balance(app_address, asset)
 
         itxn.AssetTransfer(
             xfer_asset=asset,
-            asset_receiver=self.creator.value.bytes,
+            asset_receiver=self.creator.value.native,
             asset_amount=token_balance,
-            asset_close_to=self.creator.value.bytes,
+            asset_close_to=self.creator.value.native,
             fee=0,
         ).submit()
 
@@ -99,12 +99,12 @@ class ASAEscrow(ARC4Contract):
     @arc4.abimethod(allow_actions=["DeleteApplication"])
     def delete(self) -> None:
         """Delete the application after release or kill."""
-        assert Txn.sender == self.creator.value.bytes, "Only creator can delete"
+        assert arc4.Address(Txn.sender) == self.creator.value, "Only creator can delete"
         assert self.status.value != UInt64(0), "Vault still locked"
 
         itxn.Payment(
-            receiver=self.creator.value.bytes,
+            receiver=self.creator.value.native,
             amount=0,
-            close_remainder_to=self.creator.value.bytes,
+            close_remainder_to=self.creator.value.native,
             fee=0,
         ).submit()
