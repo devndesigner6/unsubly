@@ -45,6 +45,7 @@ export function shortenAddress(address: string, chars = 6): string {
   return `${address.slice(0, chars)}...${address.slice(-chars)}`
 }
 
+// ── Pera Explorer ─────────────────────────────────────────────────────────
 export function getAlgoExplorerUrl(txnId: string, network: AlgorandNetwork = "testnet"): string {
   const prefix = network === "mainnet" ? "" : "testnet."
   return `https://${prefix}explorer.perawallet.app/tx/${txnId}`
@@ -53,6 +54,19 @@ export function getAlgoExplorerUrl(txnId: string, network: AlgorandNetwork = "te
 export function getAddressExplorerUrl(address: string, network: AlgorandNetwork = "testnet"): string {
   const prefix = network === "mainnet" ? "" : "testnet."
   return `https://${prefix}explorer.perawallet.app/address/${address}`
+}
+
+// ── Lora Explorer (AlgoKit official) ──────────────────────────────────────
+export function getLoraTransactionUrl(txnId: string, network: AlgorandNetwork = "testnet"): string {
+  return `https://lora.algokit.io/${network}/transaction/${txnId}`
+}
+
+export function getLoraApplicationUrl(appId: number, network: AlgorandNetwork = "testnet"): string {
+  return `https://lora.algokit.io/${network}/application/${appId}`
+}
+
+export function getLoraAddressUrl(address: string, network: AlgorandNetwork = "testnet"): string {
+  return `https://lora.algokit.io/${network}/account/${address}`
 }
 
 export type VaultType = "standard" | "time_locked" | "multi_sig" | "dispute" | "asa"

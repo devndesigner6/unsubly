@@ -137,7 +137,7 @@ export default function EscrowVaultsPage() {
           <p className="mt-1 text-sm text-muted-foreground">
             {walletAddress
               ? "Create your first escrow vault to lock a subscription payment"
-              : "Connect your Pera Wallet to create escrow vaults"}
+              : "Connect your wallet (Pera, Defly, or Lute) to create escrow vaults"}
           </p>
         </div>
       ) : (

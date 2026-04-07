@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom"
 import { useAuth } from "@/lib/auth-context"
 import { useAlgorand } from "@/lib/algorand/context"
 import { supabase } from "@/integrations/supabase/client"
-import { shortenAddress, getAddressExplorerUrl, getAlgoExplorerUrl, microalgosToAlgo, VAULT_TYPE_LABELS, type VaultType } from "@/lib/algorand/constants"
+import { shortenAddress, getAddressExplorerUrl, getAlgoExplorerUrl, getLoraTransactionUrl, getLoraApplicationUrl, getLoraAddressUrl, microalgosToAlgo, VAULT_TYPE_LABELS, type VaultType } from "@/lib/algorand/constants"
 import { releaseEscrowFunds, killEscrowContract, deleteEscrowContract, approveMultiSig, mintNFTReceipt } from "@/lib/algorand/contract"
 import { Button } from "@/components/Button"
 import {
@@ -11,6 +11,7 @@ import {
   RiCodeLine, RiLockLine, RiLockUnlockLine, RiAlarmWarningLine,
   RiDeleteBinLine, RiRefreshLine, RiWalletLine, RiTimeLine,
   RiUserLine, RiCoinLine, RiGroupLine, RiAwardLine, RiCheckboxMultipleLine,
+  RiCheckLine,
 } from "@remixicon/react"
 import algosdk from "algosdk"
 import { toast } from "sonner"
@@ -39,6 +40,7 @@ export default function VaultDetailsPage() {
   const [chainError, setChainError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<"details" | "history">("details")
   const [confirmAction, setConfirmAction] = useState<"kill" | "delete" | null>(null)
+  const [releasedTxnId, setReleasedTxnId] = useState<string | null>(null)
 
   async function loadVault() {
     if (!user || !id) return
@@ -124,12 +126,28 @@ export default function VaultDetailsPage() {
   const handleRelease = async () => {
     if (!walletAddress || !vault?.app_id) return
     setIsProcessing(true)
-    setActionMsg("Releasing funds on-chain… (sign in Pera)")
+    setActionMsg("Releasing funds on-chain… (sign in your wallet)")
     try {
       const txnId = await releaseEscrowFunds(algodClient, walletAddress, vault.app_id, signTransaction)
       await supabase.from("escrow_vaults" as any).update({ status: "released", txn_id: txnId, released_at: new Date().toISOString() } as any).eq("id", vault.id)
       await supabase.from("onchain_payments" as any).insert({ user_id: user!.id, subscription_id: vault.subscription_id, algorand_txn_id: txnId, amount: vault.amount, sender_address: vault.app_address || walletAddress, recipient_address: vault.escrow_address || walletAddress, note: `Released from App ${vault.app_id}` } as any)
-      toast.success("Funds released!", { description: `${vault.amount} ALGO sent to recipient` })
+      setReleasedTxnId(txnId)
+      toast.success("Funds released!", {
+        description: (
+          <span>
+            {vault.amount} ALGO sent.{" "}
+            <a
+              href={getLoraTransactionUrl(txnId, network)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline font-medium"
+            >
+              View on Lora ↗
+            </a>
+          </span>
+        ) as any,
+        duration: 10000,
+      })
       loadVault()
     } catch (err: any) {
       toast.error("Release failed", { description: err?.message || "Transaction failed" })
@@ -179,7 +197,7 @@ export default function VaultDetailsPage() {
   const handleApproveMultiSig = async () => {
     if (!walletAddress || !vault?.app_id) return
     setIsProcessing(true)
-    setActionMsg("Approving multi-sig… (sign in Pera)")
+    setActionMsg("Approving multi-sig… (sign in your wallet)")
     try {
       const txnId = await approveMultiSig(algodClient, walletAddress, vault.app_id, signTransaction)
       await supabase.from("escrow_vaults" as any).update({ co_signer_approved: true, txn_id: txnId } as any).eq("id", vault.id)
@@ -197,7 +215,7 @@ export default function VaultDetailsPage() {
   const handleMintReceipt = async () => {
     if (!walletAddress || !vault?.app_id) return
     setIsProcessing(true)
-    setActionMsg("Minting ARC-3 NFT receipt… (sign in Pera)")
+    setActionMsg("Minting ARC-3 NFT receipt… (sign in your wallet)")
     try {
       const { assetId, txnId } = await mintNFTReceipt(
         algodClient, walletAddress, vault.app_id,
@@ -266,12 +284,65 @@ export default function VaultDetailsPage() {
           {isSmartContract && (
             <div className="flex items-center gap-1.5 mt-1 text-xs text-primary">
               <RiCodeLine className="size-3" />
-              <span className="font-medium">TEAL v10 Smart Contract</span>
-              <span className="text-muted-foreground">• App ID: {vault.app_id}</span>
+              <span className="font-medium">ARC-4 Smart Contract (TEAL v11)</span>
+              <span className="text-muted-foreground">•</span>
+              <a
+                href={getLoraApplicationUrl(vault.app_id, network)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-0.5 hover:text-primary/80"
+              >
+                App #{vault.app_id} <RiExternalLinkLine className="size-2.5" />
+              </a>
             </div>
           )}
         </div>
       </div>
+
+      {/* Lora release banner — shown after release action or for already-released vaults */}
+      {(() => {
+        const activeTxnId = releasedTxnId || (vault.status === "released" ? vault.txn_id : null)
+        if (!activeTxnId) return null
+        return (
+          <div className="mb-4 flex items-start gap-3 rounded-xl border border-green-200 bg-green-50 px-4 py-3.5 dark:border-green-800/40 dark:bg-green-900/20">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/40">
+              <RiCheckLine className="size-4 text-green-600 dark:text-green-400" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-green-800 dark:text-green-300">
+                Escrow funds released on-chain
+              </p>
+              <p className="mt-0.5 text-xs text-green-700 dark:text-green-400">
+                {vault.amount} {vault.currency} sent to recipient •{" "}
+                {vault.released_at && new Date(vault.released_at).toLocaleString()}
+              </p>
+              <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
+                <a
+                  href={getLoraTransactionUrl(activeTxnId, network)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 font-semibold text-green-700 underline underline-offset-2 hover:text-green-900 dark:text-green-400 dark:hover:text-green-200"
+                >
+                  <RiExternalLinkLine className="size-3.5" />
+                  View transaction on Lora Explorer
+                </a>
+                <span className="text-green-500/50">|</span>
+                <a
+                  href={getAlgoExplorerUrl(activeTxnId, network)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-0.5 text-green-600 hover:text-green-800 dark:text-green-500 dark:hover:text-green-300"
+                >
+                  Pera Explorer <RiExternalLinkLine className="size-3" />
+                </a>
+                <span className="font-mono text-green-600/70 dark:text-green-500/70">
+                  {shortenAddress(activeTxnId, 8)}
+                </span>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Tabs */}
       <div className="flex gap-1 rounded-lg bg-muted p-1 mb-4">
@@ -323,9 +394,14 @@ export default function VaultDetailsPage() {
               <div className="flex justify-between text-sm">
                 <dt className="text-muted-foreground">Last Txn</dt>
                 <dd className="font-mono text-xs text-foreground">
-                  <a href={getAlgoExplorerUrl(vault.txn_id)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
-                    {shortenAddress(vault.txn_id, 8)} <RiExternalLinkLine className="size-3" />
-                  </a>
+                  <span className="flex items-center gap-2">
+                    <a href={getLoraTransactionUrl(vault.txn_id, network)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-0.5 font-medium text-primary hover:text-primary/80">
+                      Lora <RiExternalLinkLine className="size-2.5" />
+                    </a>
+                    <a href={getAlgoExplorerUrl(vault.txn_id, network)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-0.5 text-muted-foreground hover:text-foreground">
+                      {shortenAddress(vault.txn_id, 6)} <RiExternalLinkLine className="size-2.5" />
+                    </a>
+                  </span>
                 </dd>
               </div>
             )}
@@ -400,7 +476,7 @@ export default function VaultDetailsPage() {
                   <div className="flex justify-between text-sm">
                     <dt className="text-muted-foreground flex items-center gap-1.5"><RiUserLine className="size-3.5" /> Creator</dt>
                     <dd className="font-mono text-xs text-foreground">
-                      <a href={getAddressExplorerUrl(onChainState.creator)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
+                      <a href={getLoraAddressUrl(onChainState.creator, network)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
                         {shortenAddress(onChainState.creator)} <RiExternalLinkLine className="size-3" />
                       </a>
                     </dd>
@@ -410,7 +486,7 @@ export default function VaultDetailsPage() {
                     <div className="flex justify-between text-sm">
                       <dt className="text-muted-foreground flex items-center gap-1.5"><RiWalletLine className="size-3.5" /> Recipient</dt>
                       <dd className="font-mono text-xs text-foreground">
-                        <a href={getAddressExplorerUrl(onChainState.recipient)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
+                        <a href={getLoraAddressUrl(onChainState.recipient, network)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
                           {shortenAddress(onChainState.recipient)} <RiExternalLinkLine className="size-3" />
                         </a>
                       </dd>
@@ -467,14 +543,24 @@ export default function VaultDetailsPage() {
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <span>{new Date(p.created_at).toLocaleString()}</span>
                         {p.algorand_txn_id && (
-                          <a
-                            href={getAlgoExplorerUrl(p.algorand_txn_id)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-0.5 text-primary hover:text-primary/80"
-                          >
-                            {shortenAddress(p.algorand_txn_id, 6)} <RiExternalLinkLine className="size-3" />
-                          </a>
+                          <span className="flex items-center gap-2">
+                            <a
+                              href={getLoraTransactionUrl(p.algorand_txn_id, network)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-0.5 font-medium text-primary hover:text-primary/80"
+                            >
+                              Lora <RiExternalLinkLine className="size-3" />
+                            </a>
+                            <a
+                              href={getAlgoExplorerUrl(p.algorand_txn_id, network)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-0.5 text-muted-foreground hover:text-foreground"
+                            >
+                              {shortenAddress(p.algorand_txn_id, 5)} <RiExternalLinkLine className="size-2.5" />
+                            </a>
+                          </span>
                         )}
                       </div>
                       <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
