@@ -1,0 +1,25 @@
+Agentic Commerce
+Objective: Create infrastructure for autonomous AI agents to transact, negotiate, and verify commerce on-chain. Solution examples include:
+
+Beginner
+1. Micropayment Systems (Tap-to-Stream) Pay-per-use infrastructure for digital content, enabling streaming payments of tiny amounts. Indian Market Context: Viable monetization for vernacular content creators and education platforms.
+
+2. Instant Checkout Links Generate one-click payment URLs that handle complex on-chain settlement logic in the background. Indian Market Context: simplifies crypto acceptance for social commerce sellers (WhatsApp/Instagram).
+
+Intermediate
+3. A2A Autonomous Payments Wallets controlled by AI agents with predefined spending limits and rule-based approval logic. Indian Market Context: Useful for recurring B2B payments or IoT service subscriptions.
+
+4. A2A Data Marketplace Platform where AI agents buy and sell proprietary datasets for model training or analysis. Indian Market Context: Monetization avenue for diverse Indian datasets (agriculture, traffic, language).
+
+5. Micro-Bounty dApp Task marketplace where small jobs are posted and verified, with instant crypto payouts. Indian Market Context: Supports gig economy and student developers seeking small tasks.
+
+6. Machine-to-Machine Transactions Trustless settlement layer for automated interactions between smart devices (e.g., EV charging). Indian Market Context: Critical infrastructure for smart cities and automated logistics.
+
+Advanced
+7. A2A Agentic Commerce Framework Standardized protocol for AI agents to discover services, negotiate prices, and execute payments autonomously. Indian Market Context: Enables automated procurement for SMEs and logistics optimization.
+
+8. A2A Lending Desk Automated agents that scan lending markets for best rates and manage loan positions. Indian Market Context: Helps corporate treasuries optimize yield on idle cash.
+
+9. DePin Infrastructure Decentralized Physical Infrastructure Networks managing IoT devices, sensors, or connectivity nodes. Indian Market Context: Incentivizes rollout of localized wifi or pollution monitoring networks.
+
+10. Agentic Payments Stack Full-stack API allowing non-crypto applications to embed AI-driven payment capabilities. Indian Market Context: Integration layer for existing ERPs and accounting software.
