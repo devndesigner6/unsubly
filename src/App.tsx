@@ -18,6 +18,7 @@ import LoginPage from "@/pages/auth/LoginPage"
 import RegisterPage from "@/pages/auth/RegisterPage"
 import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage"
 import ResetPasswordPage from "@/pages/auth/ResetPasswordPage"
+import AuthCallbackPage from "@/pages/auth/AuthCallbackPage"
 
 // Dashboard pages
 import DashboardPage from "@/pages/dashboard/DashboardPage"
@@ -85,7 +86,8 @@ export default function App() {
               <Route path="/" element={<HomePage />} />
             </Route>
 
-            {/* Public Resume (no auth required) */}
+            {/* Public / no-auth routes */}
+            <Route path="/auth/callback" element={<AuthCallbackPage />} />
             <Route path="/resume/:token" element={<PublicResumePage />} />
             <Route path="/vault-approve/:vaultId" element={<CoSignerApprovalPage />} />
 
