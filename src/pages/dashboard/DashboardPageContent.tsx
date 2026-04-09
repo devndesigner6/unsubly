@@ -3,7 +3,7 @@ import { useAlgorand } from "@/lib/algorand/context"
 import { fetchSubscriptions } from "@/lib/supabase-queries"
 import { fetchProfile } from "@/lib/supabase-queries"
 import { formatCurrency } from "@/lib/currency"
-import { shortenAddress, getAddressExplorerUrl } from "@/lib/algorand/constants"
+import { shortenAddress, getAddressExplorerUrl, getLoraTransactionUrl } from "@/lib/algorand/constants"
 import { cx } from "@/lib/utils"
 import { Button } from "@/components/Button"
 import { Link } from "react-router-dom"
@@ -19,7 +19,7 @@ import { useState, useEffect, useMemo, useRef } from "react"
 
 export default function DashboardPageContent() {
   const { user } = useAuth()
-  const { walletAddress, balance, isConnecting, connectWallet, isLoadingBalance } = useAlgorand()
+  const { walletAddress, balance, isConnecting, connectWallet, isLoadingBalance, network } = useAlgorand()
   const [subscriptions, setSubscriptions] = useState<any[]>([])
   const [profile, setProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -237,7 +237,7 @@ export default function DashboardPageContent() {
               </button>
             ) : (
               <a
-                href={getAddressExplorerUrl(walletAddress)}
+                href={getAddressExplorerUrl(walletAddress, network)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 text-xs text-primary hover:underline"
@@ -343,7 +343,7 @@ export default function DashboardPageContent() {
                         {p.amount ? `${Number(p.amount).toFixed(2)} ALGO` : ""} · {date}
                         {action.txid && (
                           <> · <a
-                            href={`https://lora.algokit.io/testnet/transaction/${action.txid}`}
+                            href={getLoraTransactionUrl(action.txid, network)}
                             target="_blank" rel="noopener noreferrer"
                             className="text-primary hover:underline"
                           >View tx ↗</a></>

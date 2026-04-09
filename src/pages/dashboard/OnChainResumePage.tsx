@@ -13,7 +13,7 @@ import { toast } from "sonner"
 
 export default function OnChainResumePage() {
   const { user } = useAuth()
-  const { walletAddress } = useAlgorand()
+  const { walletAddress, network } = useAlgorand()
   const [payments, setPayments] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [shareToken, setShareToken] = useState<string | null>(null)
@@ -139,7 +139,7 @@ export default function OnChainResumePage() {
             <div>
               <h2 className="text-lg font-bold text-foreground">Verified Payment Identity</h2>
               <a
-                href={getAddressExplorerUrl(walletAddress)}
+                href={getAddressExplorerUrl(walletAddress, network)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1 text-xs text-primary hover:underline font-mono"

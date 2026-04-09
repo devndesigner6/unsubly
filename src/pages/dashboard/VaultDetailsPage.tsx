@@ -375,7 +375,7 @@ export default function VaultDetailsPage() {
             <div className="flex justify-between text-sm">
               <dt className="text-muted-foreground">Wallet</dt>
               <dd className="font-mono text-xs text-foreground">
-                <a href={getAddressExplorerUrl(vault.algorand_address)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
+                <a href={getAddressExplorerUrl(vault.algorand_address, network)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
                   {shortenAddress(vault.algorand_address)} <RiExternalLinkLine className="size-3" />
                 </a>
               </dd>
@@ -384,7 +384,7 @@ export default function VaultDetailsPage() {
               <div className="flex justify-between text-sm">
                 <dt className="text-muted-foreground">App Address</dt>
                 <dd className="font-mono text-xs text-foreground">
-                  <a href={getAddressExplorerUrl(vault.app_address)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
+                  <a href={getAddressExplorerUrl(vault.app_address, network)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
                     {shortenAddress(vault.app_address)} <RiExternalLinkLine className="size-3" />
                   </a>
                 </dd>
