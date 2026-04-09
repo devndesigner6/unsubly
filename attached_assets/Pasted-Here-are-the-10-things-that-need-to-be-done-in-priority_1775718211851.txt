@@ -1,0 +1,33 @@
+Here are the 10 things that need to be done, in priority order, to maximize your chances of getting into Round 2:
+
+1. Fix Wallet Connection End-to-End
+Pera, Defly, and Lute wallet connect must work flawlessly on first click with no errors in the browser console. This is the single most critical thing — if a judge can't connect a wallet in the first 30 seconds, the demo is dead.
+
+2. Deploy All 5 Smart Contracts to Testnet with Real App IDs
+Run deploy.py and get actual Algorand Testnet Application IDs for all 5 vault types (Standard, Time-Locked, Multi-Sig, Dispute, ASA). These App IDs need to be visible on Lora Explorer to prove the contracts are real and live.
+
+3. Complete the Full Demo Flow Without a Single Failure
+The judges must see this exact sequence working: Connect wallet → Add subscription → Create vault → Fund it with test ALGO → Release funds → Lora Explorer shows the confirmed transaction. Every step must work with zero errors.
+
+4. Add One "Agentic" Feature to Justify the Track
+The biggest gap vs the Agentic Commerce track is automation. Add a simple background job or Supabase scheduled function that checks next_billing_date daily and automatically releases vaults linked to that subscription — no human click needed. This single addition makes the "autonomous" claim real and not just a narrative stretch.
+
+5. Wire the AI Optimizer to Actually Output Recommendations
+The Gemini AI integration needs to visibly analyze the user's subscriptions and show concrete output — "Cancel Netflix, you haven't used it in 3 months, saves ₹649/month." Right now if the AI feature is silent or broken, it's a wasted differentiator. Make it visible and impressive in the demo.
+
+6. Fund a Testnet Wallet and Pre-Run the Flow Before Recording
+Get test ALGO from bank.testnet.algorand.network, run the full vault flow at least 3 times before recording so you know every edge case. Have a backup funded wallet ready. Nothing kills a demo like running out of test ALGO mid-recording.
+
+7. Clean Up the GitHub Repository
+The repo needs: a strong README with a project description, a live demo link or GIF, architecture diagram showing Supabase + Algorand + AI layers, the 5 ARC-56 contract artifacts, and the actual Testnet App IDs documented. Judges will check the repo before watching the video.
+
+8. Record the Demo Video (3 Minutes Maximum)
+Structure: 30s — what problem it solves. 90s — live demo of the full vault flow with Lora Explorer confirmation. 30s — AI optimizer output. 30s — On-Chain Resume shareable link as proof of payment reputation. No slides, no talking over loading screens — fast, clean screen recording with real transactions.
+
+9. Write the Submission Description Targeting Agentic Commerce #3
+One paragraph that uses the track's own language: "autonomous," "rule-based approval logic," "recurring subscription payments," "predefined spending limits," "on-chain AI-driven payment agent." Judges often search for keyword matches between submission and track description.
+
+10. Add a "Kill Switch Demo" as Your Unique Differentiator
+No other project in this hackathon is likely showing an instant on-chain refund mechanism. Record killing a vault and showing the ALGO immediately returning to your wallet on Lora in under 5 seconds. This is visually impressive, easy to understand, and shows real blockchain value in a way that non-crypto judges can immediately grasp.
+
+Priority order if time is short:
