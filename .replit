@@ -41,3 +41,8 @@ externalPort = 3001
 deploymentTarget = "static"
 build = ["npm", "run", "build"]
 publicDir = "dist"
+
+[userenv]
+
+[userenv.shared]
+VITE_GROQ_API_KEY = "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"
