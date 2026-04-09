@@ -95,20 +95,12 @@ export default function AIOptimizerPage() {
         currency: userCurrency,
       }
 
-      const res = await fetch("/api/ai-optimizer", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          subscriptions,
-          vaults,
-          userCurrency,
-          totalMonthly,
-          totalVaultLocked,
-        }),
+      const { data, error: fnError } = await supabase.functions.invoke("ai-optimizer", {
+        body: { subscriptions, vaults, userCurrency, totalMonthly, totalVaultLocked },
       })
 
-      const data = await res.json()
-      if (!res.ok || data.error) throw new Error(data.error || "Analysis failed")
+      if (fnError) throw fnError
+      if (data?.error) throw new Error(data.error)
 
       setAnalysis(data.analysis)
       setStats(portfolioStats)
@@ -138,31 +130,14 @@ export default function AIOptimizerPage() {
           </div>
         </div>
 
-        {/* Portfolio Stats — shown after analysis */}
+        {/* Portfolio Stats */}
         {stats && (
           <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
             {[
-              {
-                icon: <RiMoneyDollarCircleLine className="size-4" />,
-                label: "Monthly Spend",
-                value: `${stats.currency} ${stats.totalMonthly.toFixed(2)}`,
-              },
-              {
-                icon: <RiMoneyDollarCircleLine className="size-4" />,
-                label: "Annual Projected",
-                value: `${stats.currency} ${stats.annualProjected.toFixed(2)}`,
-              },
-              {
-                icon: <RiLightbulbLine className="size-4" />,
-                label: "Active Subs",
-                value: String(stats.activeSubscriptions),
-              },
-              {
-                icon: <RiShieldLine className="size-4" />,
-                label: "Locked ALGO",
-                value: stats.lockedAlgo.toFixed(4),
-                highlight: true,
-              },
+              { icon: <RiMoneyDollarCircleLine className="size-4" />, label: "Monthly Spend", value: `${stats.currency} ${stats.totalMonthly.toFixed(2)}` },
+              { icon: <RiMoneyDollarCircleLine className="size-4" />, label: "Annual Projected", value: `${stats.currency} ${stats.annualProjected.toFixed(2)}` },
+              { icon: <RiLightbulbLine className="size-4" />, label: "Active Subs", value: String(stats.activeSubscriptions) },
+              { icon: <RiShieldLine className="size-4" />, label: "Locked ALGO", value: stats.lockedAlgo.toFixed(4), highlight: true },
             ].map(({ icon, label, value, highlight }) => (
               <div key={label} className="rounded-xl border border-border bg-card p-4">
                 <div className={`flex items-center gap-2 ${highlight ? "text-primary" : "text-muted-foreground"}`}>
@@ -175,7 +150,7 @@ export default function AIOptimizerPage() {
           </div>
         )}
 
-        {/* Empty state — run analysis prompt */}
+        {/* Empty state */}
         {!analysis && !loading && !error && (
           <div className="rounded-xl border border-dashed border-border bg-muted/30 p-12 text-center">
             <div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-primary/10">
