@@ -25,6 +25,7 @@ export default function TagsPage() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [name, setName] = useState("")
   const [color, setColor] = useState(COLORS[0])
   const [saving, setSaving] = useState(false)
@@ -56,6 +57,7 @@ export default function TagsPage() {
 
   async function handleDelete(id: string) {
     await supabase.from("tags").delete().eq("id", id)
+    setDeleteConfirmId(null)
     load()
   }
 
@@ -131,9 +133,16 @@ export default function TagsPage() {
               <button onClick={() => startEdit(t)} className="rounded-full p-1 text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-foreground">
                 <RiEditLine className="size-3.5" />
               </button>
-              <button onClick={() => handleDelete(t.id)} className="rounded-full p-1 text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive">
-                <RiDeleteBinLine className="size-3.5" />
-              </button>
+              {deleteConfirmId === t.id ? (
+                <div className="flex items-center gap-1">
+                  <button onClick={() => handleDelete(t.id)} className="rounded-full px-1.5 py-0.5 text-[10px] font-medium text-destructive bg-destructive/10 hover:bg-destructive/20">Del</button>
+                  <button onClick={() => setDeleteConfirmId(null)} className="rounded-full px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-muted">×</button>
+                </div>
+              ) : (
+                <button onClick={() => setDeleteConfirmId(t.id)} className="rounded-full p-1 text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive">
+                  <RiDeleteBinLine className="size-3.5" />
+                </button>
+              )}
             </div>
           ))
         )}

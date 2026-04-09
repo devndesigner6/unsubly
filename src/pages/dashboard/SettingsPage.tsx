@@ -4,13 +4,14 @@ import { useAlgorand } from "@/lib/algorand/context"
 import { fetchProfile, updateProfile } from "@/lib/supabase-queries"
 import { supabase } from "@/integrations/supabase/client"
 import algosdk from "algosdk"
+import { toast } from "sonner"
 
 import { Button } from "@/components/Button"
 import {
   RiLoader4Line, RiSaveLine, RiLogoutBoxLine, RiAlertLine,
   RiUserLine, RiMoneyDollarCircleLine, RiNotification3Line,
   RiShieldLine, RiCheckLine, RiLockPasswordLine,
-  RiArrowLeftRightLine, RiWalletLine,
+  RiArrowLeftRightLine, RiWalletLine, RiMailSendLine,
 } from "@remixicon/react"
 
 const CURRENCIES = ["USD", "EUR", "GBP", "INR", "AUD", "CAD", "JPY", "SGD", "AED"]
@@ -39,6 +40,7 @@ export default function SettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [passwordError, setPasswordError] = useState("")
   const [passwordSuccess, setPasswordSuccess] = useState(false)
+  const [sendingTestAlert, setSendingTestAlert] = useState(false)
 
   useEffect(() => {
     if (!user) return
@@ -110,11 +112,20 @@ export default function SettingsPage() {
     }
   }
 
+  function validatePasswordStrength(pwd: string): string | null {
+    if (pwd.length < 8) return "Password must be at least 8 characters"
+    if (!/[A-Z]/.test(pwd)) return "Password must contain at least one uppercase letter"
+    if (!/[a-z]/.test(pwd)) return "Password must contain at least one lowercase letter"
+    if (!/[0-9]/.test(pwd)) return "Password must contain at least one number"
+    return null
+  }
+
   async function handleChangePassword() {
     setPasswordError("")
     setPasswordSuccess(false)
-    if (newPassword.length < 6) {
-      setPasswordError("Password must be at least 6 characters")
+    const strengthError = validatePasswordStrength(newPassword)
+    if (strengthError) {
+      setPasswordError(strengthError)
       return
     }
     if (newPassword !== confirmPassword) {
@@ -129,6 +140,38 @@ export default function SettingsPage() {
       setNewPassword("")
       setConfirmPassword("")
       setTimeout(() => setPasswordSuccess(false), 3000)
+    }
+  }
+
+  async function handleSendTestAlert() {
+    if (!user) return
+    setSendingTestAlert(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-subscription-alerts`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({ type: "test" }),
+        }
+      )
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "Failed to send")
+      if (json.sent) {
+        toast.success("Test alert sent!", { description: `Check your inbox at ${user.email}` })
+      } else {
+        toast.info("Alert preview generated", {
+          description: json.reason || "Configure RESEND_API_KEY in Supabase to enable real email sending",
+        })
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to send test alert")
+    } finally {
+      setSendingTestAlert(false)
     }
   }
 
@@ -249,6 +292,23 @@ export default function SettingsPage() {
                 <span className={`absolute left-0.5 top-0.5 size-5 rounded-full bg-primary-foreground transition-transform ${weeklyDigest ? "translate-x-5" : ""}`} />
               </button>
             </label>
+            <div className="border-t border-border pt-4">
+              <p className="text-sm font-medium text-foreground mb-1">Test Email Alerts</p>
+              <p className="text-xs text-muted-foreground mb-3">
+                Send a preview of your upcoming renewal alerts to <span className="font-mono">{user?.email}</span>
+              </p>
+              <Button
+                variant="secondary"
+                onClick={handleSendTestAlert}
+                disabled={sendingTestAlert}
+              >
+                {sendingTestAlert ? (
+                  <><RiLoader4Line className="mr-2 size-4 animate-spin" />Sending...</>
+                ) : (
+                  <><RiMailSendLine className="mr-2 size-4" />Send Test Alert</>
+                )}
+              </Button>
+            </div>
           </div>
         </section>
 
@@ -318,7 +378,8 @@ export default function SettingsPage() {
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                placeholder="••••••••"
+                placeholder="Min 8 chars, uppercase, lowercase, number"
+                autoComplete="new-password"
               />
             </div>
             <div>
@@ -329,6 +390,7 @@ export default function SettingsPage() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 placeholder="••••••••"
+                autoComplete="new-password"
               />
             </div>
             {passwordError && <p className="text-sm text-destructive">{passwordError}</p>}

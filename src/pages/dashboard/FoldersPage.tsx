@@ -25,6 +25,7 @@ export default function FoldersPage() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [name, setName] = useState("")
   const [color, setColor] = useState(COLORS[0])
   const [saving, setSaving] = useState(false)
@@ -56,6 +57,7 @@ export default function FoldersPage() {
 
   async function handleDelete(id: string) {
     await supabase.from("folders").delete().eq("id", id)
+    setDeleteConfirmId(null)
     load()
   }
 
@@ -134,9 +136,16 @@ export default function FoldersPage() {
                 <button onClick={() => startEdit(f)} className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground">
                   <RiEditLine className="size-4" />
                 </button>
-                <button onClick={() => handleDelete(f.id)} className="rounded-lg p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive">
-                  <RiDeleteBinLine className="size-4" />
-                </button>
+                {deleteConfirmId === f.id ? (
+                  <div className="flex items-center gap-1">
+                    <button onClick={() => handleDelete(f.id)} className="rounded-lg px-2 py-1 text-xs font-medium text-destructive bg-destructive/10 hover:bg-destructive/20">Delete</button>
+                    <button onClick={() => setDeleteConfirmId(null)} className="rounded-lg px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-muted">Cancel</button>
+                  </div>
+                ) : (
+                  <button onClick={() => setDeleteConfirmId(f.id)} className="rounded-lg p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive">
+                    <RiDeleteBinLine className="size-4" />
+                  </button>
+                )}
               </div>
             </div>
           ))

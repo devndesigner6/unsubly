@@ -113,6 +113,7 @@ export default function EscrowVaultsPage() {
             </div>
           )}
         </div>
+        <span title={!walletAddress ? "Connect your Pera or Defly wallet first to create a vault" : undefined}>
         <button
           onClick={() => setShowCreateModal(true)}
           disabled={!walletAddress}
@@ -121,6 +122,7 @@ export default function EscrowVaultsPage() {
           <RiAddLine className="size-4" />
           Create Vault
         </button>
+        </span>
       </div>
 
       {/* Vault List */}

@@ -162,7 +162,7 @@ export default function TransactionHistoryPage() {
                   {paginated.map((p) => (
                     <tr key={p.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
                       <td className="px-4 py-3 font-mono text-xs text-foreground">{truncate(p.algorand_txn_id)}</td>
-                      <td className="px-4 py-3 font-semibold text-foreground">{p.amount} ALGO</td>
+                      <td className="px-4 py-3 font-semibold text-foreground">{Number(p.amount).toFixed(4)} ALGO</td>
                       <td className="px-4 py-3 font-mono text-xs text-muted-foreground hidden sm:table-cell">{truncate(p.sender_address)}</td>
                       <td className="px-4 py-3 font-mono text-xs text-muted-foreground hidden md:table-cell">{p.recipient_address ? truncate(p.recipient_address) : "—"}</td>
                       <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">{p.block_round ?? "—"}</td>

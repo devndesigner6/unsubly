@@ -9,7 +9,7 @@ import { Button } from "@/components/Button"
 import { Link } from "react-router-dom"
 import { supabase } from "@/integrations/supabase/client"
 import {
-  RiAddLine, RiWalletLine,
+  RiAddLine, RiWalletLine, RiEditLine,
   RiCalendarCheckLine, RiAlertLine, RiLoader4Line,
   RiPlayCircleLine,
   RiShieldLine, RiFileChartLine, RiLockLine,
@@ -313,10 +313,17 @@ export default function DashboardPageContent() {
                 </p>
               </div>
             </div>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-300">
-              <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Active
-            </span>
+            {agentActions.some((a: any) => a.payload?.mode === "on-chain") ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Configured
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 dark:bg-amber-900/30 px-2.5 py-1 text-xs font-medium text-amber-700 dark:text-amber-300">
+                <span className="size-1.5 rounded-full bg-amber-500" />
+                DB Only
+              </span>
+            )}
           </div>
 
           {agentActions.length === 0 ? (
@@ -386,24 +393,32 @@ export default function DashboardPageContent() {
               </div>
             ) : (
               subscriptions.slice(0, 5).map((sub) => (
-                <Link
+                <div
                   key={sub.id}
-                  to={`/subscriptions/${sub.id}`}
                   className="flex items-center justify-between p-4 transition-colors hover:bg-muted/50"
                 >
                   <div>
                     <p className="font-medium text-foreground">{sub.name}</p>
                     <p className="text-xs text-muted-foreground">{sub.category || "Uncategorized"} · {sub.billing_cycle}</p>
                   </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-foreground">
-                      {formatCurrency(sub.amount, sub.currency || currency)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(sub.next_billing_date).toLocaleDateString()}
-                    </p>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <p className="font-semibold text-foreground">
+                        {formatCurrency(sub.amount, sub.currency || currency)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(sub.next_billing_date).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <Link
+                      to={`/subscriptions/${sub.id}`}
+                      className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                    >
+                      <RiEditLine className="size-3.5" />
+                      Edit
+                    </Link>
                   </div>
-                </Link>
+                </div>
               ))
             )}
           </div>

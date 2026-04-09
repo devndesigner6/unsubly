@@ -7,6 +7,7 @@ import { Button } from "@/components/Button"
 import { Input } from "@/components/Input"
 import { Link } from "react-router-dom"
 import { generateCSV, parseCSV } from "@/lib/csv"
+import { toast } from "sonner"
 import {
   RiAddLine, RiDeleteBinLine, RiEditLine, RiLoader4Line,
   RiSearchLine, RiAlertLine, RiFileListLine,
@@ -30,6 +31,7 @@ export default function SubscriptionsPage() {
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [deleting, setDeleting] = useState<string | null>(null)
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [importing, setImporting] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -55,13 +57,14 @@ export default function SubscriptionsPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Are you sure you want to delete this subscription?")) return
     try {
       setDeleting(id)
       await deleteSubscription(id)
       setSubscriptions((prev) => prev.filter((s) => s.id !== id))
+      setDeleteConfirmId(null)
+      toast.success("Subscription deleted")
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to delete")
+      toast.error(err instanceof Error ? err.message : "Failed to delete subscription")
     } finally {
       setDeleting(null)
     }
@@ -104,9 +107,9 @@ export default function SubscriptionsPage() {
         })
       }
       await loadData()
-      alert(`Successfully imported ${parsed.length} subscription(s)`)
+      toast.success(`Imported ${parsed.length} subscription${parsed.length !== 1 ? "s" : ""}`)
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Import failed")
+      toast.error(err instanceof Error ? err.message : "Import failed")
     } finally {
       setImporting(false)
       if (fileInputRef.current) fileInputRef.current.value = ""
@@ -279,18 +282,27 @@ export default function SubscriptionsPage() {
                           <RiEditLine className="size-4" />
                         </Link>
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(sub.id)}
-                        disabled={deleting === sub.id}
-                      >
-                        {deleting === sub.id ? (
-                          <RiLoader4Line className="size-4 animate-spin" />
-                        ) : (
+                      {deleteConfirmId === sub.id ? (
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleDelete(sub.id)}
+                            disabled={deleting === sub.id}
+                          >
+                            {deleting === sub.id ? <RiLoader4Line className="size-3 animate-spin" /> : "Delete"}
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => setDeleteConfirmId(null)}>Cancel</Button>
+                        </div>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setDeleteConfirmId(sub.id)}
+                        >
                           <RiDeleteBinLine className="size-4 text-destructive" />
-                        )}
-                      </Button>
+                        </Button>
+                      )}
                     </div>
                   </div>
                   <div className="mt-2 text-xs text-muted-foreground">

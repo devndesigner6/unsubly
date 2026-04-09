@@ -177,9 +177,13 @@ export default function OnChainResumePage() {
       ) : payments.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border bg-muted/30 p-12 text-center">
           <RiFileListLine className="mx-auto size-12 text-muted-foreground/50" />
-          <h3 className="mt-4 text-sm font-medium text-foreground">No on-chain payments yet</h3>
+          <h3 className="mt-4 text-sm font-medium text-foreground">
+            {!walletAddress ? "Connect your wallet to view payment history" : "No on-chain payments yet"}
+          </h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Create an escrow vault and release a payment to start building your resume
+            {!walletAddress
+              ? "Connect your Pera or Defly wallet in Settings to see your verified on-chain payment history"
+              : "Create an escrow vault and release a payment to start building your resume"}
           </p>
         </div>
       ) : (

@@ -590,17 +590,30 @@ export default function VaultDetailsPage() {
 
       {/* Confirmation dialog */}
       {confirmAction && (
-        <div className="mt-4 rounded-lg bg-destructive/5 border border-destructive/20 px-4 py-4">
-          <p className="text-sm text-destructive font-medium mb-3">
-            {confirmAction === "kill"
-              ? "Are you sure you want to activate the kill switch? This returns all funds to your wallet and cannot be undone."
-              : "Are you sure you want to delete this contract from the blockchain?"}
-          </p>
+        <div className={`mt-4 rounded-xl border-2 px-5 py-5 ${
+          confirmAction === "kill"
+            ? "border-destructive bg-destructive/8"
+            : "border-destructive/40 bg-destructive/5"
+        }`}>
+          <div className="flex items-start gap-3 mb-4">
+            <RiAlarmWarningLine className={`mt-0.5 size-5 shrink-0 ${confirmAction === "kill" ? "text-destructive" : "text-destructive/70"}`} />
+            <div>
+              <p className={`text-sm font-bold mb-1 ${confirmAction === "kill" ? "text-destructive" : "text-foreground"}`}>
+                {confirmAction === "kill" ? "⚠ Kill Switch — Irreversible Action" : "Delete Smart Contract"}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {confirmAction === "kill"
+                  ? "This will immediately return all locked ALGO to your wallet and permanently close the escrow contract. The recipient will receive nothing. This cannot be undone."
+                  : "This will permanently delete the smart contract from the Algorand blockchain and reclaim the minimum balance reserve (MBR). Only do this after funds have been fully released or killed."}
+              </p>
+            </div>
+          </div>
           <div className="flex gap-2">
-            <Button variant="destructive" onClick={confirmAction === "kill" ? handleKill : handleDelete}>
-              Confirm {confirmAction === "kill" ? "Kill Switch" : "Delete"}
+            <Button variant="destructive" onClick={confirmAction === "kill" ? handleKill : handleDelete} disabled={isProcessing}>
+              {isProcessing ? <RiLoader4Line className="mr-1.5 size-4 animate-spin" /> : <RiAlarmWarningLine className="mr-1.5 size-4" />}
+              {confirmAction === "kill" ? "Yes, Activate Kill Switch" : "Yes, Delete Contract"}
             </Button>
-            <Button variant="secondary" onClick={() => setConfirmAction(null)}>Cancel</Button>
+            <Button variant="secondary" onClick={() => setConfirmAction(null)} disabled={isProcessing}>Cancel</Button>
           </div>
         </div>
       )}
