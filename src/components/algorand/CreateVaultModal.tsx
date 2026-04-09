@@ -5,11 +5,13 @@ import { useAuth } from "@/lib/auth-context"
 import { supabase } from "@/integrations/supabase/client"
 import { algoToMicroalgos, VAULT_TYPE_LABELS, type VaultType } from "@/lib/algorand/constants"
 import {
-  deployEscrowContract, deployTimeLockContract, deployMultiSigContract,
-  deployDisputeContract, deployASAContract, fundEscrowContract,
+  deployAgentEscrowContract, deployEscrowContract, deployTimeLockContract,
+  deployMultiSigContract, deployDisputeContract, deployASAContract, fundEscrowContract,
 } from "@/lib/algorand/contract"
-import { RiCloseLine, RiLockLine, RiTimeLine, RiGroupLine, RiShieldLine, RiCoinLine } from "@remixicon/react"
+import { RiCloseLine, RiLockLine, RiTimeLine, RiGroupLine, RiShieldLine, RiCoinLine, RiRobotLine } from "@remixicon/react"
 import { toast } from "sonner"
+
+const AGENT_ADDRESS = import.meta.env.VITE_AGENT_WALLET_ADDRESS as string | undefined
 
 interface Subscription {
   id: string
@@ -33,7 +35,7 @@ const VAULT_TYPE_ICONS: Record<VaultType, typeof RiLockLine> = {
 }
 
 const VAULT_TYPE_DESCRIPTIONS: Record<VaultType, string> = {
-  standard: "Basic escrow with kill switch",
+  standard: "Agent auto-releases on billing date",
   time_locked: "Auto-releases after a set date",
   multi_sig: "Requires co-signer approval",
   dispute: "Arbitrator can resolve disputes",
@@ -176,7 +178,13 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
           )
           break
         default:
-          deployResult = await deployEscrowContract(algodClient, walletAddress, recipient, signTransaction)
+          if (AGENT_ADDRESS && isValidAlgorandAddress(AGENT_ADDRESS)) {
+            deployResult = await deployAgentEscrowContract(
+              algodClient, walletAddress, recipient, AGENT_ADDRESS, signTransaction
+            )
+          } else {
+            deployResult = await deployEscrowContract(algodClient, walletAddress, recipient, signTransaction)
+          }
       }
 
       const { appId, appAddress, txnId: deployTxnId } = deployResult
@@ -202,6 +210,7 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
         co_signer_address: vaultType === "multi_sig" ? coSignerAddress : null,
         arbitrator_address: vaultType === "dispute" ? arbitratorAddress : null,
         asset_id: vaultType === "asa" ? Number(assetId) : null,
+        agent_address: vaultType === "standard" && AGENT_ADDRESS ? AGENT_ADDRESS : null,
       } as any)
 
       if (insertError) {
@@ -427,11 +436,26 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
             </div>
           )}
 
-          <div className="rounded-lg bg-muted/50 border border-border p-3">
-            <p className="text-xs text-muted-foreground">
-              <strong className="text-foreground">Real Smart Contract:</strong> This deploys a {VAULT_TYPE_LABELS[vaultType]} TEAL contract on Algorand. You'll sign 2 transactions in Pera Wallet.
-            </p>
-          </div>
+          {vaultType === "standard" && AGENT_ADDRESS ? (
+            <div className="rounded-lg bg-green-500/5 border border-green-500/20 p-3 flex items-start gap-2">
+              <RiRobotLine className="size-4 mt-0.5 shrink-0 text-green-600 dark:text-green-400" />
+              <div>
+                <p className="text-xs font-medium text-green-700 dark:text-green-400">Agent Auto-Release Enabled</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  The autonomous agent will release this vault on the subscription billing date — no manual action needed.
+                </p>
+                <p className="text-[10px] font-mono text-muted-foreground mt-1 truncate">
+                  Agent: {AGENT_ADDRESS.slice(0, 8)}…{AGENT_ADDRESS.slice(-8)}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-lg bg-muted/50 border border-border p-3">
+              <p className="text-xs text-muted-foreground">
+                <strong className="text-foreground">Real Smart Contract:</strong> This deploys a {VAULT_TYPE_LABELS[vaultType]} TEAL contract on Algorand. You'll sign 2 transactions in Pera Wallet.
+              </p>
+            </div>
+          )}
 
           {step && (
             <div className="rounded-lg bg-primary/5 border border-primary/20 p-3">

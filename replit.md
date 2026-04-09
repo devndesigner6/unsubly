@@ -51,6 +51,36 @@ The dev server runs on port 5000 at `0.0.0.0`.
 
 Note: `--legacy-peer-deps` is required due to a peer dependency conflict between `algosdk@3.x` (project) and `@perawallet/connect` (which expects `algosdk@2.x`).
 
+## A2A Autonomous Agent (Agentic Commerce #3)
+
+Unsubscribely implements the Agentic Commerce #3 (A2A Autonomous Payments) track for AlgoBharat Hack Series 3.0.
+
+### How It Works
+
+1. User creates a **Standard** escrow vault — this deploys an `AgentEscrowVault` ARC-4 contract on Algorand Testnet, embedding BOTH the user's wallet AND the agent wallet as authorized releasers.
+2. The **agent wallet** (`NLJE4ZCTVQTOG4JPZ3EABZ63BON5M2XGKD5NDN77M33DCWUF5AC2DLWA5U`) is authorized via the `create(address,address)void` constructor.
+3. A Supabase Edge Function `auto-release-vaults` runs daily (via pg_cron at 00:05 UTC) — it calls `release()void` on each locked standard vault whose linked subscription billing date is due, using the agent wallet's mnemonic.
+4. The `release()void` method transfers all ALGO from the vault to the recipient (subscription service). The contract allows either the creator (user) OR the agent to trigger release — enabling true autonomous, trustless payments.
+
+### Agent Wallet
+
+- **Address**: `NLJE4ZCTVQTOG4JPZ3EABZ63BON5M2XGKD5NDN77M33DCWUF5AC2DLWA5U`
+- **Fund**: [Algorand Testnet Bank](https://bank.testnet.algorand.network/)
+- **Mnemonic**: Must be set as `AGENT_WALLET_MNEMONIC` secret in Supabase Dashboard → Project Settings → Edge Functions
+
+### AgentEscrowVault Contract
+
+- Located in: `smart_contracts/agent_escrow/contract.py` (Python source) and `smart_contracts/artifacts/AgentEscrowVault/` (compiled TEAL + ARC56 JSON)
+- ARC-4 methods: `create(address,address)void`, `release()void`, `kill()void`, `delete()void`
+- Global state: `creator` (bytes), `recipient` (bytes), `agent` (bytes), `status` (uint64)
+- Release selector: `0x07 0x6b 0xbd 0x4d` (sha512_256("release()void")[0:4])
+- Create selector: `0x8a 0x96 0x98 0x0e` (sha512_256("create(address,address)void")[0:4])
+
+### Env Vars Required
+
+- `VITE_AGENT_WALLET_ADDRESS` — set in Replit shared env vars (public address, auto-fills in vault UI)
+- `AGENT_WALLET_MNEMONIC` — set as Supabase secret (25-word mnemonic, used by edge function)
+
 ## Smart Contract Development (AlgoKit)
 
 ```bash

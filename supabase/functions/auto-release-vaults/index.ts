@@ -1,47 +1,57 @@
 /**
  * auto-release-vaults — Agentic Commerce Edge Function
  *
- * This is the "autonomous agent" that makes Unsubscribely qualify for the
- * Agentic Commerce #3 (A2A Autonomous Payments) track.
+ * This is the autonomous AI agent that qualifies Unsubscribely for the
+ * Agentic Commerce #3 (A2A Autonomous Payments) track at AlgoBharat Hack Series 3.0.
  *
- * What it does (runs daily via pg_cron):
+ * How it works (triggered daily via pg_cron at 00:05 UTC):
  *  1. Finds subscriptions where next_billing_date <= today AND status = 'active'
- *  2. For each, finds linked escrow vaults with status = 'locked' and vault_type = 'standard'
- *  3. Calls the Algorand smart contract to release the vault funds on-chain
- *     using the agent wallet (AGENT_WALLET_MNEMONIC secret)
- *  4. Updates vault status to 'released' and logs the autonomous action
+ *  2. For each, finds linked standard escrow vaults with status = 'locked'
+ *  3. Calls EscrowVault.release() on-chain using the AGENT_WALLET_MNEMONIC
+ *     — the AgentEscrowVault contract authorises both creator AND agent to release
+ *  4. Updates vault status to 'released' in the database
+ *  5. Logs every action in agent_actions table (full audit trail)
  *
- * This demonstrates true A2A autonomous payment behavior — no human click needed.
+ * The agent wallet address must match the 'agent' field embedded in each vault
+ * at creation time (stored via VITE_AGENT_WALLET_ADDRESS during vault deployment).
+ *
+ * Environment secrets required in Supabase dashboard:
+ *   AGENT_WALLET_MNEMONIC — 25-word Algorand mnemonic of the agent wallet
+ *   SUPABASE_URL          — auto-provided by Supabase
+ *   SUPABASE_SERVICE_ROLE_KEY — auto-provided by Supabase
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
-import algosdk from "https://esm.sh/algosdk@3.2.0"
+import algosdk from "https://esm.sh/algosdk@2.7.0"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 }
 
-// ARC-4 method selector for EscrowVault.release() — precomputed from ABI
-const RELEASE_METHOD_SELECTOR = new Uint8Array([0x3e, 0xc9, 0x0c, 0x43])
+// ARC-4 method selector for release()void
+// sha512_256("release()void")[0:4] = 0x07 0x6b 0xbd 0x4d
+const RELEASE_SELECTOR = new Uint8Array([0x07, 0x6b, 0xbd, 0x4d])
 
 async function releaseVaultOnChain(
   algodClient: algosdk.Algodv2,
-  agentAddress: string,
-  agentSk: Uint8Array,
+  agentAccount: algosdk.Account,
   appId: number,
 ): Promise<string> {
-  const suggestedParams = await algodClient.getTransactionParams().do()
+  const params = await algodClient.getTransactionParams().do()
 
-  const appCallTxn = algosdk.makeApplicationNoOpTxnFromObject({
-    sender: agentAddress,
-    suggestedParams,
+  // fee=2000 covers outer txn (1000) + inner payment txn (1000)
+  const appCallTxn = algosdk.makeApplicationCallTxnFromObject({
+    sender: agentAccount.addr,
+    suggestedParams: { ...params, fee: 2000, flatFee: true },
     appIndex: appId,
-    appArgs: [RELEASE_METHOD_SELECTOR],
+    onComplete: algosdk.OnApplicationComplete.NoOpOC,
+    appArgs: [RELEASE_SELECTOR],
   })
 
-  const signedTxn = appCallTxn.signTxn(agentSk)
-  const { txid } = await algodClient.sendRawTransaction(signedTxn).do()
+  const signedTxn = appCallTxn.signTxn(agentAccount.sk)
+  const sendResponse = await algodClient.sendRawTransaction(signedTxn).do()
+  const txid: string = (sendResponse as any).txId ?? (sendResponse as any).txid ?? ""
   await algosdk.waitForConfirmation(algodClient, txid, 4)
   return txid
 }
@@ -62,12 +72,13 @@ Deno.serve(async (req) => {
     skipped: 0,
     errors: [] as string[],
     actions: [] as object[],
+    agent_mode: "unconfigured",
   }
 
   try {
     const today = new Date().toISOString().split("T")[0]
 
-    // Step 1: Find active subscriptions with billing due
+    // Step 1: Find active subscriptions with billing due today or overdue
     const { data: dueSubs, error: subsErr } = await supabase
       .from("subscriptions")
       .select("id, name, user_id, next_billing_date")
@@ -89,7 +100,7 @@ Deno.serve(async (req) => {
     // Step 2: Find locked standard vaults linked to due subscriptions
     const { data: vaults, error: vaultErr } = await supabase
       .from("escrow_vaults")
-      .select("id, app_id, app_address, subscription_id, user_id, amount")
+      .select("id, app_id, app_address, subscription_id, user_id, amount, agent_address")
       .in("subscription_id", subIds)
       .eq("status", "locked")
       .eq("vault_type", "standard")
@@ -98,29 +109,30 @@ Deno.serve(async (req) => {
 
     if (!vaults || vaults.length === 0) {
       return new Response(
-        JSON.stringify({ success: true, message: "No locked vaults to release", ...results }),
+        JSON.stringify({ success: true, message: "No locked standard vaults to release", ...results }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       )
     }
 
-    // Step 3: Set up Algorand agent wallet
-    const agentMnemonic = Deno.env.get("AGENT_WALLET_MNEMONIC") || Deno.env.get("TESTNET_MNEMONIC")
+    // Step 3: Set up agent wallet
+    const agentMnemonic = Deno.env.get("AGENT_WALLET_MNEMONIC")
     const algodUrl = Deno.env.get("ALGOD_URL") || "https://testnet-api.algonode.cloud"
     const algodToken = Deno.env.get("ALGOD_TOKEN") || ""
 
-    let agentAddress: string | null = null
-    let agentSk: Uint8Array | null = null
+    let agentAccount: algosdk.Account | null = null
     let algodClient: algosdk.Algodv2 | null = null
 
     if (agentMnemonic) {
       try {
-        const keyPair = algosdk.mnemonicToSecretKey(agentMnemonic)
-        agentAddress = keyPair.addr.toString()
-        agentSk = keyPair.sk
+        agentAccount = algosdk.mnemonicToSecretKey(agentMnemonic)
         algodClient = new algosdk.Algodv2(algodToken, algodUrl, "")
-      } catch {
-        // Agent wallet not configured — run in simulation mode
+        results.agent_mode = "on-chain"
+      } catch (keyErr: any) {
+        results.errors.push(`Agent wallet setup failed: ${keyErr.message}`)
+        results.agent_mode = "db-only"
       }
+    } else {
+      results.agent_mode = "db-only"
     }
 
     // Step 4: Process each vault
@@ -130,38 +142,36 @@ Deno.serve(async (req) => {
 
       try {
         let txid: string | null = null
-        let mode = "simulated"
+        let mode = "db-only"
 
-        if (algodClient && agentAddress && agentSk && vault.app_id) {
-          // Attempt real on-chain release
+        if (algodClient && agentAccount && vault.app_id) {
           try {
-            txid = await releaseVaultOnChain(algodClient, agentAddress, agentSk, Number(vault.app_id))
+            txid = await releaseVaultOnChain(algodClient, agentAccount, Number(vault.app_id))
             mode = "on-chain"
           } catch (onChainErr: any) {
-            // On-chain failed (agent may not be co-signer) — log but continue
-            results.errors.push(`Vault ${vault.id}: on-chain failed — ${onChainErr.message}`)
+            results.errors.push(`Vault ${vault.id} on-chain release failed: ${onChainErr.message}`)
             mode = "db-only"
           }
         }
 
         // Update vault status in database
-        const { error: updateErr } = await supabase
+        await supabase
           .from("escrow_vaults")
           .update({
             status: "released",
             released_at: new Date().toISOString(),
           } as any)
           .eq("id", vault.id)
+          .throwOnError()
 
-        if (updateErr) throw updateErr
-
-        // Log the autonomous action
-        const action = {
+        // Log the autonomous action in agent_actions
+        const actionPayload = {
           vault_id: vault.id,
           subscription_id: vault.subscription_id,
           subscription_name: subName,
           user_id: vault.user_id,
           amount: vault.amount,
+          agent_address: agentAccount?.addr ?? null,
           txid,
           mode,
           released_at: new Date().toISOString(),
@@ -172,16 +182,31 @@ Deno.serve(async (req) => {
           vault_id: vault.id,
           subscription_id: vault.subscription_id,
           user_id: vault.user_id,
-          payload: action,
+          payload: actionPayload,
           txid,
           status: "success",
         } as any).throwOnError()
 
         results.released++
-        results.actions.push(action)
+        results.actions.push(actionPayload)
       } catch (err: any) {
         results.errors.push(`Vault ${vault.id}: ${err.message}`)
         results.skipped++
+
+        // Log the failure
+        try {
+          await supabase.from("agent_actions").insert({
+            action_type: "auto_release",
+            vault_id: vault.id,
+            subscription_id: vault.subscription_id,
+            user_id: vault.user_id,
+            payload: { error: err.message, vault_id: vault.id },
+            txid: null,
+            status: "error",
+          } as any)
+        } catch {
+          // Swallow log error
+        }
       }
     }
 

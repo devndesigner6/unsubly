@@ -1,0 +1,191 @@
+#pragma version 11
+
+// AgentEscrowVault — ARC-4 compliant escrow with agent auto-release.
+//
+// Creator (user wallet) can kill and get a refund.
+// Agent wallet can autonomously release funds to recipient (A2A autonomous payment).
+//
+// Global state:
+//   creator   (bytes/address) — user wallet, can kill
+//   recipient (bytes/address) — payment destination on release
+//   agent     (bytes/address) — autonomous agent, can release
+//   status    (uint64)        — 0=locked, 1=released, 2=killed
+//
+// Methods:
+//   create(address,address)void  — create(recipient, agent)
+//   release()void                — creator OR agent
+//   kill()void                   — creator only, refund to creator
+//   delete()void                 — creator only, after release/kill
+
+main:
+    intcblock 0 1
+    bytecblock "status" "creator" "recipient" "agent"
+    pushbytes 0x24378d3c
+    txna ApplicationArgs 0
+    match main_delete_route
+    txn OnCompletion
+    !
+    assert
+    txn ApplicationID
+    bz main_create_NoOp
+    pushbytess 0x076bbd4d 0xb9c21155
+    txna ApplicationArgs 0
+    match release kill
+    err
+
+main_create_NoOp:
+    pushbytes 0x8a96980e
+    txna ApplicationArgs 0
+    match create
+    err
+
+main_delete_route:
+    txn OnCompletion
+    pushint 5
+    ==
+    txn ApplicationID
+    &&
+    assert
+    b delete
+
+create:
+    txna ApplicationArgs 1
+    dup
+    len
+    pushint 32
+    ==
+    assert
+    txna ApplicationArgs 2
+    dup
+    len
+    pushint 32
+    ==
+    assert
+    bytec_1
+    txn Sender
+    app_global_put
+    bytec_2
+    uncover 2
+    app_global_put
+    bytec 3
+    swap
+    app_global_put
+    bytec_0
+    intc_0
+    app_global_put
+    intc_1
+    return
+
+release:
+    txn Sender
+    intc_0
+    bytec_1
+    app_global_get_ex
+    assert
+    ==
+    bnz release_authorized
+    txn Sender
+    intc_0
+    bytec 3
+    app_global_get_ex
+    assert
+    ==
+    assert
+
+release_authorized:
+    intc_0
+    bytec_0
+    app_global_get_ex
+    assert
+    !
+    assert
+    global CurrentApplicationAddress
+    dup
+    balance
+    swap
+    min_balance
+    -
+    itxn_begin
+    intc_0
+    bytec_2
+    app_global_get_ex
+    assert
+    itxn_field Receiver
+    itxn_field Amount
+    intc_1
+    itxn_field TypeEnum
+    intc_0
+    itxn_field Fee
+    itxn_submit
+    bytec_0
+    intc_1
+    app_global_put
+    intc_1
+    return
+
+kill:
+    txn Sender
+    intc_0
+    bytec_1
+    app_global_get_ex
+    assert
+    ==
+    assert
+    intc_0
+    bytec_0
+    app_global_get_ex
+    assert
+    !
+    assert
+    global CurrentApplicationAddress
+    dup
+    balance
+    swap
+    min_balance
+    -
+    itxn_begin
+    intc_0
+    bytec_1
+    app_global_get_ex
+    assert
+    itxn_field Receiver
+    itxn_field Amount
+    intc_1
+    itxn_field TypeEnum
+    intc_0
+    itxn_field Fee
+    itxn_submit
+    bytec_0
+    pushint 2
+    app_global_put
+    intc_1
+    return
+
+delete:
+    txn Sender
+    intc_0
+    bytec_1
+    app_global_get_ex
+    assert
+    swap
+    dig 1
+    ==
+    assert
+    intc_0
+    bytec_0
+    app_global_get_ex
+    assert
+    assert
+    itxn_begin
+    dup
+    itxn_field CloseRemainderTo
+    intc_0
+    itxn_field Amount
+    itxn_field Receiver
+    intc_1
+    itxn_field TypeEnum
+    intc_0
+    itxn_field Fee
+    itxn_submit
+    intc_1
+    return

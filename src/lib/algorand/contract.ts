@@ -10,6 +10,7 @@ import algosdk from "algosdk"
 import type { VaultType } from "./constants"
 
 import EscrowVaultSpec from "../../../smart_contracts/artifacts/EscrowVault/EscrowVault.arc56.json"
+import AgentEscrowVaultSpec from "../../../smart_contracts/artifacts/AgentEscrowVault/AgentEscrowVault.arc56.json"
 import TimeLockSpec from "../../../smart_contracts/artifacts/TimeLockEscrow/TimeLockEscrow.arc56.json"
 import MultiSigSpec from "../../../smart_contracts/artifacts/MultiSigEscrow/MultiSigEscrow.arc56.json"
 import DisputeSpec from "../../../smart_contracts/artifacts/DisputeEscrow/DisputeEscrow.arc56.json"
@@ -141,6 +142,29 @@ export async function deployEscrowContract(
     algodClient, senderAddress,
     artifactForType("standard"),
     [SEL.createAddr, addrBytes(recipientAddress)],
+    signTransaction,
+  )
+}
+
+/**
+ * Deploy an Agent-Managed Escrow Vault (AgentEscrowVault.arc56).
+ *
+ * Creator = senderAddress (user's wallet) — can kill and get refund.
+ * Agent  = agentAddress — autonomous AI agent that releases on billing date.
+ * Recipient = recipientAddress — subscription service that receives payment.
+ *
+ * This is the core contract for A2A Autonomous Payments (Agentic Commerce #3).
+ */
+export async function deployAgentEscrowContract(
+  algodClient: algosdk.Algodv2, senderAddress: string,
+  recipientAddress: string, agentAddress: string,
+  signTransaction: SignFn,
+): Promise<DeployResult> {
+  const spec = AgentEscrowVaultSpec as Arc56Spec
+  return deployApp(
+    algodClient, senderAddress,
+    loadArtifact(spec),
+    [SEL.createAddrAddr, addrBytes(recipientAddress), addrBytes(agentAddress)],
     signTransaction,
   )
 }
