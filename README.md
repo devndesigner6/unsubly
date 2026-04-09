@@ -152,8 +152,8 @@ supabase/
 ### Install & Run
 
 ```bash
-git clone https://github.com/kalashvasaniya/unsubscribely.git
-cd unsubscribely
+git clone https://github.com/devndesigner6/unsubly.git
+cd unsubly
 npm install
 npm run dev
 ```
