@@ -71,19 +71,19 @@ export default function ResetPasswordPage() {
     return (
       <div className="w-full max-w-md px-6 text-center">
         <div className="mb-6 flex justify-center">
-          <div className="flex size-16 items-center justify-center rounded-2xl bg-destructive/10">
-            <RiLockLine className="size-8 text-destructive" />
+          <div className="flex size-16 items-center justify-center rounded-2xl bg-primary/10">
+            <RiLockLine className="size-8 text-primary" />
           </div>
         </div>
-        <h1 className="font-display text-3xl text-foreground tracking-tight">Invalid or expired link</h1>
+        <h1 className="font-display text-3xl text-foreground tracking-tight">Reset your password</h1>
         <p className="mt-3 text-sm text-muted-foreground">
-          This password reset link is invalid or has expired. Please request a new one.
+          Use the verification code method to securely reset your password.
         </p>
         <Link
           to="/forgot-password"
-          className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-foreground hover:underline"
+          className="mt-6 inline-flex items-center gap-2 rounded-full bg-foreground px-6 py-3 text-sm font-medium text-background hover:bg-foreground/90 transition-colors"
         >
-          Request new reset link
+          Reset with verification code
         </Link>
       </div>
     )
