@@ -95,14 +95,24 @@ export default function AIOptimizerPage() {
         currency: userCurrency,
       }
 
-      const res = await fetch("/api/ai-optimizer", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subscriptions, vaults, userCurrency, totalMonthly, totalVaultLocked }),
+      // Try Supabase edge function first (works in production)
+      // Fall back to Vite dev server proxy if edge function is unavailable
+      let data: any
+      const { data: edgeData, error: edgeError } = await supabase.functions.invoke("ai-optimizer", {
+        body: { subscriptions, vaults, userCurrency, totalMonthly, totalVaultLocked },
       })
 
-      const data = await res.json()
-      if (!res.ok || data.error) throw new Error(data.error || "Analysis failed")
+      if (!edgeError && edgeData && !edgeData.error) {
+        data = edgeData
+      } else {
+        const res = await fetch("/api/ai-optimizer", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ subscriptions, vaults, userCurrency, totalMonthly, totalVaultLocked }),
+        })
+        data = await res.json()
+        if (!res.ok || data.error) throw new Error(data.error || "Analysis failed")
+      }
 
       setAnalysis(data.analysis)
       setStats(portfolioStats)
