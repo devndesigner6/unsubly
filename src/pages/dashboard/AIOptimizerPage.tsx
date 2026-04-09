@@ -95,12 +95,14 @@ export default function AIOptimizerPage() {
         currency: userCurrency,
       }
 
-      const { data, error: fnError } = await supabase.functions.invoke("ai-optimizer", {
-        body: { subscriptions, vaults, userCurrency, totalMonthly, totalVaultLocked },
+      const res = await fetch("/api/ai-optimizer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subscriptions, vaults, userCurrency, totalMonthly, totalVaultLocked }),
       })
 
-      if (fnError) throw fnError
-      if (data?.error) throw new Error(data.error)
+      const data = await res.json()
+      if (!res.ok || data.error) throw new Error(data.error || "Analysis failed")
 
       setAnalysis(data.analysis)
       setStats(portfolioStats)
