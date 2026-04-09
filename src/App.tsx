@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect } from "react"
+import { Suspense, lazy } from "react"
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 import { ThemeProvider } from "next-themes"
 import { AuthProvider, useAuth } from "@/lib/auth-context"
@@ -39,6 +39,9 @@ import CoSignerApprovalPage from "@/pages/CoSignerApprovalPage"
 import PublicResumePage from "@/pages/PublicResumePage"
 import NotFoundPage from "@/pages/NotFoundPage"
 
+// Fetch live exchange rates once at startup — fire and forget, falls back to static rates
+initExchangeRates()
+
 const AlgorandProviderLazy = lazy(async () => {
   const { AlgorandProvider } = await import("@/lib/algorand/context")
 
@@ -72,10 +75,6 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  useEffect(() => {
-    initExchangeRates()
-  }, [])
-
   return (
     <BrowserRouter>
       <ThemeProvider defaultTheme="light" disableTransitionOnChange attribute="class">
