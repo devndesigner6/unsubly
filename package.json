@@ -24,7 +24,8 @@
     "dev": "vite",
     "build": "vite build",
     "build:dev": "vite build --mode development",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy:contracts": "node scripts/deploy.js"
   },
   "dependencies": {
     "@blockshake/defly-connect": "^1.2.1",

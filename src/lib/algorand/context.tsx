@@ -146,19 +146,23 @@ function AlgorandBridge({
       setIsConnecting(true)
       try {
         const wallet = wallets.find((w) => w.id === walletId)
-        if (!wallet) throw new Error(`Wallet ${walletId} not available`)
+        if (!wallet) throw new Error(`Wallet ${walletId} not found`)
         await wallet.connect()
-        wallet.setActive()
-        toast.success("Wallet connected", {
-          description: wallet.metadata.name,
-        })
+        // setActive is a no-op if already active but ensures it's set
+        try { wallet.setActive() } catch {}
+        toast.success("Wallet connected", { description: wallet.metadata.name })
         setShowWalletSelector(false)
       } catch (err: any) {
-        if (!err?.message?.toLowerCase().includes("cancel")) {
-          toast.error("Failed to connect wallet", {
-            description: err?.message || "Please try again",
-          })
+        const msg: string = err?.message ?? ""
+        const cancelled = msg.toLowerCase().includes("cancel") ||
+                          msg.toLowerCase().includes("rejected") ||
+                          msg.toLowerCase().includes("denied")
+        if (!cancelled) {
+          // Show toast for unexpected errors
+          toast.error("Failed to connect wallet", { description: msg || "Please try again" })
         }
+        // Re-throw so the modal can show inline error too
+        throw err
       } finally {
         setIsConnecting(false)
       }

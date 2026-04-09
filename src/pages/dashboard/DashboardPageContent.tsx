@@ -13,7 +13,7 @@ import {
   RiCalendarCheckLine, RiAlertLine, RiLoader4Line,
   RiPlayCircleLine,
   RiShieldLine, RiFileChartLine, RiLockLine,
-  RiExternalLinkLine,
+  RiExternalLinkLine, RiRobotLine, RiCheckDoubleLine,
 } from "@remixicon/react"
 import { useState, useEffect, useMemo, useRef } from "react"
 
@@ -26,6 +26,7 @@ export default function DashboardPageContent() {
   const [error, setError] = useState<string | null>(null)
   const [vaultStats, setVaultStats] = useState({ total: 0, locked: 0, killed: 0, totalLocked: 0 })
   const [recentPayments, setRecentPayments] = useState<any[]>([])
+  const [agentActions, setAgentActions] = useState<any[]>([])
   const hasFetched = useRef(false)
 
   useEffect(() => {
@@ -61,6 +62,15 @@ export default function DashboardPageContent() {
           .order("created_at", { ascending: false })
           .limit(3)
         if (payments) setRecentPayments(payments as any[])
+
+        // Fetch autonomous agent actions
+        const { data: actions } = await supabase
+          .from("agent_actions" as any)
+          .select("*")
+          .eq("user_id", user!.id)
+          .order("created_at", { ascending: false })
+          .limit(5)
+        if (actions) setAgentActions(actions as any[])
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load")
       } finally {
@@ -286,6 +296,71 @@ export default function DashboardPageContent() {
                 </div>
               )}
             </>
+          )}
+        </div>
+
+        {/* Agentic Activity Panel */}
+        <div className="mt-6 rounded-2xl border border-emerald-200 dark:border-emerald-900/40 bg-gradient-to-br from-emerald-50/60 to-teal-50/40 dark:from-emerald-950/20 dark:to-teal-950/10 p-5 sm:p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-xl bg-emerald-500/15">
+                <RiRobotLine className="size-5 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-foreground">Autonomous Agent</h2>
+                <p className="text-xs text-muted-foreground">
+                  Runs daily · Releases vaults automatically when subscriptions are due
+                </p>
+              </div>
+            </div>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+              <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Active
+            </span>
+          </div>
+
+          {agentActions.length === 0 ? (
+            <div className="rounded-xl bg-card/60 border border-border/50 px-4 py-4 text-sm text-muted-foreground text-center">
+              <RiCheckDoubleLine className="mx-auto mb-2 size-6 opacity-40" />
+              <p>No autonomous actions yet.</p>
+              <p className="text-xs mt-1">
+                When a subscription billing date arrives, the agent will automatically release the linked escrow vault — no click needed.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {agentActions.map((action: any) => {
+                const p = action.payload ?? {}
+                const date = new Date(action.created_at).toLocaleString()
+                return (
+                  <div key={action.id} className="flex items-start gap-3 rounded-xl bg-card/70 border border-border/50 px-4 py-3">
+                    <RiCheckDoubleLine className="mt-0.5 size-4 shrink-0 text-emerald-600" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">
+                        Auto-released: {p.subscription_name ?? "Subscription"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {p.amount ? `${Number(p.amount).toFixed(2)} ALGO` : ""} · {date}
+                        {action.txid && (
+                          <> · <a
+                            href={`https://lora.algokit.io/testnet/transaction/${action.txid}`}
+                            target="_blank" rel="noopener noreferrer"
+                            className="text-primary hover:underline"
+                          >View tx ↗</a></>
+                        )}
+                      </p>
+                    </div>
+                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                      p.mode === "on-chain"
+                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                        : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                    }`}>
+                      {p.mode === "on-chain" ? "On-chain" : "Simulated"}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
           )}
         </div>
 

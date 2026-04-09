@@ -68,14 +68,21 @@ def get_algod_client() -> algod.AlgodClient:
 
 
 def load_teal(contract_name: str, kind: str) -> bytes:
-    """Load compiled TEAL bytes from artifacts directory."""
-    path = ARTIFACTS_DIR / contract_name / f"{kind}.teal"
-    if not path.exists():
-        raise FileNotFoundError(
-            f"TEAL file not found: {path}\n"
-            "Run 'algokit compile python smart_contracts/' first."
-        )
-    return path.read_bytes()
+    """Load compiled TEAL bytes from artifacts directory.
+    Supports both naming conventions: '{kind}.teal' and '{name}.{kind}.teal'
+    """
+    candidates = [
+        ARTIFACTS_DIR / contract_name / f"{contract_name}.{kind}.teal",
+        ARTIFACTS_DIR / contract_name / f"{kind}.teal",
+    ]
+    for path in candidates:
+        if path.exists():
+            return path.read_bytes()
+    raise FileNotFoundError(
+        f"TEAL file not found. Tried:\n" +
+        "\n".join(f"  {p}" for p in candidates) +
+        "\nRun 'algokit compile python smart_contracts/' to generate artifacts."
+    )
 
 
 def compile_teal(algod_client: algod.AlgodClient, teal_source: bytes) -> bytes:

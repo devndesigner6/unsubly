@@ -1,34 +1,73 @@
 import { WalletId } from "@txnlab/use-wallet"
 import { useWallet } from "@txnlab/use-wallet-react"
 import { useAlgorand } from "@/lib/algorand/context"
-import { RiCloseLine } from "@remixicon/react"
+import { RiCloseLine, RiExternalLinkLine, RiCheckLine, RiLoaderLine } from "@remixicon/react"
+import { useState } from "react"
 
-const WALLET_INFO: Record<string, { label: string; description: string; icon: string; color: string }> = {
+interface WalletMeta {
+  label: string
+  description: string
+  icon: string
+  color: string
+  installUrl: string
+  type: "mobile" | "extension" | "both"
+}
+
+const WALLET_INFO: Record<string, WalletMeta> = {
   [WalletId.PERA]: {
     label: "Pera Wallet",
     description: "Official Algorand mobile & web wallet",
     icon: "https://assets.perawallet.app/images/pera-logo.svg",
     color: "from-yellow-400 to-yellow-500",
+    installUrl: "https://perawallet.app",
+    type: "both",
   },
   [WalletId.DEFLY]: {
     label: "Defly Wallet",
-    description: "DeFi-focused Algorand wallet",
+    description: "DeFi-focused Algorand mobile wallet",
     icon: "https://defly.app/favicon.png",
     color: "from-green-400 to-green-500",
+    installUrl: "https://defly.app",
+    type: "mobile",
   },
   [WalletId.LUTE]: {
     label: "Lute Wallet",
-    description: "Browser-based Algorand wallet",
+    description: "Browser-based Algorand wallet extension",
     icon: "https://lute.app/favicon.png",
     color: "from-purple-400 to-purple-500",
+    installUrl: "https://lute.app",
+    type: "extension",
   },
+}
+
+const TYPE_BADGE: Record<string, string> = {
+  mobile: "Mobile App",
+  extension: "Browser Extension",
+  both: "Mobile + Web",
 }
 
 export function WalletSelectorModal() {
   const { showWalletSelector, setShowWalletSelector, connectWallet, isConnecting } = useAlgorand()
   const { wallets } = useWallet()
+  const [connectingId, setConnectingId] = useState<string | null>(null)
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   if (!showWalletSelector) return null
+
+  async function handleConnect(walletId: WalletId) {
+    setConnectingId(walletId)
+    setErrors((prev) => ({ ...prev, [walletId]: "" }))
+    try {
+      await connectWallet(walletId)
+    } catch (err: any) {
+      const msg = err?.message ?? "Connection failed"
+      if (!msg.toLowerCase().includes("cancel")) {
+        setErrors((prev) => ({ ...prev, [walletId]: msg }))
+      }
+    } finally {
+      setConnectingId(null)
+    }
+  }
 
   return (
     <div
@@ -45,63 +84,102 @@ export function WalletSelectorModal() {
           <RiCloseLine className="size-5" />
         </button>
 
-        <div className="mb-6">
+        <div className="mb-5">
           <h2 className="text-lg font-semibold text-foreground">Connect Wallet</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Choose your Algorand wallet to connect
+            Choose your Algorand wallet — you'll be prompted to approve the connection.
           </p>
         </div>
 
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2.5">
           {wallets.map((wallet) => {
             const info = WALLET_INFO[wallet.id]
             if (!info) return null
+            const isThisConnecting = connectingId === wallet.id
+            const anyConnecting = isConnecting || connectingId !== null
+            const errMsg = errors[wallet.id]
+
             return (
-              <button
-                key={wallet.id}
-                onClick={() => connectWallet(wallet.id as WalletId)}
-                disabled={isConnecting}
-                className="group flex items-center gap-4 rounded-xl border border-border bg-card p-4 text-left transition-all hover:border-primary/40 hover:bg-primary/5 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <div className={`flex size-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${info.color} shadow-sm`}>
-                  <img
-                    src={info.icon}
-                    alt={info.label}
-                    className="size-7 object-contain"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).style.display = "none"
-                    }}
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-foreground">
-                      {info.label}
-                    </span>
-                    {wallet.isConnected && (
-                      <span className="rounded-full bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                        Connected
-                      </span>
+              <div key={wallet.id}>
+                <button
+                  onClick={() => handleConnect(wallet.id as WalletId)}
+                  disabled={anyConnecting}
+                  className="group w-full flex items-center gap-4 rounded-xl border border-border bg-card p-4 text-left transition-all hover:border-primary/40 hover:bg-primary/5 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <div className={`flex size-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${info.color} shadow-sm`}>
+                    {isThisConnecting ? (
+                      <RiLoaderLine className="size-5 text-white animate-spin" />
+                    ) : wallet.isConnected ? (
+                      <RiCheckLine className="size-5 text-white" />
+                    ) : (
+                      <img
+                        src={info.icon}
+                        alt={info.label}
+                        className="size-7 object-contain"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).style.display = "none"
+                        }}
+                      />
                     )}
                   </div>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    {info.description}
-                  </p>
-                </div>
-                <svg
-                  className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary"
-                  fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-semibold text-foreground">
+                        {info.label}
+                      </span>
+                      <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                        {TYPE_BADGE[info.type]}
+                      </span>
+                      {wallet.isConnected && (
+                        <span className="rounded-full bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                          Connected
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-0.5 text-xs text-muted-foreground truncate">
+                      {isThisConnecting ? "Waiting for approval in wallet app…" : info.description}
+                    </p>
+                  </div>
+                  <svg
+                    className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary"
+                    fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+
+                {errMsg && (
+                  <div className="mt-1.5 flex items-start justify-between gap-2 rounded-lg bg-destructive/5 px-3 py-2 text-xs text-destructive border border-destructive/15">
+                    <span>{errMsg.includes("not installed") || errMsg.includes("Not found")
+                      ? `${info.label} is not installed.`
+                      : errMsg}
+                    </span>
+                    <a
+                      href={info.installUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="shrink-0 inline-flex items-center gap-1 font-medium hover:underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      Install <RiExternalLinkLine className="size-3" />
+                    </a>
+                  </div>
+                )}
+              </div>
             )
           })}
         </div>
 
-        <p className="mt-5 text-center text-xs text-muted-foreground">
-          By connecting, you agree to interact with Algorand Testnet.
-          <br />
+        <div className="mt-4 rounded-xl bg-muted/50 px-4 py-3 text-xs text-muted-foreground">
+          <p className="font-medium text-foreground mb-1">How it works</p>
+          <ol className="list-decimal list-inside space-y-0.5">
+            <li>Click a wallet above</li>
+            <li>Approve the connection in your wallet app or extension</li>
+            <li>You're connected to Algorand Testnet</li>
+          </ol>
+        </div>
+
+        <p className="mt-3 text-center text-xs text-muted-foreground">
           Powered by{" "}
           <a
             href="https://github.com/TxnLab/use-wallet"
@@ -110,7 +188,8 @@ export function WalletSelectorModal() {
             className="text-primary hover:underline"
           >
             @txnlab/use-wallet
-          </a>
+          </a>{" "}
+          · Algorand Testnet
         </p>
       </div>
     </div>
