@@ -4,8 +4,8 @@ import { RiAddLine, RiArrowLeftLine } from "@remixicon/react"
 
 export default function NewSubscriptionPage() {
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <div className="relative overflow-hidden border-b border-gray-200 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 dark:border-gray-800">
+    <div className="min-h-screen bg-background">
+      <div className="relative overflow-hidden border-b border-border bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800">
         <div className="relative mx-auto max-w-7xl px-3 py-6 sm:px-6 sm:py-8 lg:px-8">
           <Link to="/subscriptions" className="mb-2 inline-flex items-center gap-1 text-xs text-blue-200 hover:text-white transition-colors sm:text-sm">
             <RiArrowLeftLine className="size-3.5 sm:size-4" />

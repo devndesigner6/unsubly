@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth-context"
 import { fetchSubscriptionById, deleteSubscription, fetchSubscriptionTags } from "@/lib/supabase-queries"
 import { formatCurrency } from "@/lib/currency"
 import { Button } from "@/components/Button"
+import { toast } from "sonner"
 import { RiArrowLeftLine, RiDeleteBinLine, RiLoader4Line, RiAlertLine, RiEditLine } from "@remixicon/react"
 import { useState, useEffect } from "react"
 
@@ -16,6 +17,7 @@ export default function EditSubscriptionPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [isDeleting, setIsDeleting] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -37,15 +39,17 @@ export default function EditSubscriptionPage() {
   }, [id])
 
   const handleDelete = async () => {
-    if (!id || !confirm("Delete this subscription?")) return
+    if (!id) return
     setIsDeleting(true)
     try {
       await deleteSubscription(id)
+      toast.success("Subscription deleted")
       navigate("/subscriptions")
     } catch {
-      alert("Failed to delete")
+      toast.error("Failed to delete subscription")
     } finally {
       setIsDeleting(false)
+      setShowDeleteConfirm(false)
     }
   }
 
@@ -72,8 +76,8 @@ export default function EditSubscriptionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <div className="relative overflow-hidden border-b border-gray-200 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 dark:border-gray-800">
+    <div className="min-h-screen bg-background">
+      <div className="relative overflow-hidden border-b border-border bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800">
         <div className="relative mx-auto max-w-7xl px-3 py-6 sm:px-6 sm:py-8 lg:px-8">
           <div className="flex items-center justify-between">
             <div>
@@ -93,15 +97,36 @@ export default function EditSubscriptionPage() {
                 </div>
               </div>
             </div>
-            <Button
-              variant="secondary"
-              className="bg-white/20 text-white hover:bg-white/30 border-white/20"
-              onClick={handleDelete}
-              disabled={isDeleting}
-            >
-              {isDeleting ? <RiLoader4Line className="mr-2 size-4 animate-spin" /> : <RiDeleteBinLine className="mr-2 size-4" />}
-              Delete
-            </Button>
+            {showDeleteConfirm ? (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="destructive"
+                  className="border-white/20"
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? <RiLoader4Line className="mr-2 size-4 animate-spin" /> : null}
+                  {isDeleting ? "Deleting..." : "Confirm Delete"}
+                </Button>
+                <Button
+                  variant="secondary"
+                  className="bg-white/20 text-white hover:bg-white/30 border-white/20"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={isDeleting}
+                >
+                  Cancel
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="secondary"
+                className="bg-white/20 text-white hover:bg-white/30 border-white/20"
+                onClick={() => setShowDeleteConfirm(true)}
+              >
+                <RiDeleteBinLine className="mr-2 size-4" />
+                Delete
+              </Button>
+            )}
           </div>
         </div>
       </div>

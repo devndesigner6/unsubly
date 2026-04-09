@@ -462,7 +462,7 @@ export default function VaultDetailsPage() {
                   Status
                 </dt>
                 <dd className={`font-medium ${onChainState.appExists ? "text-green-600 dark:text-green-400" : "text-destructive"}`}>
-                  {onChainState.appExists ? "Live on Testnet" : "Deleted"}
+                  {onChainState.appExists ? `Live on ${network === "mainnet" ? "Mainnet" : "Testnet"}` : "Deleted"}
                 </dd>
               </div>
 
@@ -592,7 +592,7 @@ export default function VaultDetailsPage() {
       {confirmAction && (
         <div className={`mt-4 rounded-xl border-2 px-5 py-5 ${
           confirmAction === "kill"
-            ? "border-destructive bg-destructive/8"
+            ? "border-destructive bg-destructive/10"
             : "border-destructive/40 bg-destructive/5"
         }`}>
           <div className="flex items-start gap-3 mb-4">
