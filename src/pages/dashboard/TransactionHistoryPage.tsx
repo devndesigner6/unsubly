@@ -1,4 +1,6 @@
 import { useAuth } from "@/lib/auth-context"
+import { useAlgorand } from "@/lib/algorand/context"
+import { getAlgoExplorerUrl } from "@/lib/algorand/constants"
 import { supabase } from "@/integrations/supabase/client"
 import { Input } from "@/components/Input"
 import {
@@ -24,6 +26,7 @@ const PAGE_SIZE = 25
 
 export default function TransactionHistoryPage() {
   const { user } = useAuth()
+  const { network } = useAlgorand()
   const [payments, setPayments] = useState<OnchainPayment[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -165,7 +168,7 @@ export default function TransactionHistoryPage() {
                       <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">{p.block_round ?? "—"}</td>
                       <td className="px-4 py-3 text-muted-foreground">{new Date(p.confirmed_at || p.created_at).toLocaleDateString()}</td>
                       <td className="px-4 py-3">
-                        <a href={`https://testnet.explorer.perawallet.app/tx/${p.algorand_txn_id}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">
+                        <a href={getAlgoExplorerUrl(p.algorand_txn_id, network)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">
                           <RiExternalLinkLine className="size-3.5" /> View
                         </a>
                       </td>
