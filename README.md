@@ -1,55 +1,63 @@
 # Unsubscribely
 
-> **AlgoBharat Hack Series 3.0** — Future of Finance × Agentic Commerce
+> **AlgoBharat Hack Series 3.0 — Round 2**  
+> Tracks: **Future of Finance** · **Agentic Commerce #3 — A2A Autonomous Payments**
 
-A DeFi-powered subscription management platform on Algorand. Users lock funds in on-chain escrow vaults (time-locked, multi-sig, dispute-resolution), receive ARC-3 NFT payment receipts, and get AI-driven spending optimization — all from a single dashboard.
+A DeFi-powered subscription management platform built on Algorand. Users track subscriptions, lock funds in on-chain escrow vaults, receive ARC-3 NFT payment receipts, and let an autonomous on-chain agent handle releases automatically — no manual intervention required.
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)
 ![Algorand](https://img.shields.io/badge/Algorand-AVM-black?logo=algorand&logoColor=white)
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
+![Supabase](https://img.shields.io/badge/Supabase-Postgres-3ECF8E?logo=supabase&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
 ---
 
 ## Problem Statement
 
-Recurring subscription payments are opaque, hard to track, and impossible to govern on-chain. Users have no escrow protection, no programmable release conditions, and no transparent audit trail for their subscription spending.
+Recurring subscription payments are opaque, hard to track, and impossible to govern on-chain. Users have no escrow protection, no programmable release conditions, and no transparent audit trail for their subscription spending. Renewals happen silently — there's no agent watching for you.
 
 ## Solution
 
-Unsubscribely brings subscription payments on-chain with **5 types of Algorand escrow vaults**, an **AI spending optimizer**, and full **ARC-standard compliance**.
+Unsubscribely brings subscription payments on-chain with **5 types of Algorand escrow vaults**, a **fully autonomous payment agent** that watches billing dates and releases vaults automatically (A2A — no human click required), an **AI spending optimizer**, and full **ARC-standard compliance**.
 
 ---
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────┐
-│                  React Frontend                  │
-│   Dashboard · Analytics · Calendar · AI Agent    │
-├──────────┬──────────┬───────────┬───────────────┤
-│  Pera    │ Algorand │ Supabase  │  Edge         │
-│  Wallet  │ AVM      │ Postgres  │  Functions    │
-│  Connect │ (TEAL)   │  + RLS    │  (Deno)       │
-├──────────┴──────────┴───────────┴───────────────┤
-│              Algorand Testnet / Mainnet          │
-│   ARC-2 Notes · ARC-3 NFTs · ARC-4 ABI Calls    │
-└─────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│                    React 19 Frontend                      │
+│   Dashboard · Vaults · Analytics · AI Optimizer · Agent  │
+├──────────┬───────────┬────────────┬──────────────────────┤
+│  Pera /  │ Algorand  │  Supabase  │  Edge Functions      │
+│  Defly / │ AVM (TEAL)│  Postgres  │  auto-release-vaults │
+│  Lute    │ AlgoNode  │  + RLS     │  ai-optimizer        │
+│  Wallet  │ Testnet   │  pg_cron   │  algorand-compile    │
+├──────────┴───────────┴────────────┴──────────────────────┤
+│                  Algorand Testnet / Mainnet               │
+│      ARC-2 Notes · ARC-3 NFTs · ARC-4 ABI Calls         │
+└──────────────────────────────────────────────────────────┘
 ```
+
+---
 
 ## Hackathon Tracks
 
 ### 🏦 Future of Finance
 - **5 Escrow Vault Types**: Standard, Time-Locked, Multi-Sig, Dispute-Resolution, ASA-Based
 - **ARC-3 NFT Receipts**: Immutable on-chain payment proof minted after vault release
-- **ARC-2 Transaction Notes**: Structured metadata on every transaction
-- **ARC-4 ABI Methods**: Standardized smart contract interfaces
-- **Kill Switch**: Emergency fund recovery mechanism on all vaults
+- **ARC-2 Transaction Notes**: Structured metadata on every transaction (`unsubscribely:j{...}`)
+- **ARC-4 ABI Methods**: Standardized smart contract interfaces (`fund()`, `release()`, `activate_kill_switch()`)
+- **Kill Switch**: Emergency fund recovery mechanism on all vault types
+- **Lora Explorer Integration**: Every vault links directly to the live transaction on Lora
 
-### 🤖 Agentic Commerce
-- **AI Spending Optimizer**: Gemini-powered agent analyzes subscription portfolio and vault allocations
-- **Risk Assessment**: Vault health scoring across lock duration, amount concentration, and diversification
-- **Actionable Recommendations**: Automated suggestions for consolidation, cancellation, and reallocation
+### 🤖 Agentic Commerce #3 — A2A Autonomous Payments
+- **Autonomous Release Agent**: A Supabase Edge Function (`auto-release-vaults`) runs daily via pg_cron, scans all due subscriptions across all users, and releases the linked escrow vault on-chain — no user action required
+- **Agent Wallet**: A dedicated Algorand wallet signs and submits release transactions autonomously on behalf of users
+- **Agent Activity Dashboard**: Live panel on the dashboard shows every autonomous action, timestamp, amount, on-chain mode badge, and a direct Lora Explorer link to the submitted transaction
+- **AI Spending Optimizer**: Gemini-powered analysis of the subscription portfolio — risk scores, cost-saving recommendations, vault health metrics
+- **Audit Trail**: Every agent action is logged to the `agent_actions` table with full payload and txid
 
 ---
 
@@ -62,8 +70,9 @@ Unsubscribely brings subscription payments on-chain with **5 types of Algorand e
 | **Multi-Sig** | Co-signer approval required before fund release |
 | **Dispute Resolution** | Third-party arbitrator for contested payments |
 | **ASA Vaults** | Lock Algorand Standard Assets (not just ALGO) |
+| **Autonomous Agent** | Watches billing dates and releases vaults automatically (A2A) |
 | **NFT Receipts** | ARC-3 compliant receipts minted on vault release |
-| **AI Optimizer** | Portfolio analysis with actionable cost-saving insights |
+| **AI Optimizer** | Portfolio analysis with risk scores and cost-saving insights |
 | **Subscription Tracker** | Full CRUD with folders, tags, categories, multi-currency |
 | **Analytics Dashboard** | Spending trends, category breakdowns, payment calendars |
 | **On-Chain Resume** | Shareable public view of your Algorand payment history |
@@ -76,10 +85,11 @@ Unsubscribely brings subscription payments on-chain with **5 types of Algorand e
 | Layer | Technology |
 |-------|-----------|
 | Frontend | React 19, TypeScript, Tailwind CSS, Recharts |
-| Blockchain | Algorand SDK (algosdk 3.x), AlgoKit Utils, Pera Wallet Connect |
-| Backend | Supabase (Postgres + RLS + Edge Functions) |
-| AI | Google Gemini 2.5 Flash (via Lovable AI gateway) |
-| Smart Contracts | TEAL v10 (AVM) |
+| Blockchain | Algorand SDK (algosdk 3.x), AlgoKit Utils, Pera / Defly / Lute Wallet |
+| Smart Contracts | TEAL v10 (AVM) — 5 contract types |
+| Backend | Supabase (Postgres + RLS + Edge Functions + pg_cron) |
+| AI | Google Gemini 2.5 Flash |
+| Deployment | Algorand Testnet via AlgoNode public API |
 
 ---
 
@@ -88,9 +98,9 @@ Unsubscribely brings subscription payments on-chain with **5 types of Algorand e
 ```
 src/
 ├── components/
-│   ├── algorand/          # WalletConnect, CreateVaultModal, EscrowVaultCard
+│   ├── algorand/          # WalletSelectorModal, CreateVaultModal, EscrowVaultCard
 │   ├── analytics/         # Spending charts & breakdowns
-│   ├── dashboard/         # Metrics, recent subs, upcoming payments
+│   ├── dashboard/         # Metrics, agent activity panel, recent subscriptions
 │   ├── landing/           # Hero, Features, Pricing, CTA
 │   └── ui/                # Design system (Button, Input, Select, Sidebar)
 ├── lib/
@@ -101,21 +111,32 @@ src/
 │       └── contract.ts    # TEAL compilation, vault operations
 ├── pages/
 │   ├── dashboard/
+│   │   ├── DashboardPageContent.tsx   # Main dashboard + Agent Activity panel
 │   │   ├── EscrowVaultsPage.tsx
 │   │   ├── VaultDetailsPage.tsx
 │   │   ├── AIOptimizerPage.tsx
-│   │   └── ...
-│   └── auth/              # Login, Register, Password reset
-├── models/                # TypeScript interfaces
-└── data/                  # Static data & pSEO content
+│   │   └── OnChainResumePage.tsx
+│   └── auth/              # Login, Register, Password reset, Auth callback
+
+smart_contracts/
+├── EscrowVault.approval.teal
+├── TimeLockEscrow.approval.teal
+├── MultiSigEscrow.approval.teal
+├── DisputeEscrow.approval.teal
+├── ASAEscrow.approval.teal
+└── artifacts/deployed.json    # App IDs populated after deployment
+
+scripts/
+└── deploy.js              # Node.js deployment script for all 5 vault contracts
 
 supabase/
 ├── functions/
-│   ├── ai-optimizer/      # Gemini-powered portfolio analysis
-│   ├── algorand-compile/  # Server-side TEAL compilation
-│   ├── vault-health/      # Vault status monitoring
-│   └── advance-billing/   # Automated billing cycle advancement
-└── migrations/            # Database schema (managed)
+│   ├── auto-release-vaults/   # Autonomous A2A agent (runs daily via pg_cron)
+│   ├── ai-optimizer/          # Gemini-powered portfolio analysis
+│   ├── algorand-compile/      # Server-side TEAL compilation
+│   ├── vault-health/          # Vault status monitoring
+│   └── advance-billing/       # Automated billing cycle advancement
+└── migrations/                # Database schema (managed)
 ```
 
 ---
@@ -125,8 +146,8 @@ supabase/
 ### Prerequisites
 
 - Node.js 18+
-- [Pera Wallet](https://perawallet.app/) (mobile or web)
-- Algorand Testnet account funded via [dispenser](https://dispenser.testnet.aws.algodev.network/)
+- [Pera Wallet](https://perawallet.app/) (mobile or web), [Defly](https://defly.app/), or [Lute](https://lute.app/)
+- Algorand Testnet account funded via [Testnet Dispenser](https://bank.testnet.algorand.network/)
 
 ### Install & Run
 
@@ -137,13 +158,28 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:8080`
+Open `http://localhost:5000`
+
+### Deploy Smart Contracts (Testnet)
+
+```bash
+# 1. Fund the deployer wallet
+#    Address: PTX3S4RB5WBP2W5YPWLOMIJSBKWTYOIKFUFPS3LGVSGBLNRUZNJF6T7WYY
+#    Faucet:  https://bank.testnet.algorand.network/
+
+# 2. Deploy all 5 vault contracts
+npm run deploy:contracts
+
+# App IDs and Lora Explorer links are saved to smart_contracts/artifacts/deployed.json
+```
 
 ### Environment Variables
 
 ```env
 VITE_SUPABASE_URL=<your-supabase-url>
 VITE_SUPABASE_PUBLISHABLE_KEY=<your-anon-key>
+TESTNET_MNEMONIC=<25-word deployer mnemonic>
+AGENT_WALLET_MNEMONIC=<25-word agent wallet mnemonic>
 ```
 
 ---
@@ -153,7 +189,7 @@ VITE_SUPABASE_PUBLISHABLE_KEY=<your-anon-key>
 ### Vault Lifecycle
 
 ```
-Create → Fund → [Time Lock / Co-Sign / Arbitrate] → Release → Mint Receipt
+Create → Fund → [Time Lock / Co-Sign / Arbitrate] → Release → Mint ARC-3 Receipt
                                                         ↓
                                                    Kill Switch
                                                (Emergency Recovery)
@@ -164,7 +200,29 @@ Create → Fund → [Time Lock / Co-Sign / Arbitrate] → Release → Mint Recei
 - **Global State**: `receiver`, `amount`, `is_funded`, `is_released`, `kill_switch`
 - **ABI Methods**: `fund()`, `release()`, `activate_kill_switch()`, `approve_cosigner()`
 - **Minimum Balance**: 0.3 ALGO reserved for contract operations
-- **Network Aware**: Automatic Testnet/Mainnet switching via Pera Wallet
+- **Network Aware**: Automatic Testnet/Mainnet switching via connected wallet
+
+---
+
+## Autonomous Agent — A2A Architecture
+
+```
+pg_cron (daily 00:05 UTC)
+    │
+    ▼
+auto-release-vaults (Supabase Edge Function)
+    │
+    ├── Query: subscriptions WHERE next_billing_date <= today
+    │
+    ├── For each due subscription:
+    │     ├── Find linked escrow vault (status = locked)
+    │     ├── Build release transaction (algosdk)
+    │     ├── Sign with agent wallet (AGENT_WALLET_MNEMONIC)
+    │     ├── Submit to Algorand Testnet
+    │     └── Log action to agent_actions table (txid, amount, mode)
+    │
+    └── Dashboard reads agent_actions → shows live Activity panel
+```
 
 ---
 
@@ -173,34 +231,34 @@ Create → Fund → [Time Lock / Co-Sign / Arbitrate] → Release → Mint Recei
 | Standard | Usage |
 |----------|-------|
 | **ARC-2** | Structured transaction notes (`unsubscribely:j{...}`) |
-| **ARC-3** | NFT receipt metadata (name, description, properties) |
-| **ARC-4** | ABI method signatures for contract interaction |
+| **ARC-3** | NFT receipt metadata (name, description, image, properties) |
+| **ARC-4** | ABI method signatures for all contract interactions |
 | **ARC-32** | Application specification compliance |
 
 ---
 
 ## Demo Flow
 
-1. **Connect Pera Wallet** on Testnet
-2. **Add subscriptions** (Netflix, Spotify, etc.) with amounts & billing cycles
-3. **Create an Escrow Vault** — choose Standard, Time-Locked, or Multi-Sig
-4. **Fund the vault** from connected wallet
-5. **Release funds** when conditions are met
-6. **Mint ARC-3 NFT receipt** as on-chain proof
-7. **Run AI Optimizer** to get spending insights & vault health scores
-8. **View Analytics** — charts, calendars, category breakdowns
+1. **Connect Wallet** — Pera, Defly, or Lute on Testnet
+2. **Add Subscriptions** — Netflix, Spotify, etc. with amounts and billing cycles
+3. **Create an Escrow Vault** — Standard, Time-Locked, Multi-Sig, Dispute, or ASA
+4. **Fund the Vault** — signs and submits on Algorand Testnet, view on Lora Explorer
+5. **Release Funds** — manually or wait for the autonomous agent to release automatically
+6. **Mint ARC-3 NFT Receipt** — immutable on-chain proof of payment
+7. **Run AI Optimizer** — get portfolio risk scores and cost-saving recommendations
+8. **Watch Agent Activity** — dashboard panel shows every autonomous release with txid
 
 ---
 
 ## Screenshots
 
-> Add screenshots of: Dashboard, Vault Creation, AI Optimizer, NFT Receipt
+> _Coming soon — dashboard, vault creation, AI optimizer, agent activity panel_
 
 ---
 
 ## Team
 
-- **Surya** — Full-stack development, smart contract design, AI integration
+- **Kalash Vasaniya** — Full-stack development, smart contract design, AI & agent integration
 
 ---
 
