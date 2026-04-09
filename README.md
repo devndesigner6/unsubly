@@ -258,7 +258,7 @@ auto-release-vaults (Supabase Edge Function)
 
 ## Team
 
-- **Kalash Vasaniya** — Full-stack development, smart contract design, AI & agent integration
+- **mesuryabuilds** — Full-stack development, smart contract design, AI & agent integration
 
 ---
 
