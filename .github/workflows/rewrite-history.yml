@@ -1,0 +1,34 @@
+name: Rewrite Git History
+
+on:
+  workflow_dispatch:
+
+jobs:
+  rewrite:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install git-filter-repo
+        run: pip install git-filter-repo
+
+      - name: Rewrite all commit authors
+        run: |
+          git filter-repo --force \
+            --name-callback 'return b"devndesigner6"' \
+            --email-callback 'return b"peddadahemanth6@gmail.com"'
+
+      - name: Force push rewritten history
+        run: |
+          git remote add origin-rw https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/devndesigner6/unsubly.git
+          git push origin-rw main --force
+
+      - name: Done
+        run: echo "All commits are now under devndesigner6"
