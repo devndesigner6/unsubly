@@ -1,7 +1,8 @@
-import { Suspense, lazy } from "react"
+import { Suspense, lazy, useEffect } from "react"
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 import { ThemeProvider } from "next-themes"
 import { AuthProvider, useAuth } from "@/lib/auth-context"
+import { initExchangeRates } from "@/lib/currency"
 import { Toaster } from "@/components/ui/toaster"
 
 // Layouts
@@ -33,6 +34,8 @@ import EscrowVaultsPage from "@/pages/dashboard/EscrowVaultsPage"
 import VaultDetailsPage from "@/pages/dashboard/VaultDetailsPage"
 import OnChainResumePage from "@/pages/dashboard/OnChainResumePage"
 import TransactionHistoryPage from "@/pages/dashboard/TransactionHistoryPage"
+import AIOptimizerPage from "@/pages/dashboard/AIOptimizerPage"
+import CoSignerApprovalPage from "@/pages/CoSignerApprovalPage"
 import PublicResumePage from "@/pages/PublicResumePage"
 import NotFoundPage from "@/pages/NotFoundPage"
 
@@ -69,6 +72,10 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  useEffect(() => {
+    initExchangeRates()
+  }, [])
+
   return (
     <BrowserRouter>
       <ThemeProvider defaultTheme="light" disableTransitionOnChange attribute="class">
@@ -81,6 +88,7 @@ export default function App() {
 
             {/* Public Resume (no auth required) */}
             <Route path="/resume/:token" element={<PublicResumePage />} />
+            <Route path="/vault-approve/:vaultId" element={<CoSignerApprovalPage />} />
 
             {/* Auth */}
             <Route element={<AuthLayout />}>
@@ -113,6 +121,7 @@ export default function App() {
               <Route path="/payment-methods" element={<PaymentMethodsPage />} />
               <Route path="/escrow-vaults" element={<EscrowVaultsPage />} />
               <Route path="/escrow-vaults/:id" element={<VaultDetailsPage />} />
+              <Route path="/ai-optimizer" element={<AIOptimizerPage />} />
               <Route path="/onchain-resume" element={<OnChainResumePage />} />
               <Route path="/transactions" element={<TransactionHistoryPage />} />
               <Route path="/settings" element={<SettingsPage />} />

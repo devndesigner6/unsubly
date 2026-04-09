@@ -5,9 +5,9 @@ project_id = "ipnywrvwszqlaykbkske"
     verify_jwt = false
   [functions.advance-billing]
     verify_jwt = false
-  [functions.send-push-notifications]
+  [functions.ai-optimizer]
     verify_jwt = false
-  [functions.generate-vapid-keys]
+  [functions.cosigner-access]
     verify_jwt = false
   [functions.vault-health]
     verify_jwt = false

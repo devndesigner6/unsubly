@@ -35,9 +35,8 @@ export const currencies: Record<
   SAR: { name: "Saudi Riyal", symbol: "﷼", locale: "ar-SA" },
 }
 
-// Mock exchange rates (relative to USD)
-// In production, these would come from an API
-const exchangeRates: Record<string, number> = {
+// Exchange rates relative to USD — seeded with fallback values, overwritten at runtime by initExchangeRates()
+let exchangeRates: Record<string, number> = {
   USD: 1,
   EUR: 0.92,
   GBP: 0.79,
@@ -130,11 +129,7 @@ const EXCHANGE_RATE_V4_URL = "https://api.exchangerate-api.com/v4/latest"
 export async function fetchExchangeRates(
   baseCurrency: string = "USD",
 ): Promise<Record<string, number>> {
-  const apiKey = import.meta.env.VITE_EXCHANGE_RATE_API_KEY
-  const url =
-    apiKey && apiKey.startsWith("http")
-      ? apiKey.replace(/\/USD$/, `/${baseCurrency}`)
-      : `${EXCHANGE_RATE_V4_URL}/${baseCurrency}`
+  const url = `${EXCHANGE_RATE_V4_URL}/${baseCurrency}`
 
   try {
     const response = await fetch(url)
@@ -156,6 +151,25 @@ export async function fetchExchangeRates(
   } catch (error) {
     console.warn("Exchange rates fetch failed, using fallback rates:", error)
     return exchangeRates
+  }
+}
+
+/**
+ * Fetch live rates once on startup and update the module-level store so that
+ * convertCurrency() automatically uses current data everywhere in the app.
+ * Safe to call multiple times — subsequent calls are no-ops if rates are fresh.
+ */
+let _ratesInitialized = false
+export async function initExchangeRates(): Promise<void> {
+  if (_ratesInitialized) return
+  _ratesInitialized = true
+  try {
+    const live = await fetchExchangeRates("USD")
+    if (live && live.USD === 1) {
+      exchangeRates = live
+    }
+  } catch {
+    // keep fallback rates
   }
 }
 

@@ -40,17 +40,10 @@ Unsubscribely allows users to manage recurring payments using on-chain escrow va
 - `tests/` — pytest integration tests for all vault types
 - `frontend_integration/clients/` — Generated TypeScript ABI clients
 
-## Replit Environment
-
-- **Run**: Click the Run button — starts `npm run dev` on port 5000
-- **Preview**: Available in the Replit preview pane at port 5000
-- **Environment Variables**: `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` are stored as Replit shared env vars
-- **Deploy**: Static site — uses `npm run build` → `dist/` directory
-
 ## Frontend Development
 
 ```bash
-npm install
+npm install --legacy-peer-deps
 npm run dev
 ```
 

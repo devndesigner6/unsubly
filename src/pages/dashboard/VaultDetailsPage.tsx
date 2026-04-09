@@ -11,7 +11,7 @@ import {
   RiCodeLine, RiLockLine, RiLockUnlockLine, RiAlarmWarningLine,
   RiDeleteBinLine, RiRefreshLine, RiWalletLine, RiTimeLine,
   RiUserLine, RiCoinLine, RiGroupLine, RiAwardLine, RiCheckboxMultipleLine,
-  RiCheckLine,
+  RiCheckLine, RiShareLine,
 } from "@remixicon/react"
 import algosdk from "algosdk"
 import { toast } from "sonner"
@@ -613,10 +613,23 @@ export default function VaultDetailsPage() {
           </Button>
 
           {isMultiSig && !vault.co_signer_approved && (
-            <Button variant="secondary" onClick={handleApproveMultiSig} disabled={isProcessing || !walletAddress}>
-              <RiCheckboxMultipleLine className="mr-1.5 size-4" />
-              Approve (Multi-Sig)
-            </Button>
+            <>
+              <Button variant="secondary" onClick={handleApproveMultiSig} disabled={isProcessing || !walletAddress}>
+                <RiCheckboxMultipleLine className="mr-1.5 size-4" />
+                Approve (Multi-Sig)
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  const link = `${window.location.origin}/vault-approve/${vault.id}`
+                  navigator.clipboard.writeText(link)
+                  toast.success("Co-signer link copied!", { description: "Share this link with your co-signer" })
+                }}
+              >
+                <RiShareLine className="mr-1.5 size-4" />
+                Copy Co-Signer Link
+              </Button>
+            </>
           )}
 
           <Button variant="destructive" onClick={() => setConfirmAction("kill")} disabled={isProcessing || !walletAddress}>

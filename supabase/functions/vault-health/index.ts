@@ -73,7 +73,7 @@ serve(async (req: Request) => {
           issues.push({ vaultId: vault.id, appId: vault.app_id, type: "STATUS_MISMATCH", message: `DB: ${vault.status}, Chain: ${statusMap[onChainStatus] || "unknown"}` })
         }
       } catch (err) {
-        issues.push({ vaultId: vault.id, appId: vault.app_id, type: "CHECK_FAILED", message: err.message })
+        issues.push({ vaultId: vault.id, appId: vault.app_id, type: "CHECK_FAILED", message: (err as Error).message })
       }
     }
 
@@ -81,7 +81,7 @@ serve(async (req: Request) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     })
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: (error as Error).message }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     })
   }
