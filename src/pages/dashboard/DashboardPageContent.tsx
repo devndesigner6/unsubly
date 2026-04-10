@@ -14,11 +14,12 @@ import {
   RiShieldLine, RiFileChartLine, RiLockLine,
   RiExternalLinkLine, RiRobotLine, RiCheckDoubleLine,
 } from "@remixicon/react"
-import { useState, useEffect, useMemo, useRef } from "react"
+import { WalletSelectorModal } from "@/components/algorand/WalletSelectorModal"
+import { useState, useEffect, useMemo } from "react"
 
 export default function DashboardPageContent() {
   const { user } = useAuth()
-  const { walletAddress, balance, isConnecting, connectWallet, isLoadingBalance, network } = useAlgorand()
+  const { walletAddress, balance, isConnecting, isLoadingBalance, network, setShowWalletSelector } = useAlgorand()
   const [subscriptions, setSubscriptions] = useState<any[]>([])
   const [profile, setProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -26,11 +27,8 @@ export default function DashboardPageContent() {
   const [vaultStats, setVaultStats] = useState({ total: 0, locked: 0, killed: 0, totalLocked: 0 })
   const [recentPayments, setRecentPayments] = useState<any[]>([])
   const [agentActions, setAgentActions] = useState<any[]>([])
-  const hasFetched = useRef(false)
-
   useEffect(() => {
-    if (!user || hasFetched.current) return
-    hasFetched.current = true
+    if (!user) return
     async function load() {
       try {
         const [subs, prof] = await Promise.all([
@@ -80,7 +78,7 @@ export default function DashboardPageContent() {
   }, [user])
 
   const currency = profile?.currency || "USD"
-  const userName = user?.user_metadata?.full_name?.split(" ")[0] || "there"
+  const userName = profile?.name?.split(" ")[0] || user?.user_metadata?.full_name?.split(" ")[0] || "there"
 
   const metrics = useMemo(() => {
     const active = subscriptions.filter((s) => s.status === "active")
@@ -136,6 +134,7 @@ export default function DashboardPageContent() {
 
   return (
     <div className="min-h-screen bg-background">
+      <WalletSelectorModal />
       {/* Hero Welcome */}
       <div className="relative overflow-hidden border-b border-border bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800">
         <div className="absolute inset-0 bg-grid-white/10" />
@@ -227,7 +226,7 @@ export default function DashboardPageContent() {
             </div>
             {!walletAddress ? (
               <button
-                onClick={() => connectWallet()}
+                onClick={() => setShowWalletSelector(true)}
                 disabled={isConnecting}
                 className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
               >

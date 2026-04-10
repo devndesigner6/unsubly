@@ -55,9 +55,14 @@ export default function OnChainResumePage() {
 
   const handleDeactivateShare = async () => {
     if (!user) return
-    await supabase.from("resume_shares" as any).update({ is_active: false } as any).eq("user_id", user.id).eq("is_active", true)
-    setShareToken(null)
-    toast.info("Share link deactivated")
+    try {
+      const { error } = await supabase.from("resume_shares" as any).update({ is_active: false } as any).eq("user_id", user.id).eq("is_active", true)
+      if (error) throw error
+      setShareToken(null)
+      toast.info("Share link deactivated")
+    } catch (err: any) {
+      toast.error("Failed to deactivate link", { description: err?.message })
+    }
   }
 
   const shareUrl = shareToken ? `${window.location.origin}/resume/${shareToken}` : null

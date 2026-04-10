@@ -6,6 +6,7 @@ import {
   RiAddLine, RiPriceTag3Line, RiDeleteBinLine, RiEditLine,
   RiLoader4Line, RiCloseLine, RiCheckLine,
 } from "@remixicon/react"
+import { toast } from "sonner"
 
 interface Tag {
   id: string
@@ -46,19 +47,36 @@ export default function TagsPage() {
   async function handleSave() {
     if (!user || !name.trim()) return
     setSaving(true)
-    if (editingId) {
-      await supabase.from("tags").update({ name: name.trim(), color }).eq("id", editingId)
-    } else {
-      await supabase.from("tags").insert({ name: name.trim(), color, user_id: user.id })
+    try {
+      if (editingId) {
+        const { error } = await supabase.from("tags").update({ name: name.trim(), color }).eq("id", editingId)
+        if (error) throw error
+        toast.success("Tag updated")
+      } else {
+        const { error } = await supabase.from("tags").insert({ name: name.trim(), color, user_id: user.id })
+        if (error) throw error
+        toast.success("Tag created")
+      }
+      setName(""); setColor(COLORS[0]); setShowForm(false); setEditingId(null)
+      load()
+    } catch (err: any) {
+      toast.error("Failed to save tag", { description: err?.message })
+    } finally {
+      setSaving(false)
     }
-    setName(""); setColor(COLORS[0]); setShowForm(false); setEditingId(null); setSaving(false)
-    load()
   }
 
   async function handleDelete(id: string) {
-    await supabase.from("tags").delete().eq("id", id)
-    setDeleteConfirmId(null)
-    load()
+    try {
+      const { error } = await supabase.from("tags").delete().eq("id", id)
+      if (error) throw error
+      toast.success("Tag deleted")
+      setDeleteConfirmId(null)
+      load()
+    } catch (err: any) {
+      toast.error("Failed to delete tag", { description: err?.message })
+      setDeleteConfirmId(null)
+    }
   }
 
   function startEdit(t: Tag) {

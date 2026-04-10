@@ -6,6 +6,7 @@ import {
   RiAddLine, RiFolderLine, RiDeleteBinLine, RiEditLine,
   RiLoader4Line, RiCloseLine, RiCheckLine,
 } from "@remixicon/react"
+import { toast } from "sonner"
 
 interface Folder {
   id: string
@@ -46,19 +47,36 @@ export default function FoldersPage() {
   async function handleSave() {
     if (!user || !name.trim()) return
     setSaving(true)
-    if (editingId) {
-      await supabase.from("folders").update({ name: name.trim(), color }).eq("id", editingId)
-    } else {
-      await supabase.from("folders").insert({ name: name.trim(), color, user_id: user.id })
+    try {
+      if (editingId) {
+        const { error } = await supabase.from("folders").update({ name: name.trim(), color }).eq("id", editingId)
+        if (error) throw error
+        toast.success("Folder updated")
+      } else {
+        const { error } = await supabase.from("folders").insert({ name: name.trim(), color, user_id: user.id })
+        if (error) throw error
+        toast.success("Folder created")
+      }
+      setName(""); setColor(COLORS[0]); setShowForm(false); setEditingId(null)
+      load()
+    } catch (err: any) {
+      toast.error("Failed to save folder", { description: err?.message })
+    } finally {
+      setSaving(false)
     }
-    setName(""); setColor(COLORS[0]); setShowForm(false); setEditingId(null); setSaving(false)
-    load()
   }
 
   async function handleDelete(id: string) {
-    await supabase.from("folders").delete().eq("id", id)
-    setDeleteConfirmId(null)
-    load()
+    try {
+      const { error } = await supabase.from("folders").delete().eq("id", id)
+      if (error) throw error
+      toast.success("Folder deleted")
+      setDeleteConfirmId(null)
+      load()
+    } catch (err: any) {
+      toast.error("Failed to delete folder", { description: err?.message })
+      setDeleteConfirmId(null)
+    }
   }
 
   function startEdit(f: Folder) {

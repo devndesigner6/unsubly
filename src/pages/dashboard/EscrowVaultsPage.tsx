@@ -33,6 +33,17 @@ export default function EscrowVaultsPage() {
     fetchVaults()
   }, [fetchVaults])
 
+  useEffect(() => {
+    if (!user) return
+    const channel = supabase
+      .channel("escrow_vaults_realtime")
+      .on("postgres_changes" as any, { event: "*", schema: "public", table: "escrow_vaults", filter: `user_id=eq.${user.id}` }, () => {
+        fetchVaults()
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [user, fetchVaults])
+
   const filteredVaults = filterType === "all" ? vaults : vaults.filter((v) => v.vault_type === filterType)
 
   const stats = {
