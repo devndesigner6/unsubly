@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { useAlgorand } from "@/lib/algorand/context"
 import { supabase } from "@/integrations/supabase/client"
@@ -6,16 +6,42 @@ import { WalletConnect } from "@/components/algorand/WalletConnect"
 import { EscrowVaultCard } from "@/components/algorand/EscrowVaultCard"
 import { CreateVaultModal } from "@/components/algorand/CreateVaultModal"
 import { VaultHealthBanner } from "@/components/algorand/VaultHealthBanner"
-import { VAULT_TYPE_LABELS, type VaultType } from "@/lib/algorand/constants"
+import { VAULT_TYPE_LABELS, getNetworkConfig, type VaultType } from "@/lib/algorand/constants"
 import { RiAddLine, RiShieldLine, RiLockLine, RiAlarmWarningLine, RiFilterLine } from "@remixicon/react"
+import algosdk from "algosdk"
+import { toast } from "sonner"
+
+function decodeGlobalState(raw: any[]): Record<string, string | number> {
+  const result: Record<string, string | number> = {}
+  for (const item of raw) {
+    const key = atob(item.key)
+    if (item.value.type === 1) {
+      const bytes = Uint8Array.from(atob(item.value.bytes), c => c.charCodeAt(0))
+      result[key] = bytes.length === 32 ? String(algosdk.encodeAddress(bytes)) : item.value.bytes
+    } else {
+      result[key] = Number(item.value.uint)
+    }
+  }
+  return result
+}
+
+function vaultTypeFromState(state: Record<string, string | number>): VaultType {
+  if ("agent" in state) return "standard"
+  if ("co_signer" in state) return "multi_sig"
+  if ("arbitrator" in state) return "dispute"
+  if ("unlock_time" in state) return "time_locked"
+  if ("asa_id" in state) return "asa"
+  return "standard"
+}
 
 export default function EscrowVaultsPage() {
   const { user } = useAuth()
-  const { walletAddress } = useAlgorand()
+  const { walletAddress, algodClient, network } = useAlgorand()
   const [vaults, setVaults] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [filterType, setFilterType] = useState<VaultType | "all">("all")
+  const healedRef = useRef(false)
 
   const fetchVaults = useCallback(async () => {
     if (!user) return
@@ -27,11 +53,86 @@ export default function EscrowVaultsPage() {
       .order("created_at", { ascending: false })
     if (data) setVaults(data as any[])
     setIsLoading(false)
+    return data as any[] | null
   }, [user])
 
+  const autoHealOrphanedVaults = useCallback(async (knownVaults: any[]) => {
+    if (!user || !walletAddress) return
+    try {
+      const cfg = getNetworkConfig(network)
+      const idxUrl = cfg.indexerServer
+      const resp = await fetch(`${idxUrl}/v2/accounts/${walletAddress}/created-apps?limit=50`)
+      if (!resp.ok) return
+      const { apps } = await resp.json()
+      if (!apps || apps.length === 0) return
+
+      const knownAppIds = new Set(knownVaults.map((v: any) => Number(v.app_id)).filter(Boolean))
+      const orphans = (apps as any[]).filter((a: any) => !knownAppIds.has(Number(a.id)))
+      if (orphans.length === 0) return
+
+      let recovered = 0
+      for (const app of orphans) {
+        try {
+          const appInfo = await algodClient.getApplicationByID(Number(app.id)).do() as any
+          const rawState = appInfo.params?.globalState ?? appInfo.params?.["global-state"] ?? []
+          if (!Array.isArray(rawState) || rawState.length === 0) continue
+
+          const state = decodeGlobalState(rawState)
+          if (!("creator" in state) || !("recipient" in state)) continue
+
+          const vaultType = vaultTypeFromState(state)
+          const appAddress = String(algosdk.getApplicationAddress(Number(app.id)))
+
+          let balance = 0
+          try {
+            const acct = await algodClient.accountInformation(appAddress).do() as any
+            balance = Number(acct.amount ?? 0)
+          } catch {}
+
+          const algoAmount = Math.max(0, (balance - 100_000) / 1_000_000)
+          const statusVal = Number(state["status"] ?? 0)
+          const dbStatus = statusVal === 1 ? "released" : statusVal === 2 ? "killed" : "locked"
+
+          await supabase.from("escrow_vaults" as any).insert({
+            user_id: user.id,
+            algorand_address: walletAddress,
+            amount: algoAmount,
+            currency: "ALGO",
+            status: dbStatus,
+            app_id: Number(app.id),
+            app_address: appAddress,
+            vault_type: vaultType,
+            escrow_address: typeof state["recipient"] === "string" ? state["recipient"] : null,
+            co_signer_address: vaultType === "multi_sig" && typeof state["co_signer"] === "string" ? state["co_signer"] : null,
+            arbitrator_address: vaultType === "dispute" && typeof state["arbitrator"] === "string" ? state["arbitrator"] : null,
+            asset_id: vaultType === "asa" && typeof state["asa_id"] === "number" ? state["asa_id"] : null,
+            unlock_time: vaultType === "time_locked" && typeof state["unlock_time"] === "number" && state["unlock_time"] > 0
+              ? new Date(Number(state["unlock_time"]) * 1000).toISOString()
+              : null,
+          } as any)
+          recovered++
+        } catch {}
+      }
+
+      if (recovered > 0) {
+        toast.success(`Recovered ${recovered} vault${recovered > 1 ? "s" : ""} from chain`, {
+          description: "Found on-chain contracts not yet in your vault list — added automatically.",
+          duration: 6000,
+        })
+        await fetchVaults()
+      }
+    } catch {}
+  }, [user, walletAddress, algodClient, network, fetchVaults])
+
   useEffect(() => {
-    fetchVaults()
-  }, [fetchVaults])
+    if (!user) return
+    fetchVaults().then((loaded) => {
+      if (!healedRef.current && walletAddress) {
+        healedRef.current = true
+        autoHealOrphanedVaults(loaded ?? [])
+      }
+    })
+  }, [user, walletAddress, fetchVaults, autoHealOrphanedVaults])
 
   useEffect(() => {
     if (!user) return
