@@ -124,6 +124,13 @@ export default function EscrowVaultsPage() {
     } catch {}
   }, [user, walletAddress, algodClient, network, fetchVaults])
 
+  const handleCreated = useCallback(async () => {
+    const loaded = await fetchVaults()
+    if (walletAddress) {
+      await autoHealOrphanedVaults(loaded ?? [])
+    }
+  }, [fetchVaults, walletAddress, autoHealOrphanedVaults])
+
   useEffect(() => {
     if (!user) return
     fetchVaults().then((loaded) => {
@@ -265,7 +272,7 @@ export default function EscrowVaultsPage() {
       <CreateVaultModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        onCreated={fetchVaults}
+        onCreated={handleCreated}
       />
     </div>
   )

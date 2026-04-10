@@ -214,8 +214,10 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
 
       if (insertError) {
         console.error("DB insert error:", insertError)
-        toast.error("Vault created on-chain but failed to save to database", {
-          description: `App ID: ${appId}. Contact support with this ID.`,
+        const errDetail = (insertError as any)?.message || (insertError as any)?.details || JSON.stringify(insertError)
+        toast.error("Vault on-chain — syncing to database…", {
+          description: `Auto-recovery will import it now. (${errDetail})`,
+          duration: 10000,
         })
       }
 
