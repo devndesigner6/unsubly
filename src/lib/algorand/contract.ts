@@ -305,7 +305,7 @@ export async function deleteEscrowContract(
   const txn = algosdk.makeApplicationCallTxnFromObject({
     sender: senderAddress, appIndex: appId,
     onComplete: algosdk.OnApplicationComplete.DeleteApplicationOC,
-    suggestedParams: params,
+    suggestedParams: { ...params, fee: 2000, flatFee: true },
     appArgs: [SEL.delete],
   })
   const signedTxns = await signTransaction(txn)

@@ -213,7 +213,22 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
       toast.success("Contract deleted", { description: "MBR reclaimed to your wallet" })
       onUpdate()
     } catch (err: any) {
-      toast.error("Delete failed", { description: err?.message || "Transaction failed" })
+      const msg: string = err?.message || ""
+      const isAssertFail = msg.includes("assert") || msg.includes("logic eval") || msg.includes("opcodes")
+      const isUserRejected = msg.toLowerCase().includes("rejected") || msg.toLowerCase().includes("cancel")
+
+      if (isAssertFail) {
+        await supabase.from("escrow_vaults" as any).delete().eq("id", vault.id)
+        toast.warning("Removed from your vault list", {
+          description: "The on-chain contract could not be deleted (wallet mismatch or already settled). Your 0.1 ALGO min-balance remains on-chain.",
+          duration: 8000,
+        })
+        onUpdate()
+      } else if (isUserRejected) {
+        toast.info("Cancelled", { description: "Delete transaction was not signed." })
+      } else {
+        toast.error("Delete failed", { description: msg || "Transaction failed" })
+      }
     } finally {
       setIsProcessing(false)
       setAction("")
