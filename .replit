@@ -50,7 +50,7 @@ run = ["node", "server.js"]
 [userenv]
 
 [userenv.shared]
-GROQ_API_KEY = "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"
+GROQ_API_KEY = "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"
 TESTNET_MNEMONIC = "unique grace fuel derive vicious city dizzy slab rent cannon west alcohol desk vessel project scout album bottom gap focus lend layer pair above birth"
 AGENT_WALLET_MNEMONIC = "unique grace fuel derive vicious city dizzy slab rent cannon west alcohol desk vessel project scout album bottom gap focus lend layer pair above birth"
 VITE_AGENT_WALLET_ADDRESS = "NLJE4ZCTVQTOG4JPZ3EABZ63BON5M2XGKD5NDN77M33DCWUF5AC2DLWA5U"
