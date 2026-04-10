@@ -1,15 +1,15 @@
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Link } from "react-router-dom"
 import { useAlgorand } from "@/lib/algorand/context"
 import {
   shortenAddress, getLoraTransactionUrl, getLoraApplicationUrl,
-  VAULT_TYPE_LABELS, type VaultType,
+  microalgosToAlgo, VAULT_TYPE_LABELS, type VaultType,
 } from "@/lib/algorand/constants"
-import { releaseEscrowFunds, killEscrowContract, deleteEscrowContract } from "@/lib/algorand/contract"
+import { releaseEscrowFunds, killEscrowContract, deleteEscrowContract, fundEscrowContract } from "@/lib/algorand/contract"
 import {
   RiLockLine, RiLockUnlockLine, RiShieldLine, RiExternalLinkLine,
   RiAlarmWarningLine, RiDeleteBinLine, RiCodeLine, RiTimeLine,
-  RiGroupLine, RiCoinLine, RiCheckLine,
+  RiGroupLine, RiCoinLine, RiCheckLine, RiRefreshLine, RiAddLine,
 } from "@remixicon/react"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/lib/auth-context"
@@ -57,9 +57,63 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
   const [action, setAction] = useState("")
   const [confirmAction, setConfirmAction] = useState<"kill" | "delete" | null>(null)
   const [releasedTxnId, setReleasedTxnId] = useState<string | null>(null)
+  const [onChainBalance, setOnChainBalance] = useState<number | null>(null)
+  const [loadingBalance, setLoadingBalance] = useState(false)
+  const [showFundModal, setShowFundModal] = useState(false)
+  const [fundAmount, setFundAmount] = useState("")
 
   const isSmartContract = !!vault.app_id
   const vType = (vault.vault_type || "standard") as VaultType
+
+  const fetchOnChainBalance = useCallback(async () => {
+    if (!vault.app_address || !isSmartContract) return
+    setLoadingBalance(true)
+    try {
+      const info = await algodClient.accountInformation(vault.app_address).do() as any
+      const µALGO = Number(info.amount ?? info["amount"] ?? 0)
+      setOnChainBalance(µALGO)
+    } catch {
+      setOnChainBalance(null)
+    } finally {
+      setLoadingBalance(false)
+    }
+  }, [algodClient, vault.app_address, isSmartContract])
+
+  useEffect(() => {
+    fetchOnChainBalance()
+  }, [fetchOnChainBalance])
+
+  const handleFund = async () => {
+    const algoAmt = parseFloat(fundAmount)
+    if (!walletAddress || !vault.app_address || isNaN(algoAmt) || algoAmt <= 0) return
+    setShowFundModal(false)
+    setIsProcessing(true)
+    setAction("Funding vault on-chain… (sign in your wallet)")
+    try {
+      const microAlgos = Math.floor(algoAmt * 1_000_000)
+      const txnId = await fundEscrowContract(algodClient, walletAddress, vault.app_address, microAlgos, signTransaction)
+      await supabase.from("escrow_vaults" as any)
+        .update({ status: "locked", txn_id: txnId } as any)
+        .eq("id", vault.id)
+      await fetchOnChainBalance()
+      setFundAmount("")
+      toast.success(`${algoAmt} ALGO funded on-chain`, {
+        description: (
+          <a href={getLoraTransactionUrl(txnId, network)} target="_blank" rel="noopener noreferrer" className="underline font-medium">
+            View on Lora ↗
+          </a>
+        ) as any,
+        duration: 8000,
+      })
+      onUpdate()
+    } catch (err: any) {
+      toast.error("Fund failed", { description: err?.message || "Transaction failed" })
+    } finally {
+      setIsProcessing(false)
+      setAction("")
+    }
+  }
+
   const VTypeIcon = VAULT_TYPE_ICON[vType] || RiShieldLine
 
   const statusColors: Record<string, string> = {
@@ -184,9 +238,28 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
             <h3 className="text-sm font-semibold text-foreground">
               {vault.subscription?.name || "Subscription Vault"}
             </h3>
-            <p className="text-xs text-muted-foreground">
-              {vault.amount} {vault.currency}
-            </p>
+            <div className="flex items-center gap-1.5">
+              {isSmartContract && onChainBalance !== null ? (
+                <p className="text-xs font-medium text-foreground">
+                  {microalgosToAlgo(onChainBalance).toFixed(6)} ALGO
+                  <span className="ml-1 text-primary/70 font-normal">(on-chain)</span>
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  {vault.amount} {vault.currency}
+                </p>
+              )}
+              {isSmartContract && (
+                <button
+                  onClick={() => fetchOnChainBalance()}
+                  disabled={loadingBalance}
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                  title="Refresh on-chain balance"
+                >
+                  <RiRefreshLine className={`size-3 ${loadingBalance ? "animate-spin" : ""}`} />
+                </button>
+              )}
+            </div>
           </div>
         </div>
         <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${statusColors[vault.status]}`}>
@@ -294,22 +367,62 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
       )}
 
       {vault.status === "locked" && isSmartContract && !confirmAction && (
-        <div className="mt-4 flex gap-2">
-          <button
-            onClick={handleRelease}
-            disabled={isProcessing || !walletAddress}
-            className="flex-1 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-          >
-            {isProcessing ? "Processing…" : "Release Payment"}
-          </button>
-          <button
-            onClick={() => setConfirmAction("kill")}
-            disabled={isProcessing}
-            className="flex items-center gap-1.5 rounded-lg bg-destructive px-3 py-2 text-xs font-medium text-destructive-foreground transition-colors hover:bg-destructive/90 disabled:opacity-50"
-          >
-            <RiAlarmWarningLine className="size-3.5" />
-            Kill Switch
-          </button>
+        <div className="mt-4 space-y-2">
+          <div className="flex gap-2">
+            <button
+              onClick={handleRelease}
+              disabled={isProcessing || !walletAddress}
+              className="flex-1 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+            >
+              {isProcessing ? "Processing…" : "Release Payment"}
+            </button>
+            <button
+              onClick={() => setShowFundModal(true)}
+              disabled={isProcessing || !walletAddress}
+              className="flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-50"
+            >
+              <RiAddLine className="size-3.5" />
+              Fund
+            </button>
+            <button
+              onClick={() => setConfirmAction("kill")}
+              disabled={isProcessing}
+              className="flex items-center gap-1.5 rounded-lg bg-destructive px-3 py-2 text-xs font-medium text-destructive-foreground transition-colors hover:bg-destructive/90 disabled:opacity-50"
+            >
+              <RiAlarmWarningLine className="size-3.5" />
+              Kill
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showFundModal && (
+        <div className="mt-3 rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
+          <p className="text-xs font-medium text-foreground">Add ALGO to vault on-chain</p>
+          <div className="flex gap-2">
+            <input
+              type="number"
+              min="0.001"
+              step="0.001"
+              placeholder="Amount (ALGO)"
+              value={fundAmount}
+              onChange={e => setFundAmount(e.target.value)}
+              className="flex-1 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+            <button
+              onClick={handleFund}
+              disabled={!fundAmount || parseFloat(fundAmount) <= 0}
+              className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50"
+            >
+              Send
+            </button>
+            <button
+              onClick={() => { setShowFundModal(false); setFundAmount("") }}
+              className="rounded-md bg-muted px-3 py-1.5 text-xs font-medium text-foreground"
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       )}
 
