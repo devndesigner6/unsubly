@@ -61,3 +61,7 @@ smart_contracts/artifacts/**/*.puya.map
 # Deployment secrets
 .env
 .env.local
+
+# Replit config files — managed by Replit, not needed on GitHub
+.replit
+replit.md
