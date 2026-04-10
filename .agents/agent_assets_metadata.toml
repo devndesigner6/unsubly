@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "rfmEG7Hpf7WT7T1A1dqsp"
+uri = "file://public/demo-script.pdf"
+type = "pdf"
+title = "Unsubscribely — Demo Video Script (4 pages)"
