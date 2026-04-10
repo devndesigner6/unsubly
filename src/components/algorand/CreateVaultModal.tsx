@@ -210,7 +210,6 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
         co_signer_address: vaultType === "multi_sig" ? coSignerAddress : null,
         arbitrator_address: vaultType === "dispute" ? arbitratorAddress : null,
         asset_id: vaultType === "asa" ? Number(assetId) : null,
-        agent_address: vaultType === "standard" && AGENT_ADDRESS ? AGENT_ADDRESS : null,
       } as any)
 
       if (insertError) {
