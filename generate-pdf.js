@@ -1,303 +1,399 @@
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
 
-const doc = new PDFDocument({ size: 'A4', margin: 45, bufferPages: true });
+const doc = new PDFDocument({ size: 'A4', margin: 0, autoFirstPage: false });
 const out = fs.createWriteStream('public/demo-script.pdf');
 doc.pipe(out);
 
-const PURPLE = '#6d28d9';
-const LIGHT_PURPLE = '#ede9fe';
-const AMBER = '#b45309';
-const AMBER_BG = '#fffbeb';
-const DARK = '#1a1a1a';
-const GRAY = '#6b7280';
-const W = 595 - 90; // usable width
+const PW = 595.28;
+const PH = 841.89;
+const ML = 48;
+const MR = 48;
+const CW = PW - ML - MR;
 
-function header(doc, pageLabel) {
-  doc.rect(45, 38, W, 28).fill('#f5f3ff');
-  doc.fontSize(9).fillColor(PURPLE).font('Helvetica-Bold')
-    .text('UNSUBSCRIBELY', 52, 47, { continued: true })
-    .font('Helvetica').fillColor(GRAY)
-    .text(`   ·   ${pageLabel}`, { align: 'left' });
-  doc.moveTo(45, 66).lineTo(45 + W, 66).lineWidth(2).strokeColor(PURPLE).stroke();
-  doc.y = 80;
+const C = {
+  purple: '#5b21b6',
+  purpleLight: '#7c3aed',
+  purplePale: '#ede9fe',
+  purpleDark: '#3b0764',
+  amber: '#92400e',
+  amberBg: '#fffbeb',
+  amberBorder: '#fbbf24',
+  green: '#065f46',
+  greenBg: '#ecfdf5',
+  dark: '#111827',
+  gray: '#6b7280',
+  grayLight: '#f9fafb',
+  white: '#ffffff',
+  border: '#e5e7eb',
+};
+
+// ─── helpers ──────────────────────────────────────────────────────────────────
+
+function newPage(pageNum, total) {
+  doc.addPage({ size: 'A4', margin: 0 });
+
+  // top bar
+  doc.rect(0, 0, PW, 52).fill('#1e1b4b');
+  doc.fontSize(11).fillColor('#a78bfa').font('Helvetica-Bold')
+    .text('UNSUBSCRIBELY', ML, 14);
+  doc.fontSize(8).fillColor('#c4b5fd').font('Helvetica')
+    .text('AlgoBharat Hack Series 3.0  ·  Round 2  ·  Agentic Commerce #3 — A2A Autonomous Payments', ML, 27);
+
+  // page indicator pill
+  const pill = `PAGE ${pageNum} / ${total}`;
+  const pillW = 70;
+  doc.rect(PW - ML - pillW, 16, pillW, 20).fill('#7c3aed');
+  doc.fontSize(8.5).fillColor('#fff').font('Helvetica-Bold')
+    .text(pill, PW - ML - pillW, 22, { width: pillW, align: 'center' });
+
+  // accent line
+  doc.rect(0, 52, PW, 3).fill('#7c3aed');
+
+  return 70; // starting Y
 }
 
-function pageTitle(doc, title, subtitle) {
-  doc.fontSize(18).fillColor(PURPLE).font('Helvetica-Bold').text(title, 45, doc.y);
-  doc.fontSize(9).fillColor(GRAY).font('Helvetica-Oblique').text(subtitle, 45, doc.y + 3);
-  doc.y += 14;
-  doc.moveTo(45, doc.y).lineTo(45 + W, doc.y).lineWidth(0.5).strokeColor(LIGHT_PURPLE).stroke();
-  doc.y += 10;
+function sectionBanner(y, title, timeRange, bgColor, textColor) {
+  bgColor = bgColor || C.purplePale;
+  textColor = textColor || C.purple;
+  doc.rect(ML, y, CW, 28).fill(bgColor);
+  doc.rect(ML, y, 4, 28).fill(textColor === C.purple ? C.purpleLight : textColor);
+  doc.fontSize(11).fillColor(textColor).font('Helvetica-Bold')
+    .text(title, ML + 12, y + 7, { width: CW - 80 });
+  doc.fontSize(8.5).fillColor(C.gray).font('Helvetica')
+    .text(timeRange, PW - ML - 90, y + 9, { width: 85, align: 'right' });
+  return y + 36;
 }
 
-function segment(doc, time, actionLabel, voiceLines, screenAction, highlight) {
-  const startY = doc.y;
-  const leftX = 45;
-  const timeW = 68;
-  const contentX = leftX + timeW + 8;
-  const contentW = W - timeW - 8;
-
-  if (highlight) {
-    doc.rect(leftX, startY - 4, W, 1).fill(PURPLE);
-  }
-
-  // Time badge
-  doc.rect(leftX, startY, timeW, 16).fill(PURPLE).roundedRect(leftX, startY, timeW, 16, 3).fill(PURPLE);
-  doc.fontSize(8.5).fillColor('white').font('Helvetica-Bold')
-    .text(time, leftX + 2, startY + 4, { width: timeW - 4, align: 'center' });
-
-  if (actionLabel) {
-    doc.rect(leftX, startY + 20, timeW, 13).fill('#f59e0b').roundedRect(leftX, startY + 20, timeW, 13, 2).fill('#f59e0b');
-    doc.fontSize(7).fillColor('#1a1a1a').font('Helvetica-Bold')
-      .text(actionLabel, leftX + 2, startY + 23, { width: timeW - 4, align: 'center' });
-  }
-
-  // Voiceover text
-  const voiceY = startY;
-  let lineY = voiceY;
-  doc.fontSize(11).fillColor(DARK).font('Helvetica');
-  for (const line of voiceLines) {
-    doc.text(line, contentX, lineY, { width: contentW });
-    lineY = doc.y + 2;
-  }
-
-  // Screen action
-  if (screenAction) {
-    doc.rect(contentX, lineY, contentW, 15).fill(AMBER_BG);
-    doc.rect(contentX, lineY, 3, 15).fill('#f59e0b');
-    doc.fontSize(8.5).fillColor(AMBER).font('Helvetica-Bold')
-      .text('SCREEN: ', contentX + 6, lineY + 4, { continued: true, width: contentW - 10 })
-      .font('Helvetica').text(screenAction, { width: contentW - 10 });
-    lineY = doc.y + 2;
-  }
-
-  doc.y = Math.max(doc.y, startY + 36) + 10;
-
-  // Separator
-  doc.moveTo(contentX, doc.y - 5).lineTo(contentX + contentW, doc.y - 5)
-    .lineWidth(0.3).strokeColor('#e5e7eb').stroke();
+function voiceBlock(y, lines) {
+  const quoteX = ML + 10;
+  const quoteW = CW - 20;
+  doc.rect(ML, y, 3, 1).fill(C.purpleLight); // placeholder
+  doc.fontSize(10.5).fillColor(C.dark).font('Helvetica');
+  const joined = lines.join(' ');
+  const textH = doc.heightOfString(joined, { width: quoteW });
+  // background
+  doc.rect(ML, y, CW, textH + 14).fill('#fafafa');
+  doc.rect(ML, y, 2, textH + 14).fill(C.purpleLight);
+  doc.fontSize(10.5).fillColor(C.dark).font('Helvetica')
+    .text(joined, quoteX, y + 7, { width: quoteW });
+  return y + textH + 20;
 }
 
-function keybox(doc, title, items) {
-  const boxY = doc.y;
-  const boxH = 14 + items.length * 14 + 8;
-  doc.rect(45, boxY, W, boxH).fill('#f5f3ff');
-  doc.rect(45, boxY, 3, boxH).fill(PURPLE);
-  doc.fontSize(8).fillColor(PURPLE).font('Helvetica-Bold')
-    .text(title.toUpperCase(), 54, boxY + 8);
-  let y = boxY + 20;
-  for (const item of items) {
-    doc.fontSize(9).fillColor('#3b0764').font('Helvetica')
-      .text(`• ${item}`, 58, y, { width: W - 20 });
-    y += 14;
+function screenBox(y, text) {
+  const boxX = ML;
+  const boxW = CW;
+  doc.fontSize(9).fillColor(C.amber).font('Helvetica-Bold');
+  const textH = doc.heightOfString(text, { width: boxW - 24 });
+  doc.rect(boxX, y, boxW, textH + 12).fill(C.amberBg);
+  doc.rect(boxX, y, boxW, textH + 12).strokeColor(C.amberBorder).lineWidth(0.8).stroke();
+  doc.fontSize(8.5).fillColor(C.amber).font('Helvetica-Bold')
+    .text('SCREEN ACTION:  ', boxX + 8, y + 7, { continued: true, width: boxW - 16 })
+    .font('Helvetica').fillColor(C.amber)
+    .text(text, { width: boxW - 16 });
+  return y + textH + 18;
+}
+
+function timeBadge(x, y, time) {
+  const tw = doc.fontSize(8).font('Helvetica-Bold').widthOfString(time) + 14;
+  doc.rect(x, y, tw, 16).fill(C.purple);
+  doc.fontSize(8).fillColor(C.white).font('Helvetica-Bold')
+    .text(time, x, y + 4, { width: tw, align: 'center' });
+  return tw;
+}
+
+function gap(y, size) { return y + (size || 12); }
+
+function divider(y) {
+  doc.moveTo(ML, y).lineTo(ML + CW, y).lineWidth(0.5).strokeColor(C.border).stroke();
+  return y + 10;
+}
+
+function tipBox(y, tips) {
+  const boxH = 16 + tips.length * 15 + 8;
+  doc.rect(ML, y, CW, boxH).fill('#f5f3ff');
+  doc.rect(ML, y, CW, boxH).strokeColor(C.purpleLight).lineWidth(0.8).stroke();
+  doc.rect(ML, y, 3, boxH).fill(C.purple);
+  doc.fontSize(8).fillColor(C.purple).font('Helvetica-Bold')
+    .text('BEFORE YOU RECORD — CHECKLIST', ML + 10, y + 8);
+  let ty = y + 22;
+  for (const tip of tips) {
+    doc.fontSize(9).fillColor(C.purpleDark).font('Helvetica')
+      .text(`•  ${tip}`, ML + 10, ty, { width: CW - 20 });
+    ty += 15;
   }
-  doc.y = boxY + boxH + 10;
+  return y + boxH + 10;
 }
 
-function techRow(doc, tags) {
-  let x = 45;
-  const y = doc.y;
-  for (const tag of tags) {
-    const tw = doc.fontSize(7.5).font('Helvetica-Bold').widthOfString(tag) + 14;
-    doc.rect(x, y, tw, 14).fill('#1a1a2e');
-    doc.fontSize(7.5).fillColor('#a78bfa').font('Helvetica-Bold').text(tag, x + 7, y + 3);
-    x += tw + 5;
-    if (x > 45 + W - 60) { x = 45; doc.y += 18; }
-  }
-  doc.y = y + 20;
+function footer(y, left, right) {
+  doc.moveTo(ML, PH - 32).lineTo(ML + CW, PH - 32).lineWidth(0.5).strokeColor(C.border).stroke();
+  doc.fontSize(8).fillColor(C.gray).font('Helvetica')
+    .text(left, ML, PH - 24, { width: CW / 2 })
+    .text(right, ML + CW / 2, PH - 24, { width: CW / 2, align: 'right' });
 }
 
-function footer(doc, right) {
-  doc.fontSize(8).fillColor('#9ca3af').font('Helvetica')
-    .text('Unsubscribely · AlgoBharat Hack Series 3.0 · Round 2', 45, 800, { continued: true, width: W })
-    .text(right, { align: 'right' });
-}
+// ═══════════════════════════════════════════════════════════════════════════════
+// PAGE 1 — HOOK · PROBLEM · SOLUTION · TRACK ALIGNMENT
+// ═══════════════════════════════════════════════════════════════════════════════
+let y = newPage(1, 4);
 
-// ═══════════════════════════════ PAGE 1 ═══════════════════════════════
-header(doc, 'Demo Script — Page 1 of 4   |   AlgoBharat Hack Series 3.0 · Round 2');
-pageTitle(doc, 'INTRODUCTION & PROBLEM STATEMENT', 'Segment: 0:00 – 1:00  ·  Track: Agentic Commerce #3 — A2A Autonomous Payments');
+// main title
+doc.fontSize(20).fillColor(C.purple).font('Helvetica-Bold')
+  .text('HOOK · PROBLEM STATEMENT · SOLUTION', ML, y);
+y += 28;
+doc.fontSize(9).fillColor(C.gray).font('Helvetica-Oblique')
+  .text('Voiceover Segment  0:00 – 1:10  ·  Speak clearly, keep eye on timer', ML, y);
+y = gap(y + 10, 6);
+y = divider(y);
 
-segment(doc, '0:00–0:10', 'OPEN', [
-  '"Hi, I\'m presenting Unsubscribely — a DeFi-powered subscription management platform',
-  'built on the Algorand blockchain, submitted for AlgoBharat Hack Series 3.0, Round 2,',
-  'under the Agentic Commerce track."'
-], 'Show the Unsubscribely landing page hero section — logo clearly visible', true);
+// --- 0:00 – 0:12
+timeBadge(ML, y, '0:00 – 0:12');
+y += 22;
+y = voiceBlock(y, [
+  '"Hello. I am presenting Unsubscribely — a fully on-chain, autonomous subscription payment platform',
+  'built on the Algorand blockchain. This project is submitted under the Agentic Commerce track, Track',
+  'Number Three — Agent-to-Agent Autonomous Payments — where the goal is to build systems where',
+  'AI or software agents make financial decisions and execute blockchain transactions independently,',
+  'without requiring any human to press a button."',
+]);
+y = screenBox(y, 'Show the Unsubscribely landing page — logo and tagline clearly visible on screen. Do not click anything yet. Let the page breathe for 5 seconds.');
+y = gap(y, 8);
 
-segment(doc, '0:10–0:30', null, [
-  '"Today, people pay for dozens of subscriptions — Netflix, Spotify, SaaS tools — and they',
-  'have zero on-chain accountability. Payments happen silently, there\'s no proof of payment,',
-  'no trustless protection, and no autonomous management. If a service doesn\'t deliver,',
-  'your money is already gone."'
-], 'Scroll slowly down the landing page to show the Problems We Solve / features section');
+// --- 0:12 – 0:40
+timeBadge(ML, y, '0:12 – 0:40');
+y += 22;
+y = voiceBlock(y, [
+  '"Let me start with the problem. Today, every person pays for multiple recurring services —',
+  'cloud tools, SaaS platforms, streaming, API subscriptions. But every single one of those payments',
+  'is handled by a centralized payment processor. There is no transparency. There is no escrow.',
+  'If you pay for a service and it fails to deliver, the money is already gone — no recourse,',
+  'no on-chain evidence, and no autonomous enforcement mechanism.',
+  'What if your payment agent could hold the funds, verify delivery, and release money automatically',
+  'on schedule — all on-chain — without you lifting a finger? That is exactly what we built."',
+]);
+y = screenBox(y, 'Slowly scroll the landing page to reveal the "Problems We Solve" or key features section. Keep scrolling slowly and smoothly.');
 
-segment(doc, '0:30–0:50', null, [
-  '"Unsubscribely solves this with three core innovations: On-chain Escrow Vaults that hold',
-  'payment funds in Algorand smart contracts until service is confirmed. ARC-3 NFT Receipts',
-  'that give you permanent, tamper-proof proof of every payment. And an A2A Autonomous Agent',
-  'that automatically releases vault funds when billing dates arrive — no human trigger needed."'
-], 'Scroll to the features / how-it-works section on the landing page');
+footer(y, 'Unsubscribely  ·  A2A Autonomous Payments on Algorand', 'Page 1 of 4  —  Hook & Problem Statement');
 
-segment(doc, '0:50–1:00', null, [
-  '"Let me show you the live app."'
-], 'Click Get Started or navigate to the dashboard — show the main dashboard overview');
+// ═══════════════════════════════════════════════════════════════════════════════
+// PAGE 2 — SOLUTION OVERVIEW · DASHBOARD · LIVE WALLET
+// ═══════════════════════════════════════════════════════════════════════════════
+y = newPage(2, 4);
 
-keybox(doc, 'Key Points to Emphasize on Screen', [
-  'Landing page must be visible — show the logo "Unsubscribely" clearly',
-  'Scroll slowly so judges can read the feature bullets',
-  'Have the wallet already connected before recording starts — shows ALGO balance',
-  'Keep mouse movement smooth and deliberate',
+doc.fontSize(20).fillColor(C.purple).font('Helvetica-Bold')
+  .text('SOLUTION OVERVIEW · DASHBOARD · WALLET', ML, y);
+y += 28;
+doc.fontSize(9).fillColor(C.gray).font('Helvetica-Oblique')
+  .text('Voiceover Segment  0:40 – 2:20  ·  Navigate to dashboard before this segment begins', ML, y);
+y = gap(y + 10, 6);
+y = divider(y);
+
+// --- 0:40 – 1:05
+timeBadge(ML, y, '0:40 – 1:05');
+y += 22;
+y = voiceBlock(y, [
+  '"Unsubscribely solves this with three interconnected layers. First — an on-chain Escrow Vault',
+  'system: five types of Algorand smart contracts that lock payment funds until a billing date is',
+  'confirmed. Second — ARC-3 NFT Receipts: tamper-proof, permanent on-chain proof of every',
+  'single payment. And third — our A2A Autonomous Agent: a software agent that holds a separate',
+  'Algorand wallet, monitors every vault daily, and when a billing date arrives, signs and broadcasts',
+  'the release transaction entirely on its own. No user approval. No manual trigger.',
+  'Pure autonomous on-chain commerce — which is exactly what the Agentic Commerce track demands."',
+]);
+y = screenBox(y, 'Navigate to the main dashboard. Show the full dashboard overview — metric cards at the top, wallet panel on the right, and the Agentic Activity log visible below.');
+y = gap(y, 6);
+
+// --- 1:05 – 1:30
+timeBadge(ML, y, '1:05 – 1:30');
+y += 22;
+y = voiceBlock(y, [
+  '"This is the live dashboard. At the top you see real-time metrics — total monthly spend tracked,',
+  'total number of active service subscriptions, and the next upcoming payment date. On the right',
+  'panel, the Algorand wallet is connected via Pera Wallet. You can see the live testnet wallet address',
+  'and the current ALGO balance pulled directly from the Algorand node — not mocked, not simulated.',
+  'Every action this platform takes goes through real transactions on the Algorand testnet."',
+]);
+y = screenBox(y, 'Point to each metric card individually. Then slowly point to the wallet panel — highlight the wallet address and ALGO balance. Hover over it briefly.');
+y = gap(y, 6);
+
+// --- 1:30 – 2:00
+timeBadge(ML, y, '1:30 – 2:00');
+y += 22;
+y = voiceBlock(y, [
+  '"Below the metrics is the Agentic Activity Log. This is the heartbeat of our autonomous agent.',
+  'Every time the agent detects a billing date has been reached, it fires a smart contract call,',
+  'releases funds from the escrow vault to the recipient, and logs the entire action here with a',
+  'timestamp, the vault ID, the amount released, and a clickable link to the live transaction on',
+  'the Lora blockchain explorer. This is your proof that the A2A agent is real and functional."',
+]);
+y = screenBox(y, 'Point to the Agentic Activity log section. Click one log entry to show its details. Click the Lora Explorer transaction link and briefly show the live on-chain transaction.');
+y = gap(y, 6);
+
+// --- 2:00 – 2:20
+timeBadge(ML, y, '2:00 – 2:20');
+y += 22;
+y = voiceBlock(y, [
+  '"Let me also quickly show the Analytics and Calendar views. The analytics page breaks down',
+  'spending by category with bar charts — showing exactly how much is being spent per service type',
+  'each month. The calendar view maps every upcoming payment date visually so nothing is ever missed.',
+  'These views give users complete financial clarity over their on-chain payment obligations."',
+]);
+y = screenBox(y, 'Navigate to Analytics — show bar chart for 4 seconds. Then navigate to Calendar — show the payment calendar for 4 seconds. Return to dashboard.');
+
+footer(y, 'Unsubscribely  ·  A2A Autonomous Payments on Algorand', 'Page 2 of 4  —  Solution Overview & Dashboard');
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PAGE 3 — ESCROW VAULTS · SMART CONTRACTS · A2A AGENT DEMO
+// ═══════════════════════════════════════════════════════════════════════════════
+y = newPage(3, 4);
+
+doc.fontSize(20).fillColor(C.purple).font('Helvetica-Bold')
+  .text('ESCROW VAULTS · SMART CONTRACTS · A2A AGENT', ML, y);
+y += 28;
+doc.fontSize(9).fillColor(C.gray).font('Helvetica-Oblique')
+  .text('Voiceover Segment  2:20 – 4:05  ·  The core A2A innovation — spend the most time here', ML, y);
+y = gap(y + 10, 6);
+y = divider(y);
+
+// --- 2:20 – 2:45
+timeBadge(ML, y, '2:20 – 2:45');
+y += 22;
+y = voiceBlock(y, [
+  '"Now let us look at the core of the platform — Escrow Vaults. These are real Algorand smart',
+  'contracts compiled in TEAL version 11, conforming to the ARC-4 ABI standard, and deployed',
+  'directly from this interface to the Algorand testnet. Unsubscribely offers five distinct vault types.',
+  'Standard vaults for direct single-recipient release. Time-Locked vaults where funds are frozen',
+  'until a specific future timestamp. Multi-Signature vaults requiring approval from both the payer',
+  'and the service provider. Dispute vaults with an independent arbitrator address. And ASA vaults',
+  'for holding Algorand Standard Assets — not just ALGO — in escrow."',
+]);
+y = screenBox(y, 'Navigate to /escrow-vaults. Show the vault list — at least 3 vaults visible with different types and statuses (Active, Funded, Released). Point to each type label.');
+y = gap(y, 6);
+
+// --- 2:45 – 3:15
+timeBadge(ML, y, '2:45 – 3:15');
+y += 22;
+y = voiceBlock(y, [
+  '"Let me create a new vault live. I will click Create Vault. I will select the Standard type.',
+  'Notice immediately — a green banner appears that says Agent Auto-Release Enabled.',
+  'This is the A2A mechanism. When this vault is created, our autonomous agent wallet address',
+  'is baked directly into the smart contract as an authorized signer. The TEAL contract has a',
+  'specific release method — callable only by the agent address or the vault owner.',
+  'So on the billing date, the agent — operating from its own independent Algorand wallet —',
+  'will call this release method, sign the transaction with its own private key, and the funds',
+  'move from the vault to the recipient. Zero human involvement. This is Agent-to-Agent commerce."',
+]);
+y = screenBox(y, 'Click Create Vault → select Standard → PAUSE and clearly point to the green "Agent Auto-Release Enabled" banner → fill in recipient address and ALGO amount → click Deploy → sign with Pera Wallet.');
+y = gap(y, 6);
+
+// --- 3:15 – 3:40
+timeBadge(ML, y, '3:15 – 3:40');
+y += 22;
+y = voiceBlock(y, [
+  '"The wallet is prompting for my signature to deploy the contract. Once I confirm, Algorand',
+  'creates the smart contract application, assigns it an Application ID, and the vault is live.',
+  'Let me click into this vault. Here you can see the on-chain Application ID — this is the',
+  'contract\'s identity on Algorand. Below that, the Agent Address — a completely separate wallet',
+  'from mine — this is the autonomous agent. And the vault balance, which starts at zero until funded.',
+  'Let me now fund this vault. I will click Fund, enter one ALGO, and sign the transaction.',
+  'The ALGO is now locked inside the smart contract. The vault status is now Funded.",',
+]);
+y = screenBox(y, 'Click into the newly created vault → point to Application ID, Agent Address (different from your wallet), and current balance → click Fund → enter 1 ALGO → sign wallet → show status updating to Funded.');
+y = gap(y, 6);
+
+// --- 3:40 – 4:05
+timeBadge(ML, y, '3:40 – 4:05');
+y += 22;
+y = voiceBlock(y, [
+  '"Now — when the billing date stored in our database matches today\'s date, our Supabase edge',
+  'function fires. It queries all vaults due today, constructs an Algorand transaction calling the',
+  'release ABI method on each vault contract, signs it using the agent\'s private key, and broadcasts',
+  'it to the network. The funds leave the smart contract, arrive at the recipient, and the agent',
+  'logs the action. The user never needed to do anything. The agent handled the full payment cycle.',
+  'That is the A2A autonomous payment loop — and it runs every single day, automatically."',
+]);
+y = screenBox(y, 'Return to dashboard → point to the Agentic Activity log → show an existing auto-release entry → click the Lora Explorer link → show the real on-chain transaction details including sender (agent wallet), receiver, and amount.');
+
+footer(y, 'Unsubscribely  ·  A2A Autonomous Payments on Algorand', 'Page 3 of 4  —  Escrow Vaults & A2A Agent Demo');
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PAGE 4 — NFT RECEIPTS · ON-CHAIN RESUME · CLOSING
+// ═══════════════════════════════════════════════════════════════════════════════
+y = newPage(4, 4);
+
+doc.fontSize(20).fillColor(C.purple).font('Helvetica-Bold')
+  .text('NFT RECEIPTS · ON-CHAIN RESUME · CLOSE', ML, y);
+y += 28;
+doc.fontSize(9).fillColor(C.gray).font('Helvetica-Oblique')
+  .text('Voiceover Segment  4:05 – 5:00  ·  Strong finish — emphasize on-chain finality and the track vision', ML, y);
+y = gap(y + 10, 6);
+y = divider(y);
+
+// --- 4:05 – 4:25
+timeBadge(ML, y, '4:05 – 4:25');
+y += 22;
+y = voiceBlock(y, [
+  '"Every vault release generates a permanent ARC-3 NFT Receipt. Let me demonstrate. I will click',
+  'Mint ARC-3 NFT Receipt on this released vault. The platform constructs an asset creation',
+  'transaction using the ARC-3 metadata standard — embedding the payment amount, recipient address,',
+  'vault application ID, and timestamp into the NFT metadata. I sign the transaction, and within',
+  'seconds an Algorand Standard Asset is minted on-chain. The unit name is RCPT. This NFT is now',
+  'permanent, immutable, and publicly verifiable proof that this payment happened — exactly like',
+  'a blockchain receipt that can never be falsified or deleted."',
+]);
+y = screenBox(y, 'Navigate to a vault with Released status → click Mint ARC-3 NFT Receipt → sign wallet → show the success notification with asset ID → open Lora Explorer showing the newly minted ASA with RCPT unit name and metadata.');
+y = gap(y, 6);
+
+// --- 4:25 – 4:45
+timeBadge(ML, y, '4:25 – 4:45');
+y += 22;
+y = voiceBlock(y, [
+  '"The final feature is the On-Chain Resume. As payments accumulate through Unsubscribely,',
+  'every released vault contributes to a verifiable financial identity for this wallet.',
+  'The On-Chain Resume shows total ALGO transacted, total number of confirmed on-chain payments,',
+  'and a full history. The user can make this resume public — generating a unique sharable URL.',
+  'Anyone with that link — an employer, a partner, a DAO — can verify this wallet\'s payment',
+  'reliability without asking a bank or a credit bureau. This is decentralized financial reputation,',
+  'built entirely from autonomous on-chain activity."',
+]);
+y = screenBox(y, 'Navigate to /onchain-resume → show total volume and transaction count figures → toggle the Public switch ON → copy the generated shareable URL and show it in the browser address bar briefly.');
+y = gap(y, 6);
+
+// --- 4:45 – 5:00
+timeBadge(ML, y, '4:45 – 5:00');
+y += 22;
+y = voiceBlock(y, [
+  '"Unsubscribely is a fully working MVP on Algorand testnet. It demonstrates the complete',
+  'Agent-to-Agent autonomous payment loop — a software agent holds funds in a TEAL v11 smart',
+  'contract, monitors billing schedules, and autonomously executes on-chain payments. It generates',
+  'ARC-3 NFT receipts as immutable proof of payment. And it builds a decentralized financial',
+  'reputation from on-chain activity alone. This is what Agentic Commerce looks like on Algorand.',
+  'Thank you."',
+]);
+y = screenBox(y, 'Return to the landing page — hold for 3 seconds showing the logo and tagline. End recording here.');
+y = gap(y, 10);
+
+// checklist box
+y = tipBox(y, [
+  'Wallet pre-connected with at least 5 testnet ALGO before starting  (bank.testnet.algorand.network)',
+  'Have 4–5 vaults already created: at least one Funded, one Released, one with agent log entry',
+  'Have one transaction already in the Agentic Activity log — click it and show Lora Explorer live',
+  'Have one Released vault ready for NFT minting — avoids waiting for confirmation on screen',
+  'Use Chrome in full-screen mode — hide bookmarks bar and other tabs before recording',
+  'Speak at 80 percent of normal speed — slower delivery always sounds more confident on video',
+  'Record at 1920 × 1080 minimum using OBS, Loom, or Screencastify',
 ]);
 
-techRow(doc, ['Algorand Testnet', 'TEAL v11 Smart Contracts', 'ARC-3 NFT', 'A2A Autonomous Agent', 'Supabase', 'React + Vite']);
-footer(doc, 'Page 1 / 4 — Introduction');
+// password box
+doc.rect(ML, y, CW, 40).fill('#1e1b4b');
+doc.rect(ML, y, 3, 40).fill('#a78bfa');
+doc.fontSize(8).fillColor('#a78bfa').font('Helvetica-Bold')
+  .text('SUBMISSION PASSWORD', ML + 12, y + 8);
+doc.fontSize(20).fillColor('#e9d5ff').font('Helvetica-Bold')
+  .text('ALGOHackSeries3', ML + 12, y + 18, { letterSpacing: 2 });
 
-// ═══════════════════════════════ PAGE 2 ═══════════════════════════════
-doc.addPage();
-header(doc, 'Demo Script — Page 2 of 4   |   AlgoBharat Hack Series 3.0 · Round 2');
-pageTitle(doc, 'DASHBOARD & SUBSCRIPTION TRACKING', 'Segment: 1:00 – 2:15  ·  Core product walkthrough');
-
-segment(doc, '1:00–1:20', 'DASHBOARD', [
-  '"This is the main dashboard. At the top we see real-time metrics — total monthly spend,',
-  'number of active subscriptions, and upcoming payment dates. On the right is the connected',
-  'Algorand wallet showing the wallet address and live ALGO balance from the testnet."'
-], 'Point to metric cards (monthly spend, active subs, upcoming) — then point to wallet panel showing ALGO balance', true);
-
-segment(doc, '1:20–1:35', null, [
-  '"The dashboard also has an Agentic Activity panel — the live log of every action the',
-  'autonomous agent has taken: vault releases, fund transfers, on-chain confirmations.',
-  'Every action timestamps and links directly to the Lora block explorer."'
-], 'Scroll to Agentic Activity log — point to a log entry and click the transaction link');
-
-segment(doc, '1:35–1:50', 'SUBSCRIPTIONS', [
-  '"Now let\'s look at Subscription Tracking. Here\'s the full list — each card shows the',
-  'service name, monthly cost, category, and next billing date. I can filter by category,',
-  'search by name, and export the entire list as a CSV."'
-], 'Navigate to /subscriptions — show subscription cards, use the search bar, show Export CSV button');
-
-segment(doc, '1:50–2:05', null, [
-  '"Let me add a new subscription. I\'ll click Add Subscription, fill in the service name,',
-  'amount in ALGO, billing cycle, and category. This subscription is now tracked in the',
-  'database and can be linked to an on-chain escrow vault."'
-], 'Click Add Subscription → fill in form fields → submit → show new card appearing in list');
-
-segment(doc, '2:05–2:15', null, [
-  '"I can also view the Analytics page with spending breakdowns by category as a bar chart,',
-  'and the Calendar view which maps every upcoming billing date — so you always know',
-  'what\'s due and when."'
-], 'Quick 5-second glimpse of Analytics chart → quick 5-second glimpse of Calendar view');
-
-keybox(doc, 'Tips for This Section', [
-  'Have at least 4–5 subscriptions pre-loaded (Netflix, Spotify, GitHub etc.) so list looks populated',
-  'Add one subscription live during recording — makes the demo feel interactive',
-  'Wallet must show connected status and ALGO balance throughout',
-  'Don\'t linger on Analytics — a 5-second glimpse is enough, keep moving',
-]);
-footer(doc, 'Page 2 / 4 — Dashboard & Subscriptions');
-
-// ═══════════════════════════════ PAGE 3 ═══════════════════════════════
-doc.addPage();
-header(doc, 'Demo Script — Page 3 of 4   |   AlgoBharat Hack Series 3.0 · Round 2');
-pageTitle(doc, 'ESCROW VAULTS + A2A AUTONOMOUS AGENT', 'Segment: 2:15 – 4:00  ·  The core blockchain innovation');
-
-segment(doc, '2:15–2:35', 'VAULTS', [
-  '"Now for the core innovation — Escrow Vaults. These are real Algorand smart contracts',
-  'deployed directly from this UI. Navigate to Escrow Vaults to see all created vaults.',
-  'Each vault shows its on-chain address, ALGO balance, status, and vault type."'
-], 'Navigate to /escrow-vaults — show the vault list with statuses (Active, Funded, Released)', true);
-
-segment(doc, '2:35–3:00', null, [
-  '"Let me create a new vault. I\'ll click Create Vault. Unsubscribely supports five vault',
-  'types: Standard, Time-Locked, Multi-Signature, Dispute, and ASA token vaults.',
-  'I\'ll select Standard — watch for the green banner: Agent Auto-Release Enabled.',
-  'This means an autonomous agent has permission to release this vault automatically',
-  'on the billing date."'
-], 'Click Create Vault → Select Standard → CLEARLY point to green "Agent Auto-Release Enabled" banner → fill recipient + amount → click Deploy');
-
-segment(doc, '3:00–3:20', null, [
-  '"The smart contract is now deploying on Algorand testnet. The wallet prompts for',
-  'signature — once confirmed, the contract gets a unique on-chain application ID.',
-  'Clicking into this vault shows the contract address, the agent address that has release',
-  'permissions, on-chain balance, and full transaction history."'
-], 'Sign wallet transaction → wait for confirmation → click into vault detail page → point to App ID, Agent Address, and tx list');
-
-segment(doc, '3:20–3:40', null, [
-  '"Now I\'ll fund the vault. I click Fund, enter an ALGO amount, sign with my wallet —',
-  'and the funds are now locked inside the smart contract on-chain. The vault status updates',
-  'to Funded. No one can touch these funds without authorization — not even me — unless',
-  'through the contract\'s release logic."'
-], 'Click Fund → enter amount (1 ALGO) → sign wallet → show vault balance updating to Funded status');
-
-segment(doc, '3:40–4:00', 'A2A AGENT', [
-  '"This is the A2A magic. Our autonomous agent — running as a Supabase Edge Function —',
-  'checks every vault daily. When a billing date arrives, the agent signs and sends the',
-  'release transaction using its own wallet, paying from the vault to the recipient',
-  'automatically. No user action needed. This is true Agent-to-Agent autonomous payment',
-  'on the Algorand blockchain."'
-], 'Go to dashboard → point to Agentic Activity log → show auto-release entry → click Lora Explorer link to show live on-chain tx', true);
-
-keybox(doc, 'Critical Points for Judges', [
-  'Say "Agent Auto-Release Enabled" banner out loud — this is the A2A differentiator for the track',
-  'Point to agent address in vault details — it is different from your wallet (it\'s the autonomous agent)',
-  'Click the Lora Explorer link to prove it\'s a REAL on-chain transaction, not mocked',
-  'If wallet signing fails live, have a pre-funded vault ready to fall back to',
-]);
-footer(doc, 'Page 3 / 4 — Escrow Vaults & A2A Agent');
-
-// ═══════════════════════════════ PAGE 4 ═══════════════════════════════
-doc.addPage();
-header(doc, 'Demo Script — Page 4 of 4   |   AlgoBharat Hack Series 3.0 · Round 2');
-pageTitle(doc, 'NFT RECEIPTS + ON-CHAIN RESUME + CLOSE', 'Segment: 4:00 – 5:00  ·  Final features and wrap-up');
-
-segment(doc, '4:00–4:20', 'NFT MINT', [
-  '"Every time a vault releases a payment, the user can mint an ARC-3 NFT Receipt —',
-  'permanent on-chain proof of payment. I\'ll click Mint ARC-3 NFT Receipt on this released',
-  'vault. The wallet signs, and within seconds an Algorand Standard Asset is minted with',
-  'unit name RCPT, storing the payment amount, recipient address, and vault ID as verified',
-  'metadata — forever on-chain."'
-], 'On a released vault detail page → click Mint ARC-3 NFT Receipt → sign wallet → show success toast with NFT asset ID → briefly show on Lora Explorer', true);
-
-segment(doc, '4:20–4:40', 'RESUME', [
-  '"Now the On-Chain Resume. This aggregates every payment this wallet has ever made',
-  'through Unsubscribely into a verifiable financial identity. Total transacted volume,',
-  'transaction count — all provable on-chain. I can toggle it public and share a unique',
-  'link. Anyone with this link sees my verified payment history. This is your Web3',
-  'financial reputation — no bank, no intermediary."'
-], 'Navigate to /onchain-resume → show total volume + tx count → toggle Public → copy and show shareable link URL');
-
-segment(doc, '4:40–4:55', null, [
-  '"To summarize: Unsubscribely is a complete DeFi subscription management platform on',
-  'Algorand. Subscription tracking, five types of on-chain escrow smart contracts,',
-  'NFT-based payment receipts, and a fully autonomous A2A agent that releases payments',
-  'on schedule — no human intervention required. Built with TEAL v11 smart contracts,',
-  'ARC-3 NFT standard, Supabase edge functions, and React."'
-], 'Return to the landing page or dashboard — show the full UI clearly one final time');
-
-segment(doc, '4:55–5:00', 'CLOSE', [
-  '"Thank you. GitHub and deployment links are in the submission."'
-], 'Hold on landing page or dashboard for 5 seconds — done');
-
-keybox(doc, 'Pre-Recording Checklist — Do This Before You Hit Record', [
-  'Wallet connected (Pera/Defly) with at least 5 ALGO testnet balance — get from bank.testnet.algorand.network',
-  'Have 4–5 subscriptions pre-loaded (Netflix, Spotify, GitHub, Figma, Notion)',
-  'Have at least one Released vault ready (for NFT minting demo without waiting)',
-  'Have at least one Funded vault ready (to show agent log entry)',
-  'Open Lora Explorer (lora.algokit.io/testnet) in a separate tab for quick switching',
-  'Use Chrome full-screen, hide bookmarks bar for a clean recording',
-  'Record at 1920×1080 minimum — use OBS or Loom',
-  'Speak at 80% of normal speed — slightly slower is always better for demos',
-]);
-
-// Password box
-const pwY = doc.y + 4;
-doc.rect(45, pwY, W, 44).fill('#f5f3ff');
-doc.rect(45, pwY, 3, 44).fill(PURPLE);
-doc.fontSize(8).fillColor(PURPLE).font('Helvetica-Bold').text('SUBMISSION PASSWORD', 54, pwY + 8);
-doc.fontSize(22).fillColor('#3b0764').font('Helvetica-Bold').text('ALGOHackSeries3', 54, pwY + 20, { letterSpacing: 3 });
-
-techRow(doc, ['AlgoKit · TEAL v11', 'ARC-3 · ARC-4', 'Pera Wallet', 'Supabase Edge Functions', 'Lora Explorer', 'React + Vite + TypeScript']);
-footer(doc, 'Page 4 / 4 — NFT Receipts, On-Chain Resume & Close');
+footer(y + 50, 'Unsubscribely  ·  A2A Autonomous Payments on Algorand', 'Page 4 of 4  —  NFT Receipts & Closing');
 
 doc.end();
-out.on('finish', () => console.log('PDF generated: public/demo-script.pdf'));
-out.on('error', e => console.error('Error:', e));
+out.on('finish', () => console.log('PDF ready: public/demo-script.pdf'));
+out.on('error', e => console.error(e));
