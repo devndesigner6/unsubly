@@ -25,16 +25,19 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("ErrorBoundary caught an error:", error, errorInfo)
-  }
-
-  private handleReset = () => {
-    window.location.reload()
+    if (!import.meta.env.DEV) {
+      window.location.reload()
+    }
   }
 
   public render() {
     if (this.state.hasError) {
       if (this.props.fallback) {
         return this.props.fallback
+      }
+
+      if (!import.meta.env.DEV) {
+        return null
       }
 
       return (
@@ -49,7 +52,7 @@ export class ErrorBoundary extends Component<Props, State> {
             <p className="mb-4 text-sm text-red-600 dark:text-red-400">
               An unexpected error occurred. Please try again.
             </p>
-            {import.meta.env.DEV && this.state.error && (
+            {this.state.error && (
               <details className="mb-4 rounded-lg bg-red-100 p-3 text-left dark:bg-red-900/30">
                 <summary className="cursor-pointer text-xs font-medium text-red-700 dark:text-red-300">
                   Error details
@@ -59,13 +62,6 @@ export class ErrorBoundary extends Component<Props, State> {
                 </pre>
               </details>
             )}
-            <button
-              onClick={this.handleReset}
-              className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600"
-            >
-              <RiRefreshLine className="size-4" />
-              Try again
-            </button>
           </div>
         </div>
       )
