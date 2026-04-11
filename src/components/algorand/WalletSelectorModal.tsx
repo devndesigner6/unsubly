@@ -106,18 +106,23 @@ export function WalletSelectorModal() {
                   disabled={anyConnecting}
                   className="group w-full flex items-center gap-4 rounded-xl border border-border bg-card p-4 text-left transition-all hover:border-primary/40 hover:bg-primary/5 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  <div className={`flex size-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${info.color} shadow-sm`}>
+                  <div className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-border bg-white shadow-sm dark:bg-zinc-900">
                     {isThisConnecting ? (
-                      <RiLoaderLine className="size-5 text-white animate-spin" />
+                      <RiLoaderLine className="size-5 text-muted-foreground animate-spin" />
                     ) : wallet.isConnected ? (
-                      <RiCheckLine className="size-5 text-white" />
+                      <RiCheckLine className="size-5 text-green-600" />
                     ) : (
                       <img
                         src={info.icon}
                         alt={info.label}
                         className="size-7 object-contain"
                         onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).style.display = "none"
+                          const el = e.currentTarget as HTMLImageElement
+                          el.style.display = "none"
+                          const parent = el.parentElement
+                          if (parent) {
+                            parent.innerHTML = `<span style="font-size:18px;font-weight:700;color:#6366f1">${info.label.charAt(0)}</span>`
+                          }
                         }}
                       />
                     )}

@@ -12,6 +12,7 @@ import {
   RiUserLine, RiMoneyDollarCircleLine, RiNotification3Line,
   RiShieldLine, RiCheckLine, RiLockPasswordLine,
   RiArrowLeftRightLine, RiWalletLine, RiMailSendLine,
+  RiDeleteBinLine, RiErrorWarningLine,
 } from "@remixicon/react"
 
 const CURRENCIES = ["USD", "EUR", "GBP", "INR", "AUD", "CAD", "JPY", "SGD", "AED"]
@@ -41,6 +42,11 @@ export default function SettingsPage() {
   const [passwordError, setPasswordError] = useState("")
   const [passwordSuccess, setPasswordSuccess] = useState(false)
   const [sendingTestAlert, setSendingTestAlert] = useState(false)
+
+  // Delete account
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState("")
+  const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
     if (!user) return
@@ -172,6 +178,31 @@ export default function SettingsPage() {
       toast.error(err instanceof Error ? err.message : "Failed to send test alert")
     } finally {
       setSendingTestAlert(false)
+    }
+  }
+
+  async function handleDeleteAccount() {
+    if (!user || deleteConfirmText !== "DELETE") return
+    setIsDeleting(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-account`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session?.access_token}`,
+          },
+        }
+      )
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "Deletion failed")
+      toast.success("Account deleted", { description: "All your data has been permanently removed." })
+      await signOut()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete account")
+      setIsDeleting(false)
     }
   }
 
@@ -417,6 +448,60 @@ export default function SettingsPage() {
             Sign Out
           </Button>
         </div>
+
+        {/* Danger Zone */}
+        <section className="mt-8 rounded-xl border border-destructive/40 bg-destructive/5 p-5 sm:p-6">
+          <div className="mb-3 flex items-center gap-2">
+            <RiErrorWarningLine className="size-5 text-destructive" />
+            <h2 className="text-lg font-semibold text-destructive">Danger Zone</h2>
+          </div>
+          <p className="mb-4 text-sm text-muted-foreground">
+            Permanently delete your account and all associated data — subscriptions, escrow vaults, on-chain payment records, NFT receipts, and your profile. This cannot be undone. If you sign up again with the same email, you will start completely fresh.
+          </p>
+          {!showDeleteConfirm ? (
+            <Button
+              variant="destructive"
+              onClick={() => setShowDeleteConfirm(true)}
+            >
+              <RiDeleteBinLine className="mr-2 size-4" />
+              Delete My Account
+            </Button>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-foreground">
+                Type <span className="font-mono font-bold text-destructive">DELETE</span> to confirm
+              </p>
+              <input
+                type="text"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="DELETE"
+                className="w-full rounded-lg border border-destructive/40 bg-background px-3 py-2 text-sm font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-destructive/50"
+                autoFocus
+              />
+              <div className="flex gap-2">
+                <Button
+                  variant="destructive"
+                  onClick={handleDeleteAccount}
+                  disabled={deleteConfirmText !== "DELETE" || isDeleting}
+                >
+                  {isDeleting ? (
+                    <><RiLoader4Line className="mr-2 size-4 animate-spin" />Deleting everything...</>
+                  ) : (
+                    <><RiDeleteBinLine className="mr-2 size-4" />Confirm Delete</>
+                  )}
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmText("") }}
+                  disabled={isDeleting}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+        </section>
       </div>
     </div>
   )

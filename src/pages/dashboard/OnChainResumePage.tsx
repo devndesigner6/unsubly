@@ -3,6 +3,7 @@ import { useAuth } from "@/lib/auth-context"
 import { useAlgorand } from "@/lib/algorand/context"
 import { supabase } from "@/integrations/supabase/client"
 import { WalletConnect } from "@/components/algorand/WalletConnect"
+import { WalletRequired } from "@/components/algorand/WalletRequired"
 import { OnChainResumeCard } from "@/components/algorand/OnChainResumeCard"
 import { getAddressExplorerUrl } from "@/lib/algorand/constants"
 import {
@@ -87,9 +88,10 @@ export default function OnChainResumePage() {
         </p>
       </div>
 
-      <div className="mb-6">
-        <WalletConnect />
-      </div>
+      <WalletRequired feature="On-Chain Resume">
+        <div className="mb-6">
+          <WalletConnect />
+        </div>
 
       {/* Share Controls */}
       <div className="mb-6 rounded-xl border border-border bg-card p-4">
@@ -198,6 +200,7 @@ export default function OnChainResumePage() {
           ))}
         </div>
       )}
+      </WalletRequired>
     </div>
   )
 }

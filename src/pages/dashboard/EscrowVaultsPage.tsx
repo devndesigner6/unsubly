@@ -3,6 +3,7 @@ import { useAuth } from "@/lib/auth-context"
 import { useAlgorand } from "@/lib/algorand/context"
 import { supabase } from "@/integrations/supabase/client"
 import { WalletConnect } from "@/components/algorand/WalletConnect"
+import { WalletRequired } from "@/components/algorand/WalletRequired"
 import { EscrowVaultCard } from "@/components/algorand/EscrowVaultCard"
 import { CreateVaultModal } from "@/components/algorand/CreateVaultModal"
 import { VaultHealthBanner } from "@/components/algorand/VaultHealthBanner"
@@ -174,11 +175,12 @@ export default function EscrowVaultsPage() {
         </p>
       </div>
 
-      <div className="mb-6">
-        <WalletConnect />
-      </div>
+      <WalletRequired feature="Escrow Vaults">
+        <div className="mb-6">
+          <WalletConnect />
+        </div>
 
-      <VaultHealthBanner />
+        <VaultHealthBanner />
 
       {/* Stats */}
       <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -274,6 +276,7 @@ export default function EscrowVaultsPage() {
         onClose={() => setShowCreateModal(false)}
         onCreated={handleCreated}
       />
+      </WalletRequired>
     </div>
   )
 }
