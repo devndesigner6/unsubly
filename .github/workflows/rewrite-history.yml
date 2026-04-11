@@ -19,7 +19,7 @@ jobs:
       - name: Install git-filter-repo
         run: pip install git-filter-repo
 
-      - name: Rewrite all commit authors
+      - name: Rewrite all commit authors and committers to devndesigner6
         run: |
           git filter-repo --force \
             --name-callback 'return b"devndesigner6"' \
