@@ -25,9 +25,6 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("ErrorBoundary caught an error:", error, errorInfo)
-    if (!import.meta.env.DEV) {
-      window.location.reload()
-    }
   }
 
   public render() {
