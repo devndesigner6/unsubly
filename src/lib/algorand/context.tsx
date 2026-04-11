@@ -254,8 +254,23 @@ function AlgorandBridge({
 }
 
 export function AlgorandProvider({ children }: { children: ReactNode }) {
-  const [network, setNetwork] = useState<AlgorandNetwork>(getStoredNetwork)
-  const [manager] = useState(() => createManager(network))
+  const [network, setNetwork] = useState<AlgorandNetwork>(() => {
+    try { return getStoredNetwork() } catch { return "testnet" }
+  })
+  const [manager] = useState(() => {
+    try {
+      return createManager(network)
+    } catch {
+      // Wallet SDK failed to init (corrupted localStorage, browser restrictions, etc.)
+      // Reset storage and fall back to a clean testnet manager
+      try { localStorage.removeItem("algorand_network") } catch {}
+      try { localStorage.removeItem("txnlab-use-wallet") } catch {}
+      return new WalletManager({
+        wallets: [WalletId.PERA, WalletId.DEFLY, WalletId.LUTE],
+        defaultNetwork: NetworkId.TESTNET,
+      })
+    }
+  })
 
   return (
     <WalletProvider manager={manager}>
