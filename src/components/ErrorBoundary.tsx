@@ -14,6 +14,8 @@ interface State {
 }
 
 export class ErrorBoundary extends Component<Props, State> {
+  private hasAutoRetried = false
+
   public state: State = {
     hasError: false,
     error: null,
@@ -25,6 +27,15 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("ErrorBoundary caught an error:", error, errorInfo)
+    // In production, auto-reset once after a short delay.
+    // This recovers from transient errors during wallet state changes
+    // without a full page reload (which breaks the wallet QR flow).
+    if (!import.meta.env.DEV && !this.hasAutoRetried) {
+      this.hasAutoRetried = true
+      setTimeout(() => {
+        this.setState({ hasError: false, error: null })
+      }, 350)
+    }
   }
 
   public render() {

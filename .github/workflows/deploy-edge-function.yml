@@ -1,1 +1,9 @@
-# DISABLED — no triggers defined, this workflow will never run.
+name: Disabled
+on:
+  workflow_dispatch:
+jobs:
+  placeholder:
+    if: false
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "This workflow is disabled."
