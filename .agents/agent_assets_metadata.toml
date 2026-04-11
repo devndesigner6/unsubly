@@ -6,3 +6,9 @@ id = "rfmEG7Hpf7WT7T1A1dqsp"
 uri = "file://public/demo-script.pdf"
 type = "pdf"
 title = "Unsubscribely — Demo Video Script (4 pages)"
+
+[[outputs]]
+id = "eW0LOVLKqQF7fceMAQdu2"
+uri = "file://public/demo-script-video.pdf"
+type = "pdf"
+title = "Unsubscribely — Demo Script (5 pages)"
