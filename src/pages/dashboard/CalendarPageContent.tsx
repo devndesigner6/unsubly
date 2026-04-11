@@ -100,6 +100,22 @@ export default function CalendarPageContent() {
         ])
         setSubscriptions(subs)
         setCurrency(profile?.currency || "USD")
+
+        // Silently advance any past-due billing dates
+        try {
+          const { data: { session } } = await (await import("@/integrations/supabase/client")).supabase.auth.getSession()
+          if (session?.access_token) {
+            const res = await fetch("/api/advance-billing", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+            })
+            const json = await res.json()
+            if (res.ok && json.advanced > 0) {
+              const refreshed = await fetchSubscriptions(user!.id)
+              setSubscriptions(refreshed)
+            }
+          }
+        } catch { /* non-critical */ }
       } finally {
         setLoading(false)
       }

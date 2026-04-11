@@ -29,6 +29,7 @@ import {
 import { Link, useLocation } from "react-router-dom"
 import * as React from "react"
 import { UserProfile } from "./UserProfile"
+import { useUpcomingCount } from "@/hooks/useUpcomingCount"
 
 const mainNavigation = [
   { name: "Dashboard", href: siteConfig.baseLinks.dashboard, icon: RiDashboardLine },
@@ -58,6 +59,7 @@ export function DashboardSidebar({
   ...props
 }: React.ComponentProps<typeof Sidebar>) {
   const { pathname } = useLocation()
+  const upcomingCount = useUpcomingCount()
 
   const isActive = React.useCallback((href: string) => {
     if (href === "/dashboard") return pathname === "/dashboard"
@@ -90,7 +92,12 @@ export function DashboardSidebar({
             <SidebarMenu className="space-y-1">
               {mainNavigation.map((item) => (
                 <SidebarMenuItem key={item.name}>
-                  <SidebarLink href={item.href} isActive={isActive(item.href)} icon={item.icon}>
+                  <SidebarLink
+                    href={item.href}
+                    isActive={isActive(item.href)}
+                    icon={item.icon}
+                    notifications={item.name === "Dashboard" && upcomingCount > 0 ? upcomingCount : undefined}
+                  >
                     {item.name}
                   </SidebarLink>
                 </SidebarMenuItem>

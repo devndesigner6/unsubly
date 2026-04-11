@@ -131,7 +131,7 @@ export default function EditSubscriptionPage() {
         </div>
       </div>
       <div className="mx-auto max-w-3xl p-3 sm:p-6 lg:p-8">
-        <SubscriptionForm subscription={subscription} tagIds={tagIds} />
+        <SubscriptionForm key={subscription.id} subscription={subscription} tagIds={tagIds} />
       </div>
     </div>
   )

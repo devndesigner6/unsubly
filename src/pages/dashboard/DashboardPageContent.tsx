@@ -443,7 +443,13 @@ export default function DashboardPageContent() {
                 : "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
             }`}>
               {agentResult.error
-                ? <><RiAlertLine className="size-3.5 shrink-0" /> {agentResult.error}</>
+                ? <><RiAlertLine className="size-3.5 shrink-0" /> {
+                    agentResult.error.toLowerCase().includes("mnemonic") ||
+                    agentResult.error.toLowerCase().includes("wallet") ||
+                    agentResult.error.toLowerCase().includes("sign")
+                      ? "Agent wallet not configured in Vercel — add AGENT_WALLET_MNEMONIC to your Vercel environment variables to enable on-chain releases."
+                      : agentResult.error
+                  }</>
                 : agentResult.released === 0
                   ? <><RiCheckDoubleLine className="size-3.5 shrink-0" /> No vaults due right now — all clear.</>
                   : <><RiCheckDoubleLine className="size-3.5 shrink-0" /> Released {agentResult.released} vault{agentResult.released !== 1 ? "s" : ""} · {agentResult.mode === "on-chain" ? "On-chain ✓" : "DB only"}</>

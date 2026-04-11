@@ -249,12 +249,24 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
       setErrorMsg("")
     } catch (err: any) {
       console.error("Create vault error:", err)
-      const message = err?.message || "Transaction failed"
-      if (message.includes("CONNECT_MODAL_CLOSED") || message.includes("cancelled")) {
-        setErrorMsg("Transaction cancelled by user.")
-      } else {
-        setErrorMsg(message)
-        toast.error("Failed to create vault", { description: message })
+      const raw = err?.message || "Transaction failed"
+      let friendly = raw
+
+      if (raw.includes("CONNECT_MODAL_CLOSED") || raw.toLowerCase().includes("cancel")) {
+        friendly = "Transaction cancelled — nothing was sent."
+      } else if (raw.toLowerCase().includes("insufficient") || raw.toLowerCase().includes("below min")) {
+        friendly = "Your wallet doesn't have enough ALGO. You need at least 0.3 ALGO to cover the vault minimum balance and fees."
+      } else if (raw.toLowerCase().includes("network") || raw.toLowerCase().includes("fetch")) {
+        friendly = "Couldn't connect to Algorand. Check your internet connection and try again."
+      } else if (raw.toLowerCase().includes("unauthorized") || raw.toLowerCase().includes("auth")) {
+        friendly = "Wallet authorization failed. Reconnect your Pera Wallet and try again."
+      } else if (raw.toLowerCase().includes("overspend") || raw.toLowerCase().includes("balance")) {
+        friendly = "Transaction would leave your wallet below the minimum balance. Add more ALGO and retry."
+      }
+
+      setErrorMsg(friendly)
+      if (!raw.includes("CONNECT_MODAL_CLOSED") && !raw.toLowerCase().includes("cancel")) {
+        toast.error("Failed to create vault", { description: friendly })
       }
       setStep("")
     } finally {

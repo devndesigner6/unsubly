@@ -45,7 +45,11 @@ export default function AnalyticsPage() {
   const analytics = useMemo(() => {
     const active = subscriptions.filter((s) => s.status === "active")
 
-    // Monthly cost per subscription
+    // Detect mixed currencies
+    const allCurrencies = [...new Set(subscriptions.map(s => s.currency || "USD"))]
+    const hasMixedCurrencies = allCurrencies.length > 1
+
+    // Monthly cost per subscription (in its own currency)
     const monthlyCosts = subscriptions.map((sub) => {
       const amt = sub.amount || 0
       let monthly = amt
@@ -55,12 +59,24 @@ export default function AnalyticsPage() {
       return { ...sub, monthlyCost: monthly }
     })
 
-    const totalMonthly = monthlyCosts.reduce((s, x) => s + x.monthlyCost, 0)
+    // For display, only sum subscriptions matching the profile currency
+    const sameCurrencySubs = hasMixedCurrencies
+      ? monthlyCosts.filter(s => (s.currency || "USD") === currency)
+      : monthlyCosts
+
+    const totalMonthly = sameCurrencySubs.reduce((s, x) => s + x.monthlyCost, 0)
     const totalYearly = totalMonthly * 12
 
-    // By category
+    // Per-currency breakdown (for mixed-currency warning)
+    const currencyBreakdown = allCurrencies.map(curr => ({
+      currency: curr,
+      monthly: monthlyCosts.filter(s => (s.currency || "USD") === curr).reduce((sum, s) => sum + s.monthlyCost, 0),
+      count: monthlyCosts.filter(s => (s.currency || "USD") === curr).length,
+    }))
+
+    // By category (all currencies, use their own amounts)
     const categoryMap: Record<string, number> = {}
-    monthlyCosts.forEach((sub) => {
+    sameCurrencySubs.forEach((sub) => {
       const cat = sub.category || "Uncategorized"
       categoryMap[cat] = (categoryMap[cat] || 0) + sub.monthlyCost
     })
@@ -75,8 +91,8 @@ export default function AnalyticsPage() {
     })
     const cycleData = Object.entries(cycleMap).map(([name, count]) => ({ name, count }))
 
-    // Top subscriptions
-    const topSubs = [...monthlyCosts].sort((a, b) => b.monthlyCost - a.monthlyCost).slice(0, 8)
+    // Top subscriptions (same currency)
+    const topSubs = [...sameCurrencySubs].sort((a, b) => b.monthlyCost - a.monthlyCost).slice(0, 8)
     const topSubsData = topSubs.map((s) => ({
       name: s.name.length > 12 ? s.name.slice(0, 12) + "…" : s.name,
       amount: Math.round(s.monthlyCost * 100) / 100,
@@ -101,9 +117,11 @@ export default function AnalyticsPage() {
       cycleData,
       topSubsData,
       monthlyProjection,
-      avgPerSub: subscriptions.length > 0 ? totalMonthly / subscriptions.length : 0,
+      avgPerSub: sameCurrencySubs.length > 0 ? totalMonthly / sameCurrencySubs.length : 0,
+      hasMixedCurrencies,
+      currencyBreakdown,
     }
-  }, [subscriptions])
+  }, [subscriptions, currency])
 
   if (loading) {
     return (
@@ -131,6 +149,28 @@ export default function AnalyticsPage() {
           <h1 className="font-display text-3xl font-bold text-foreground sm:text-4xl">Analytics</h1>
           <p className="mt-2 text-muted-foreground">Insights into your subscription spending</p>
         </div>
+
+        {/* Mixed currency warning */}
+        {analytics.hasMixedCurrencies && (
+          <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
+            <div className="flex items-start gap-3">
+              <RiAlertLine className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">Multiple currencies detected</p>
+                <p className="mt-0.5 text-xs text-amber-700 dark:text-amber-400">
+                  Totals below only include your {currency} subscriptions. Update subscription currencies in Settings → Profile to match.
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {analytics.currencyBreakdown.map(b => (
+                    <span key={b.currency} className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                      {b.currency}: {formatCurrency(b.monthly, b.currency)}/mo ({b.count} sub{b.count !== 1 ? "s" : ""})
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Summary Cards */}
         <div className="mb-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">

@@ -23,6 +23,7 @@ const COLORS = [
 export default function FoldersPage() {
   const { user } = useAuth()
   const [folders, setFolders] = useState<Folder[]>([])
+  const [subCounts, setSubCounts] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -33,12 +34,17 @@ export default function FoldersPage() {
 
   async function load() {
     if (!user) return
-    const { data } = await supabase
-      .from("folders")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-    setFolders(data || [])
+    const [{ data: folderData }, { data: subsData }] = await Promise.all([
+      supabase.from("folders").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+      supabase.from("subscriptions").select("folder_id").eq("user_id", user.id).not("folder_id", "is", null),
+    ])
+    setFolders(folderData || [])
+    // Build count map
+    const counts: Record<string, number> = {}
+    for (const sub of subsData || []) {
+      if (sub.folder_id) counts[sub.folder_id] = (counts[sub.folder_id] || 0) + 1
+    }
+    setSubCounts(counts)
     setLoading(false)
   }
 
@@ -148,7 +154,12 @@ export default function FoldersPage() {
             <div key={f.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-4 transition-colors hover:bg-muted/50">
               <div className="flex items-center gap-3">
                 <div className="size-4 rounded" style={{ backgroundColor: f.color || COLORS[0] }} />
-                <span className="font-medium text-foreground">{f.name}</span>
+                <div>
+                  <span className="font-medium text-foreground">{f.name}</span>
+                  <p className="text-xs text-muted-foreground">
+                    {subCounts[f.id] ? `${subCounts[f.id]} subscription${subCounts[f.id] !== 1 ? "s" : ""}` : "No subscriptions"}
+                  </p>
+                </div>
               </div>
               <div className="flex items-center gap-1">
                 <button onClick={() => startEdit(f)} className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground">

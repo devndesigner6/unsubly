@@ -29,6 +29,8 @@ export default function SubscriptionsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
+  const [statusFilter, setStatusFilter] = useState<string>("all")
+  const [sortBy, setSortBy] = useState<string>("name")
   const [deleting, setDeleting] = useState<string | null>(null)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [importing, setImporting] = useState(false)
@@ -116,11 +118,24 @@ export default function SubscriptionsPage() {
   }
 
   const filtered = useMemo(() => {
-    if (!searchQuery) return subscriptions
-    return subscriptions.filter((s) =>
-      s.name.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  }, [subscriptions, searchQuery])
+    let result = subscriptions
+    if (searchQuery) {
+      result = result.filter(s =>
+        s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (s.description ?? "").toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    }
+    if (statusFilter !== "all") {
+      result = result.filter(s => s.status === statusFilter)
+    }
+    result = [...result].sort((a, b) => {
+      if (sortBy === "amount_desc") return (b.amount || 0) - (a.amount || 0)
+      if (sortBy === "amount_asc") return (a.amount || 0) - (b.amount || 0)
+      if (sortBy === "date") return new Date(a.next_billing_date).getTime() - new Date(b.next_billing_date).getTime()
+      return a.name.localeCompare(b.name)
+    })
+    return result
+  }, [subscriptions, searchQuery, statusFilter, sortBy])
 
   const monthlyTotal = useMemo(() => {
     return filtered.reduce((sum, sub) => {
@@ -216,9 +231,9 @@ export default function SubscriptionsPage() {
       </div>
 
       <div className="mx-auto max-w-7xl p-3 sm:p-6 lg:p-8">
-        {/* Search */}
-        <div className="mb-4 sm:mb-6">
-          <div className="relative">
+        {/* Search + Filter + Sort */}
+        <div className="mb-4 sm:mb-6 flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="relative flex-1">
             <RiSearchLine className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
               placeholder="Search subscriptions..."
@@ -226,6 +241,29 @@ export default function SubscriptionsPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
             />
+          </div>
+          <div className="flex gap-2 shrink-0">
+            <select
+              value={statusFilter}
+              onChange={e => setStatusFilter(e.target.value)}
+              className="rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="all">All Status</option>
+              <option value="active">Active</option>
+              <option value="trial">Trial</option>
+              <option value="paused">Paused</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+            <select
+              value={sortBy}
+              onChange={e => setSortBy(e.target.value)}
+              className="rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="name">A–Z</option>
+              <option value="date">By Date</option>
+              <option value="amount_desc">$ High–Low</option>
+              <option value="amount_asc">$ Low–High</option>
+            </select>
           </div>
         </div>
 
