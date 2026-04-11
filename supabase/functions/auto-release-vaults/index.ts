@@ -61,6 +61,15 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders })
   }
 
+  // Auth: accept requests bearing the agent wallet address as the bearer token
+  const auth = req.headers.get("Authorization") ?? ""
+  const expectedBearer = Deno.env.get("VITE_AGENT_WALLET_ADDRESS") ?? "NLJE4ZCTVQTOG4JPZ3EABZ63BON5M2XGKD5NDN77M33DCWUF5AC2DLWA5U"
+  if (auth !== `Bearer ${expectedBearer}`) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    })
+  }
+
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
@@ -115,7 +124,8 @@ Deno.serve(async (req) => {
     }
 
     // Step 3: Set up agent wallet
-    const agentMnemonic = Deno.env.get("AGENT_WALLET_MNEMONIC")
+    // Accept mnemonic from env (Supabase secret) OR from request header (Replit/GitHub Actions cron)
+    const agentMnemonic = Deno.env.get("AGENT_WALLET_MNEMONIC") || req.headers.get("x-agent-mnemonic") || null
     const algodUrl = Deno.env.get("ALGOD_URL") || "https://testnet-api.algonode.cloud"
     const algodToken = Deno.env.get("ALGOD_TOKEN") || ""
 
