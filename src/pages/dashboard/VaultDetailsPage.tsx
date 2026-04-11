@@ -74,19 +74,35 @@ export default function VaultDetailsPage() {
       // Handle both v2 and v3 response formats
       const stateArray = appInfo.params?.globalState ?? appInfo.params?.["global-state"] ?? appInfo?.["global-state-schema"] ?? []
 
+      const safeDecodeKey = (raw: unknown): string => {
+        if (raw instanceof Uint8Array) return new TextDecoder().decode(raw)
+        if (typeof raw === "string") { try { return atob(raw) } catch { return raw } }
+        return String(raw ?? "")
+      }
+      const safeDecodeBytes = (raw: unknown): Uint8Array | null => {
+        if (raw instanceof Uint8Array) return raw
+        if (typeof raw === "string" && raw.length > 0) {
+          try { return Uint8Array.from(atob(raw), c => c.charCodeAt(0)) } catch { return null }
+        }
+        return null
+      }
+
       if (Array.isArray(stateArray)) {
         for (const item of stateArray) {
-          const key = atob(item.key)
-          if (item.value.type === 1) {
-            const bytes = Uint8Array.from(atob(item.value.bytes), c => c.charCodeAt(0))
-            if (bytes.length === 32) {
-              globalState[key] = String(algosdk.encodeAddress(bytes))
+          try {
+            const key = safeDecodeKey(item.key)
+            if (!key) continue
+            if (item.value?.type === 1 || item.value?.bytes !== undefined) {
+              const bytes = safeDecodeBytes(item.value?.bytes)
+              if (bytes && bytes.length === 32) {
+                globalState[key] = String(algosdk.encodeAddress(bytes))
+              } else {
+                globalState[key] = typeof item.value?.bytes === "string" ? item.value.bytes : ""
+              }
             } else {
-              globalState[key] = item.value.bytes
+              globalState[key] = Number(item.value?.uint ?? item.value?.Uint ?? 0)
             }
-          } else {
-            globalState[key] = Number(item.value.uint)
-          }
+          } catch { /* skip malformed state entry */ }
         }
       }
 
@@ -384,7 +400,7 @@ export default function VaultDetailsPage() {
               <div className="flex justify-between text-sm">
                 <dt className="text-muted-foreground">App Address</dt>
                 <dd className="font-mono text-xs text-foreground">
-                  <a href={getAddressExplorerUrl(vault.app_address, network)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
+                  <a href={getLoraAddressUrl(vault.app_address, network)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
                     {shortenAddress(vault.app_address)} <RiExternalLinkLine className="size-3" />
                   </a>
                 </dd>
@@ -394,14 +410,9 @@ export default function VaultDetailsPage() {
               <div className="flex justify-between text-sm">
                 <dt className="text-muted-foreground">Last Txn</dt>
                 <dd className="font-mono text-xs text-foreground">
-                  <span className="flex items-center gap-2">
-                    <a href={getLoraTransactionUrl(vault.txn_id, network)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-0.5 font-medium text-primary hover:text-primary/80">
-                      Lora <RiExternalLinkLine className="size-2.5" />
-                    </a>
-                    <a href={getAlgoExplorerUrl(vault.txn_id, network)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-0.5 text-muted-foreground hover:text-foreground">
-                      {shortenAddress(vault.txn_id, 6)} <RiExternalLinkLine className="size-2.5" />
-                    </a>
-                  </span>
+                  <a href={getLoraTransactionUrl(vault.txn_id, network)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 font-mono text-primary hover:text-primary/80">
+                    {shortenAddress(vault.txn_id, 8)} <RiExternalLinkLine className="size-2.5" />
+                  </a>
                 </dd>
               </div>
             )}
