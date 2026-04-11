@@ -45,15 +45,13 @@ export function shortenAddress(address: string, chars = 6): string {
   return `${address.slice(0, chars)}...${address.slice(-chars)}`
 }
 
-// ── Pera Explorer ─────────────────────────────────────────────────────────
+// ── Legacy aliases — now all point to Lora ────────────────────────────────
 export function getAlgoExplorerUrl(txnId: string, network: AlgorandNetwork = "testnet"): string {
-  const prefix = network === "mainnet" ? "" : "testnet."
-  return `https://${prefix}explorer.perawallet.app/tx/${txnId}`
+  return `https://lora.algokit.io/${network}/transaction/${txnId}`
 }
 
 export function getAddressExplorerUrl(address: string, network: AlgorandNetwork = "testnet"): string {
-  const prefix = network === "mainnet" ? "" : "testnet."
-  return `https://${prefix}explorer.perawallet.app/address/${address}`
+  return `https://lora.algokit.io/${network}/account/${address}`
 }
 
 // ── Lora Explorer (AlgoKit official) ──────────────────────────────────────
