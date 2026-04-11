@@ -13,6 +13,7 @@ import {
   RiPlayCircleLine,
   RiShieldLine, RiFileChartLine, RiLockLine,
   RiExternalLinkLine, RiRobotLine, RiCheckDoubleLine,
+  RiRefreshLine,
 } from "@remixicon/react"
 import { WalletSelectorModal } from "@/components/algorand/WalletSelectorModal"
 import { useState, useEffect, useMemo } from "react"
@@ -27,6 +28,51 @@ export default function DashboardPageContent() {
   const [vaultStats, setVaultStats] = useState({ total: 0, locked: 0, killed: 0, totalLocked: 0 })
   const [recentPayments, setRecentPayments] = useState<any[]>([])
   const [agentActions, setAgentActions] = useState<any[]>([])
+  const [agentRunning, setAgentRunning] = useState(false)
+  const [agentResult, setAgentResult] = useState<{ released: number; mode?: string; error?: string } | null>(null)
+
+  async function fetchAgentActions() {
+    if (!user) return
+    const { data } = await supabase
+      .from("agent_actions" as any)
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(5)
+    if (data) setAgentActions(data as any[])
+  }
+
+  async function runAgent() {
+    if (!user || agentRunning) return
+    setAgentRunning(true)
+    setAgentResult(null)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) throw new Error("Not authenticated")
+
+      const res = await fetch("/api/agent-run", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({}),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Agent run failed")
+
+      setAgentResult({
+        released: data.released ?? 0,
+        mode: data.agent_mode,
+      })
+      await fetchAgentActions()
+    } catch (err: any) {
+      setAgentResult({ released: 0, error: err.message })
+    } finally {
+      setAgentRunning(false)
+    }
+  }
+
   useEffect(() => {
     if (!user) return
     async function load() {
@@ -61,13 +107,7 @@ export default function DashboardPageContent() {
         if (payments) setRecentPayments(payments as any[])
 
         // Fetch autonomous agent actions
-        const { data: actions } = await supabase
-          .from("agent_actions" as any)
-          .select("*")
-          .eq("user_id", user!.id)
-          .order("created_at", { ascending: false })
-          .limit(5)
-        if (actions) setAgentActions(actions as any[])
+        await fetchAgentActions()
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load")
       } finally {
@@ -307,29 +347,57 @@ export default function DashboardPageContent() {
               <div>
                 <h2 className="font-semibold text-foreground">Autonomous Agent</h2>
                 <p className="text-xs text-muted-foreground">
-                  Runs daily · Releases vaults automatically when subscriptions are due
+                  Releases vaults when subscriptions are due
                 </p>
               </div>
             </div>
-            {agentActions.some((a: any) => a.payload?.mode === "on-chain") ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-300">
-                <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Configured
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 dark:bg-amber-900/30 px-2.5 py-1 text-xs font-medium text-amber-700 dark:text-amber-300">
-                <span className="size-1.5 rounded-full bg-amber-500" />
-                DB Only
-              </span>
-            )}
+            <div className="flex items-center gap-2">
+              {agentActions.some((a: any) => a.payload?.mode === "on-chain") ? (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                  <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  On-chain
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 dark:bg-amber-900/30 px-2.5 py-1 text-xs font-medium text-amber-700 dark:text-amber-300">
+                  <span className="size-1.5 rounded-full bg-amber-500" />
+                  DB Only
+                </span>
+              )}
+              <button
+                onClick={runAgent}
+                disabled={agentRunning}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors disabled:opacity-60"
+              >
+                {agentRunning
+                  ? <><RiLoader4Line className="size-3.5 animate-spin" /> Running…</>
+                  : <><RiRefreshLine className="size-3.5" /> Run Now</>
+                }
+              </button>
+            </div>
           </div>
+
+          {/* Agent result feedback */}
+          {agentResult && (
+            <div className={`mb-3 flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium ${
+              agentResult.error
+                ? "bg-destructive/10 text-destructive border border-destructive/20"
+                : "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+            }`}>
+              {agentResult.error
+                ? <><RiAlertLine className="size-3.5 shrink-0" /> {agentResult.error}</>
+                : agentResult.released === 0
+                  ? <><RiCheckDoubleLine className="size-3.5 shrink-0" /> No vaults due right now — all clear.</>
+                  : <><RiCheckDoubleLine className="size-3.5 shrink-0" /> Released {agentResult.released} vault{agentResult.released !== 1 ? "s" : ""} · {agentResult.mode === "on-chain" ? "On-chain ✓" : "DB only"}</>
+              }
+            </div>
+          )}
 
           {agentActions.length === 0 ? (
             <div className="rounded-xl bg-card/60 border border-border/50 px-4 py-4 text-sm text-muted-foreground text-center">
               <RiCheckDoubleLine className="mx-auto mb-2 size-6 opacity-40" />
               <p>No autonomous actions yet.</p>
               <p className="text-xs mt-1">
-                When a subscription billing date arrives, the agent will automatically release the linked escrow vault — no click needed.
+                Hit <strong>Run Now</strong> to check for due subscriptions and release linked vaults automatically.
               </p>
             </div>
           ) : (
