@@ -9,19 +9,19 @@ jobs:
   run-agent:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger auto-release-vaults edge function
-        run: |
-          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
-            "https://ipnywrvwszqlaykbkske.supabase.co/functions/v1/auto-release-vaults" \
-            -H "Content-Type: application/json" \
-            -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlwbnl3cnZ3c3pxbGF5a2Jrc2tlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4OTg0NDksImV4cCI6MjA4ODQ3NDQ0OX0.xUcUpKQ52PVFGAjKokKDwhf9p8RZYmEOgMmu7HAm-sk" \
-            -H "Authorization: Bearer NLJE4ZCTVQTOG4JPZ3EABZ63BON5M2XGKD5NDN77M33DCWUF5AC2DLWA5U" \
-            -H "x-agent-mnemonic: ${{ secrets.AGENT_WALLET_MNEMONIC }}")
-          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
-          BODY=$(echo "$RESPONSE" | head -1)
-          echo "HTTP Status: $HTTP_CODE"
-          echo "Response: $BODY"
-          if [ "$HTTP_CODE" != "200" ]; then
-            echo "Agent call failed with status $HTTP_CODE"
-            exit 1
-          fi
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install algosdk
+        run: npm install algosdk --no-save
+
+      - name: Run autonomous release agent
+        env:
+          AGENT_WALLET_MNEMONIC: ${{ secrets.AGENT_WALLET_MNEMONIC }}
+          VAULT_APP_IDS: ${{ secrets.VAULT_APP_IDS }}
+          ALGO_NETWORK: testnet
+        run: node agents/release-agent.mjs
