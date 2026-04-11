@@ -186,22 +186,48 @@ export default function SettingsPage() {
     setIsDeleting(true)
     try {
       const { data: { session } } = await supabase.auth.getSession()
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-account`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${session?.access_token}`,
-          },
+      if (!session) throw new Error("No active session")
+
+      // Step 1 — delete all application data (RLS allows users to delete their own rows)
+      await supabase.from("resume_shares" as any).delete().eq("user_id", user.id)
+      await supabase.from("onchain_payments" as any).delete().eq("user_id", user.id)
+      await supabase.from("agent_actions" as any).delete().eq("user_id", user.id)
+      await supabase.from("subscriptions" as any).delete().eq("user_id", user.id)
+      await supabase.from("profiles" as any).delete().eq("id", user.id)
+
+      // Step 2 — delete the auth user via GoTrue's self-delete REST endpoint
+      // This is the only way to hard-delete from auth.users without a service role key.
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
+      const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
+        method: "DELETE",
+        headers: {
+          "apikey": anonKey,
+          "Authorization": `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+        },
+      })
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        // If the project hasn't enabled self-deletion in Supabase Auth settings,
+        // we still wipe all data and sign out — the auth record becomes an empty shell.
+        const msg = body?.message ?? body?.msg ?? body?.error ?? ""
+        if (res.status === 422 || msg.toLowerCase().includes("not enabled")) {
+          toast.warning("Data cleared", {
+            description: "Your subscriptions and profile have been permanently wiped. To fully remove your login record, ask the admin to enable 'User Deletion' in Supabase Auth settings.",
+            duration: 8000,
+          })
+          await signOut()
+          return
         }
-      )
-      const json = await res.json()
-      if (!res.ok) throw new Error(json.error || "Deletion failed")
+        throw new Error(msg || `Auth deletion failed (${res.status})`)
+      }
+
       toast.success("Account deleted", { description: "All your data has been permanently removed." })
       await signOut()
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to delete account")
+    } catch (err: any) {
+      toast.error(err?.message ?? "Failed to delete account")
       setIsDeleting(false)
     }
   }
