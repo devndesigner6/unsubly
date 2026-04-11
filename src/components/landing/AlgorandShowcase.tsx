@@ -20,7 +20,7 @@ export function AlgorandShowcase() {
           {/* Left - Text */}
           <div className={`transition-all duration-1000 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`}>
             <h2 className="font-display text-4xl sm:text-5xl md:text-6xl text-foreground tracking-tight leading-[1.05]">
-              Debug any charge
+              Audit every payment
               <br />
               down to a
               <br />
