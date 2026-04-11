@@ -65,3 +65,7 @@ smart_contracts/artifacts/**/*.puya.map
 # Replit config files — managed by Replit, not needed on GitHub
 .replit
 replit.md
+
+# Private demo materials
+demo-script-video.html
+demo-script-video.pdf
