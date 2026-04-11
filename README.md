@@ -207,19 +207,19 @@ Create → Fund → [Time Lock / Co-Sign / Arbitrate] → Release → Mint ARC-3
 ## Autonomous Agent — A2A Architecture
 
 ```
-pg_cron (daily 00:05 UTC)
+GitHub Actions Cron (daily 00:05 UTC)
     │
     ▼
-auto-release-vaults (Supabase Edge Function)
+agents/release-agent.mjs  (Node.js — runs in CI, no server required)
     │
-    ├── Query: subscriptions WHERE next_billing_date <= today
+    ├── Query Supabase: subscriptions WHERE next_billing_date <= today
     │
     ├── For each due subscription:
     │     ├── Find linked escrow vault (status = locked)
-    │     ├── Build release transaction (algosdk)
-    │     ├── Sign with agent wallet (AGENT_WALLET_MNEMONIC)
-    │     ├── Submit to Algorand Testnet
-    │     └── Log action to agent_actions table (txid, amount, mode)
+    │     ├── Build release() ARC-4 call (algosdk)
+    │     ├── Sign with agent wallet (AGENT_WALLET_MNEMONIC secret)
+    │     ├── Submit to Algorand Testnet via AlgoNode
+    │     └── Patch escrow_vaults status → "released" + txid in DB
     │
     └── Dashboard reads agent_actions → shows live Activity panel
 ```
@@ -264,4 +264,4 @@ auto-release-vaults (Supabase Edge Function)
 
 ## License
 
-[MIT](LICENSE.md)
+[MIT](LICENSE)
