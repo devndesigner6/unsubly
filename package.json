@@ -2,11 +2,11 @@
   "name": "unsubscribely",
   "version": "1.0.0",
   "description": "DeFi subscription management on Algorand — escrow vaults, ARC-3 NFT receipts, and AI spending optimization",
-  "author": "Kalash Vasaniya <kalashvasaniya@gmail.com>",
+  "author": "devndesigner6",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/kalashvasaniya/unsubscribely.git"
+    "url": "https://github.com/devndesigner6/unsubly.git"
   },
   "keywords": [
     "algorand",
@@ -18,7 +18,7 @@
     "arc-3",
     "nft",
     "ai-agent",
-    "algobharat"
+    "web3"
   ],
   "scripts": {
     "dev": "vite",
@@ -50,7 +50,6 @@
     "lucide-react": "^0.473.0",
     "lute-connect": "^1.7.0",
     "next-themes": "^0.4.6",
-    "pdfkit": "^0.18.0",
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "react-router-dom": "^7.13.1",

@@ -1,8 +1,7 @@
 /**
- * auto-release-vaults — Agentic Commerce Edge Function
+ * auto-release-vaults — Autonomous Payment Agent Edge Function
  *
- * This is the autonomous AI agent that qualifies Unsubscribely for the
- * Agentic Commerce #3 (A2A Autonomous Payments) track at AlgoBharat Hack Series 3.0.
+ * Handles autonomous vault releases for due subscriptions.
  *
  * How it works (triggered daily via pg_cron at 00:05 UTC):
  *  1. Finds subscriptions where next_billing_date <= today AND status = 'active'

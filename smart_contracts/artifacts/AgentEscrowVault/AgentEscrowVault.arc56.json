@@ -1,6 +1,6 @@
 {
   "name": "AgentEscrowVault",
-  "desc": "Agent-Managed Escrow Vault — A2A Autonomous Payments (ARC-4). Creator locks ALGO; agent wallet autonomously releases on billing date. AlgoBharat Hack Series 3.0, Agentic Commerce #3 track.",
+  "desc": "Agent-Managed Escrow Vault — A2A Autonomous Payments (ARC-4). Creator locks ALGO; agent wallet autonomously releases on billing date.",
   "arcs": [4],
   "structs": [],
   "methods": [

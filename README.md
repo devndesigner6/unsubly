@@ -1,9 +1,6 @@
 # Unsubscribely
 
-> **AlgoBharat Hack Series 3.0 — Round 2**  
-> Tracks: **Future of Finance** · **Agentic Commerce #3 — A2A Autonomous Payments**
-
-A DeFi-powered subscription management platform built on Algorand. Users track subscriptions, lock funds in on-chain escrow vaults, receive ARC-3 NFT payment receipts, and let an autonomous on-chain agent handle releases automatically — no manual intervention required.
+A DeFi-powered subscription management platform built on Algorand. Track subscriptions, lock funds in on-chain escrow vaults, receive ARC-3 NFT payment receipts, and let an autonomous agent handle payment releases automatically — no manual intervention required.
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)
 ![Algorand](https://img.shields.io/badge/Algorand-AVM-black?logo=algorand&logoColor=white)
@@ -42,20 +39,20 @@ Unsubscribely brings subscription payments on-chain with **5 types of Algorand e
 
 ---
 
-## Hackathon Tracks
+## On-Chain Capabilities
 
-### 🏦 Future of Finance
-- **5 Escrow Vault Types**: Standard, Time-Locked, Multi-Sig, Dispute-Resolution, ASA-Based
+### 🏦 Escrow Vaults
+- **5 Vault Types**: Standard, Time-Locked, Multi-Sig, Dispute-Resolution, ASA-Based
 - **ARC-3 NFT Receipts**: Immutable on-chain payment proof minted after vault release
 - **ARC-2 Transaction Notes**: Structured metadata on every transaction (`unsubscribely:j{...}`)
 - **ARC-4 ABI Methods**: Standardized smart contract interfaces (`fund()`, `release()`, `activate_kill_switch()`)
 - **Kill Switch**: Emergency fund recovery mechanism on all vault types
 - **Lora Explorer Integration**: Every vault links directly to the live transaction on Lora
 
-### 🤖 Agentic Commerce #3 — A2A Autonomous Payments
-- **Autonomous Release Agent**: A Supabase Edge Function (`auto-release-vaults`) runs daily via pg_cron, scans all due subscriptions across all users, and releases the linked escrow vault on-chain — no user action required
+### 🤖 Autonomous Payment Agent
+- **A2A Agent**: Runs daily via GitHub Actions, scans all due subscriptions across all users, and releases linked escrow vaults on-chain — no user action required
 - **Agent Wallet**: A dedicated Algorand wallet signs and submits release transactions autonomously on behalf of users
-- **Agent Activity Dashboard**: Live panel on the dashboard shows every autonomous action, timestamp, amount, on-chain mode badge, and a direct Lora Explorer link to the submitted transaction
+- **Agent Activity Dashboard**: Live panel on the dashboard shows every autonomous action, timestamp, amount, on-chain mode badge, and a direct Lora Explorer link
 - **AI Spending Optimizer**: Gemini-powered analysis of the subscription portfolio — risk scores, cost-saving recommendations, vault health metrics
 - **Audit Trail**: Every agent action is logged to the `agent_actions` table with full payload and txid
 

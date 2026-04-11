@@ -24,8 +24,7 @@ class AgentEscrowVault(ARC4Contract):
         agent      — autonomous AI agent (can release on billing date)
         status     — 0 = locked, 1 = released, 2 = killed
 
-    This contract is the core of the Agentic Commerce #3 (A2A Autonomous Payments)
-    track implementation for AlgoBharat Hack Series 3.0.
+    This contract is the core of the autonomous A2A payment agent.
     """
 
     def __init__(self) -> None:
