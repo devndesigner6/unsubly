@@ -1,1 +1,1 @@
-# Deprecated — vault release is handled by agents/release-agent.mjs via agent-daily-cron.yml
+# DISABLED — no triggers defined, this workflow will never run.

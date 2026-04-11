@@ -1,2 +1,1 @@
-name: Name
-# Deprecated — this workflow has been disabled and will not run.
+# DISABLED — no triggers defined, this workflow will never run.
