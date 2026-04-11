@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react"
 import { Link } from "react-router-dom"
 import { useAlgorand } from "@/lib/algorand/context"
 import {
-  shortenAddress, getLoraTransactionUrl, getLoraApplicationUrl,
+  shortenAddress, getLoraTransactionUrl, getLoraApplicationUrl, getLoraAddressUrl,
   microalgosToAlgo, VAULT_TYPE_LABELS, type VaultType,
 } from "@/lib/algorand/constants"
 import { releaseEscrowFunds, killEscrowContract, deleteEscrowContract, fundEscrowContract } from "@/lib/algorand/contract"
@@ -284,7 +284,7 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
       </div>
 
       {isSmartContract && (
-        <div className="mt-2 flex items-center gap-1.5 text-xs text-primary">
+        <div className="mt-2 flex items-center gap-1.5 text-xs text-primary flex-wrap">
           <RiCodeLine className="size-3" />
           <span className="font-medium">{VAULT_TYPE_LABELS[vType]} Contract</span>
           <span className="text-muted-foreground">•</span>
@@ -296,6 +296,19 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
           >
             App #{vault.app_id} <RiExternalLinkLine className="size-2.5" />
           </a>
+          {vault.app_address && (
+            <>
+              <span className="text-muted-foreground">•</span>
+              <a
+                href={getLoraAddressUrl(vault.app_address, network)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-0.5 text-muted-foreground hover:text-primary"
+              >
+                {shortenAddress(vault.app_address, 4)} <RiExternalLinkLine className="size-2.5" />
+              </a>
+            </>
+          )}
         </div>
       )}
 

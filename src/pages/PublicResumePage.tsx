@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react"
 import { useParams } from "react-router-dom"
 import { supabase } from "@/integrations/supabase/client"
-import { getAlgoExplorerUrl, getAddressExplorerUrl, shortenAddress } from "@/lib/algorand/constants"
+import { getLoraTransactionUrl, getLoraAddressUrl, shortenAddress } from "@/lib/algorand/constants"
 import {
   RiShieldCheckLine, RiCoinLine, RiFileListLine,
   RiExternalLinkLine, RiCheckDoubleLine, RiLoader4Line,
-  RiAlertLine,
+  RiAlertLine, RiFlashlightLine,
 } from "@remixicon/react"
 
 export default function PublicResumePage() {
@@ -60,24 +60,30 @@ export default function PublicResumePage() {
       <div className="mx-auto max-w-3xl p-4 sm:p-6 lg:p-8">
         {/* Header */}
         <div className="mb-8 rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="flex size-12 items-center justify-center rounded-xl bg-primary/20">
-              <RiShieldCheckLine className="size-6 text-primary" />
+          <div className="flex items-start justify-between gap-3 mb-4">
+            <div className="flex items-center gap-3">
+              <div className="flex size-12 items-center justify-center rounded-xl bg-primary/20">
+                <RiShieldCheckLine className="size-6 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-foreground">On-Chain Financial Resume</h1>
+                <p className="text-xs text-muted-foreground">Verified payment history on Algorand blockchain</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-foreground">On-Chain Financial Resume</h1>
-              <p className="text-xs text-muted-foreground">Verified payment history on Algorand blockchain</p>
-            </div>
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 shrink-0">
+              <RiFlashlightLine className="size-3" />
+              Algorand Testnet
+            </span>
           </div>
 
-          {data.address && (
+          {data.walletAddress && (
             <a
-              href={getAddressExplorerUrl(data.address)}
+              href={getLoraAddressUrl(data.walletAddress, "testnet")}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-mono mb-4"
             >
-              {data.address} <RiExternalLinkLine className="size-3" />
+              {data.walletAddress} <RiExternalLinkLine className="size-3" />
             </a>
           )}
 
@@ -117,16 +123,13 @@ export default function PublicResumePage() {
                     {payment.note || "Payment"}
                   </span>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-xs text-muted-foreground font-mono">
-                      {shortenAddress(payment.algorand_txn_id, 8)}
-                    </span>
                     <a
-                      href={getAlgoExplorerUrl(payment.algorand_txn_id)}
+                      href={getLoraTransactionUrl(payment.algorand_txn_id, "testnet")}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-primary hover:text-primary/80"
+                      className="flex items-center gap-0.5 text-xs text-primary hover:text-primary/80 font-mono"
                     >
-                      <RiExternalLinkLine className="size-3" />
+                      {shortenAddress(payment.algorand_txn_id, 8)} <RiExternalLinkLine className="size-3" />
                     </a>
                   </div>
                 </div>
