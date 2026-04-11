@@ -11,6 +11,7 @@ import {
   RiLoader4Line,
   RiFileTextLine,
   RiFolderLine,
+  RiNotification3Line,
 } from "@remixicon/react"
 import { useNavigate } from "react-router-dom"
 import { useState, useEffect } from "react"
@@ -333,6 +334,32 @@ export function SubscriptionForm({ subscription, tagIds: initialTagIds = [] }: S
             </div>
           </div>
         )}
+      </div>
+
+      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <div className="mb-5 flex items-center gap-3">
+          <div className="flex size-10 items-center justify-center rounded-xl bg-green-100 dark:bg-green-900/50">
+            <RiNotification3Line className="size-5 text-green-600 dark:text-green-400" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Reminders</h2>
+            <p className="text-sm text-gray-500">Get notified before this subscription renews</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Renewal Alert</p>
+            <p className="text-xs text-gray-500 mt-0.5">Notify me before this subscription bills</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setFormData({ ...formData, alertEnabled: !formData.alertEnabled })}
+            className={`relative h-6 w-11 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${formData.alertEnabled ? "bg-primary" : "bg-gray-200 dark:bg-gray-700"}`}
+            aria-label="Toggle renewal alert"
+          >
+            <span className={`absolute left-0.5 top-0.5 size-5 rounded-full bg-white shadow transition-transform ${formData.alertEnabled ? "translate-x-5" : ""}`} />
+          </button>
+        </div>
       </div>
 
       <div className="flex justify-end gap-3">

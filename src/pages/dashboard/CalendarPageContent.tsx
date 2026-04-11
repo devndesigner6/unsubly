@@ -12,6 +12,76 @@ import {
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
+function toMonthlyAmount(amount: number, cycle: string): number {
+  switch (cycle) {
+    case "weekly": return amount * 4.33
+    case "monthly": return amount
+    case "quarterly": return amount / 3
+    case "yearly": return amount / 12
+    default: return amount
+  }
+}
+
+function getBillingDaysInMonth(sub: any, year: number, month: number): number[] {
+  if (sub.status !== "active" && sub.status !== "trial") return []
+
+  const base = new Date(sub.next_billing_date + "T00:00:00")
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  const days: number[] = []
+
+  switch (sub.billing_cycle) {
+    case "monthly": {
+      // Same day every month — cap to last day of month
+      days.push(Math.min(base.getDate(), daysInMonth))
+      break
+    }
+    case "yearly": {
+      // Only in the anniversary month
+      if (base.getMonth() === month) {
+        days.push(Math.min(base.getDate(), daysInMonth))
+      }
+      break
+    }
+    case "quarterly": {
+      // Advance forward from base until we reach the target month
+      let d = new Date(base)
+      // Clamp to future if base is too far ahead
+      while (d.getFullYear() > year || (d.getFullYear() === year && d.getMonth() > month)) {
+        d.setMonth(d.getMonth() - 3)
+      }
+      // Advance until we hit or pass the target
+      while (d.getFullYear() < year || (d.getFullYear() === year && d.getMonth() < month)) {
+        d.setMonth(d.getMonth() + 3)
+      }
+      if (d.getFullYear() === year && d.getMonth() === month) {
+        days.push(Math.min(d.getDate(), daysInMonth))
+      }
+      break
+    }
+    case "weekly": {
+      // Find every occurrence within the target month
+      const monthStart = new Date(year, month, 1)
+      const monthEnd = new Date(year, month + 1, 0)
+      let d = new Date(base)
+      // Rewind to before the month start
+      while (d > monthStart) d.setDate(d.getDate() - 7)
+      // Advance until we enter the month
+      while (d < monthStart) d.setDate(d.getDate() + 7)
+      // Collect every occurrence in the month
+      while (d <= monthEnd) {
+        days.push(d.getDate())
+        d = new Date(d)
+        d.setDate(d.getDate() + 7)
+      }
+      break
+    }
+    default:
+      break
+  }
+
+  return days
+}
+
 export default function CalendarPageContent() {
   const { user } = useAuth()
   const today = new Date()
@@ -49,20 +119,30 @@ export default function CalendarPageContent() {
     return days
   }, [firstDayOfMonth, daysInMonth])
 
-  const getSubsForDay = (day: number) => {
-    return subscriptions.filter(sub => {
-      const date = new Date(sub.next_billing_date)
-      return date.getDate() === day && date.getMonth() === month && date.getFullYear() === year
-    })
-  }
-
-  const monthlyTotal = subscriptions.reduce((sum, sub) => {
-    const date = new Date(sub.next_billing_date)
-    if (date.getMonth() === month && date.getFullYear() === year) {
-      return sum + (sub.amount || 0)
+  // Build a map of day → subscriptions that bill on that day this month
+  const daySubsMap = useMemo(() => {
+    const map: Record<number, any[]> = {}
+    for (const sub of subscriptions) {
+      const days = getBillingDaysInMonth(sub, year, month)
+      for (const day of days) {
+        if (!map[day]) map[day] = []
+        map[day].push(sub)
+      }
     }
-    return sum
-  }, 0)
+    return map
+  }, [subscriptions, year, month])
+
+  // Monthly total: sum of actual billing amounts in this month (weekly may bill multiple times)
+  const monthlyTotal = useMemo(() => {
+    let total = 0
+    for (const sub of subscriptions) {
+      const days = getBillingDaysInMonth(sub, year, month)
+      total += days.length * (sub.amount || 0)
+    }
+    return total
+  }, [subscriptions, year, month])
+
+  const activeSubs = subscriptions.filter(s => s.status === "active" || s.status === "trial").length
 
   if (loading) return <div className="flex h-screen items-center justify-center"><RiLoader4Line className="animate-spin text-primary" /></div>
 
@@ -81,7 +161,10 @@ export default function CalendarPageContent() {
           <div className="mt-4 flex flex-wrap gap-3 text-sm text-white">
             <div className="flex items-center gap-2 rounded-full bg-white/20 px-3 py-1">
               <RiWalletLine className="size-4" />
-              <span>{formatCurrency(monthlyTotal, currency)} this month</span>
+              <span>{formatCurrency(monthlyTotal, currency)} due this month</span>
+            </div>
+            <div className="flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs text-white/70">
+              {activeSubs} active subscription{activeSubs !== 1 ? "s" : ""}
             </div>
           </div>
         </div>
@@ -96,22 +179,27 @@ export default function CalendarPageContent() {
           ))}
           {calendarDays.map((day, i) => {
             if (!day) return <div key={`empty-${i}`} className="min-h-[100px] bg-card" />
-            const daySubs = getSubsForDay(day)
+            const daySubs = daySubsMap[day] ?? []
             const dayTotal = daySubs.reduce((sum, s) => sum + (s.amount || 0), 0)
-            
+            const isToday = day === today.getDate() && month === today.getMonth() && year === today.getFullYear()
+            const isPast = new Date(year, month, day) < new Date(today.getFullYear(), today.getMonth(), today.getDate())
+
             return (
-              <div key={day} className="group relative min-h-[100px] bg-card p-2 transition-colors hover:bg-accent/50">
+              <div key={day} className={cx(
+                "group relative min-h-[100px] bg-card p-2 transition-colors hover:bg-accent/50",
+                isPast && "opacity-60"
+              )}>
                 <span className={cx(
                   "flex size-6 items-center justify-center rounded-full text-xs font-medium",
-                  day === today.getDate() && month === today.getMonth() && year === today.getFullYear() 
-                    ? "bg-primary text-primary-foreground" 
+                  isToday
+                    ? "bg-primary text-primary-foreground"
                     : "text-foreground"
                 )}>
                   {day}
                 </span>
                 <div className="mt-2 space-y-1">
-                  {daySubs.map(sub => (
-                    <div key={sub.id} className="truncate rounded px-1.5 py-0.5 text-xs bg-primary/10 text-primary">
+                  {daySubs.map((sub, idx) => (
+                    <div key={`${sub.id}-${idx}`} className="truncate rounded px-1.5 py-0.5 text-xs bg-primary/10 text-primary">
                       {sub.name}
                     </div>
                   ))}
@@ -125,6 +213,12 @@ export default function CalendarPageContent() {
             )
           })}
         </div>
+
+        {subscriptions.length === 0 && (
+          <div className="mt-12 text-center text-sm text-muted-foreground">
+            No subscriptions yet. Add one to see your payment calendar.
+          </div>
+        )}
       </div>
     </div>
   )

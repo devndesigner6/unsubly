@@ -106,6 +106,28 @@ export default function DashboardPageContent() {
           .limit(3)
         if (payments) setRecentPayments(payments as any[])
 
+        // Silently advance any past-due billing dates so calendar + metrics stay current
+        try {
+          const { data: { session } } = await supabase.auth.getSession()
+          if (session?.access_token) {
+            const advRes = await fetch("/api/advance-billing", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${session.access_token}`,
+              },
+            })
+            const advData = await advRes.json()
+            if (advRes.ok && advData.advanced > 0) {
+              // Re-fetch subscriptions with updated dates
+              const refreshed = await fetchSubscriptions(user!.id)
+              setSubscriptions(refreshed)
+            }
+          }
+        } catch {
+          // Non-critical: billing date advance failed, continue with stale dates
+        }
+
         // Fetch autonomous agent actions
         await fetchAgentActions()
       } catch (err) {
@@ -132,12 +154,16 @@ export default function DashboardPageContent() {
     }, 0)
 
     const now = new Date()
-    const upcoming = subscriptions.filter((s) => {
-      const days = Math.ceil((new Date(s.next_billing_date).getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-      return days >= 0 && days <= 7 && s.status === "active"
-    })
+    now.setHours(0, 0, 0, 0)
+    const upcomingSubs = subscriptions.filter((s) => {
+      if (s.status !== "active" && s.status !== "trial") return false
+      const billing = new Date(s.next_billing_date)
+      billing.setHours(0, 0, 0, 0)
+      const days = Math.ceil((billing.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+      return days >= 0 && days <= 7
+    }).sort((a, b) => new Date(a.next_billing_date).getTime() - new Date(b.next_billing_date).getTime())
 
-    return { total: subscriptions.length, active: active.length, monthly, upcoming: upcoming.length }
+    return { total: subscriptions.length, active: active.length, monthly, upcoming: upcomingSubs.length, upcomingSubs }
   }, [subscriptions])
 
   function getGreeting() {
@@ -247,6 +273,39 @@ export default function DashboardPageContent() {
             </div>
           ))}
         </div>
+
+        {/* Upcoming Renewals Banner */}
+        {metrics.upcomingSubs.length > 0 && (
+          <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:p-5 dark:border-amber-800 dark:bg-amber-900/20">
+            <div className="flex items-center gap-2 mb-3">
+              <RiAlertLine className="size-4 text-amber-600 dark:text-amber-400 shrink-0" />
+              <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+                {metrics.upcomingSubs.length === 1 ? "1 subscription" : `${metrics.upcomingSubs.length} subscriptions`} renewing within 7 days
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {metrics.upcomingSubs.map((sub) => {
+                const billing = new Date(sub.next_billing_date)
+                billing.setHours(0, 0, 0, 0)
+                const now = new Date()
+                now.setHours(0, 0, 0, 0)
+                const daysLeft = Math.ceil((billing.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+                return (
+                  <Link
+                    key={sub.id}
+                    to={`/subscriptions/${sub.id}`}
+                    className="flex items-center gap-2 rounded-lg border border-amber-200 bg-white px-3 py-2 text-xs shadow-sm transition-colors hover:border-amber-400 dark:border-amber-700 dark:bg-amber-900/30"
+                  >
+                    <span className="font-medium text-gray-900 dark:text-gray-100">{sub.name}</span>
+                    <span className="text-gray-500 dark:text-gray-400">
+                      {formatCurrency(sub.amount, currency)} · {daysLeft === 0 ? "Today" : daysLeft === 1 ? "Tomorrow" : `in ${daysLeft}d`}
+                    </span>
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Algorand Blockchain Section */}
         <div className="mt-6 rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-5 sm:p-6">

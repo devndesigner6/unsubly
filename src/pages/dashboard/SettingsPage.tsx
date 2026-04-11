@@ -41,7 +41,7 @@ export default function SettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [passwordError, setPasswordError] = useState("")
   const [passwordSuccess, setPasswordSuccess] = useState(false)
-  const [sendingTestAlert, setSendingTestAlert] = useState(false)
+  // sendingTestAlert removed — email reminders are coming soon
 
   // Delete account
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -149,37 +149,6 @@ export default function SettingsPage() {
     }
   }
 
-  async function handleSendTestAlert() {
-    if (!user) return
-    setSendingTestAlert(true)
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-subscription-alerts`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${session?.access_token}`,
-          },
-          body: JSON.stringify({ type: "test" }),
-        }
-      )
-      const json = await res.json()
-      if (!res.ok) throw new Error(json.error || "Failed to send")
-      if (json.sent) {
-        toast.success("Test alert sent!", { description: `Check your inbox at ${user.email}` })
-      } else {
-        toast.info("Alert preview generated", {
-          description: json.reason || "Configure RESEND_API_KEY in Supabase to enable real email sending",
-        })
-      }
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to send test alert")
-    } finally {
-      setSendingTestAlert(false)
-    }
-  }
 
   async function handleDeleteAccount() {
     if (!user || deleteConfirmText !== "DELETE") return
@@ -345,21 +314,21 @@ export default function SettingsPage() {
               </button>
             </label>
             <div className="border-t border-border pt-4">
-              <p className="text-sm font-medium text-foreground mb-1">Test Email Alerts</p>
-              <p className="text-xs text-muted-foreground mb-3">
-                Send a preview of your upcoming renewal alerts to <span className="font-mono">{user?.email}</span>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-foreground mb-0.5">Email Reminder Delivery</p>
+                  <p className="text-xs text-muted-foreground">
+                    Automated renewal alerts sent to <span className="font-mono">{user?.email}</span>
+                  </p>
+                </div>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-400">
+                  <RiLoader4Line className="size-3" />
+                  Coming Soon
+                </span>
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Email delivery is being set up. Your preferences below are saved and will activate automatically when it launches.
               </p>
-              <Button
-                variant="secondary"
-                onClick={handleSendTestAlert}
-                disabled={sendingTestAlert}
-              >
-                {sendingTestAlert ? (
-                  <><RiLoader4Line className="mr-2 size-4 animate-spin" />Sending...</>
-                ) : (
-                  <><RiMailSendLine className="mr-2 size-4" />Send Test Alert</>
-                )}
-              </Button>
             </div>
           </div>
         </section>

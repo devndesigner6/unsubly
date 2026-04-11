@@ -11,7 +11,7 @@ const corsHeaders = {
 
 const SITE_NAME = 'Unsubscribely'
 const SITE_URL = Deno.env.get('SITE_URL') || 'https://unsubscribely.app'
-const FROM_EMAIL = `${SITE_NAME} <alerts@notify.focuslive.dev>`
+const FROM_EMAIL = `${SITE_NAME} <alerts@notify.unsubscribely.app>`
 
 async function sendViaResend(to: string, subject: string, html: string, text: string) {
   const apiKey = Deno.env.get('RESEND_API_KEY')
