@@ -69,7 +69,7 @@
   </tr>
   <tr>
     <td><img src="screenshots/dashboard.png" alt="Dashboard with wallet" width="100%"></td>
-    <td><img src="screenshots/dashboard-wide.png" alt="Dashboard wide" width="100%"></td>
+    <td><img src="screenshots/subscriptions.png" alt="Subscriptions page" width="100%"></td>
   </tr>
 </table>
 
