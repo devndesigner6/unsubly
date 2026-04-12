@@ -11,7 +11,7 @@
   <h3 align="center">Unsubscribely</h3>
 
   <p align="center">
-    Subscription management, built on the Algorand blockchain.
+    A DeFi-powered subscription management platform built on Algorand blockchain.
     <br />
     <a href="https://unsubly2.vercel.app"><strong>Explore the live app »</strong></a>
     <br />
