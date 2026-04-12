@@ -1,6 +1,9 @@
 /**
- * Unsubscribely Autonomous A2A Agent
+ * Unsubscribely Autonomous A2A Agent — v2
+ *
  * Releases locked escrow vaults on-chain when subscriptions are due.
+ * Supports both standard ALGO vaults and ASA token vaults.
+ * Works on testnet and mainnet — set ALGO_NETWORK=mainnet to target mainnet.
  *
  * Reads due vaults from Supabase, signs release() via agent wallet,
  * submits on-chain via Algorand, then syncs status back to DB.
@@ -8,19 +11,31 @@
 
 import algosdk from "algosdk"
 
-const SUPABASE_URL    = process.env.SUPABASE_URL    || "https://ipnywrvwszqlaykbkske.supabase.co"
-const SUPABASE_ANON   = process.env.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlwbnl3cnZ3c3pxbGF5a2Jrc2tlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4OTg0NDksImV4cCI6MjA4ODQ3NDQ0OX0.xUcUpKQ52PVFGAjKokKDwhf9p8RZYmEOgMmu7HAm-sk"
-const AGENT_MNEMONIC  = process.env.AGENT_WALLET_MNEMONIC
-const ALGOD_URL       = process.env.ALGOD_URL || "https://testnet-api.algonode.cloud"
-const NETWORK         = process.env.ALGO_NETWORK || "testnet"
+const NETWORK = process.env.ALGO_NETWORK || "testnet"
 
-// ARC-4 method selector for release()void
-const RELEASE_SELECTOR = new Uint8Array([0x07, 0x6b, 0xbd, 0x4d])
+const DEFAULT_ALGOD = NETWORK === "mainnet"
+  ? "https://mainnet-api.algonode.cloud"
+  : "https://testnet-api.algonode.cloud"
 
+const SUPABASE_URL   = process.env.SUPABASE_URL || "https://ipnywrvwszqlaykbkske.supabase.co"
+const SUPABASE_ANON  = process.env.SUPABASE_ANON_KEY ||
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlwbnl3cnZ3c3pxbGF5a2Jrc2tlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4OTg0NDksImV4cCI6MjA4ODQ3NDQ0OX0.xUcUpKQ52PVFGAjKokKDwhf9p8RZYmEOgMmu7HAm-sk"
+const ALGOD_URL      = process.env.ALGOD_URL || DEFAULT_ALGOD
+const AGENT_MNEMONIC = process.env.AGENT_WALLET_MNEMONIC
+
+// ARC-4 method selectors (sha512_256 of signature, first 4 bytes)
+const SEL_RELEASE = new Uint8Array([0x07, 0x6b, 0xbd, 0x4d]) // release()void
+
+const LOW_BALANCE_THRESHOLD = NETWORK === "mainnet" ? 0.5 : 0.1
+const MAX_RETRIES   = 3
+const RETRY_DELAY_MS = 4_000
+
+// ── Supabase helpers ──────────────────────────────────────────────────────────
 async function supabaseGet(path) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` },
   })
+  if (!res.ok) throw new Error(`Supabase GET failed: ${res.status}`)
   return res.json()
 }
 
@@ -38,14 +53,28 @@ async function supabasePatch(path, body) {
   return res.status
 }
 
-async function releaseOnChain(algodClient, agentAccount, appId) {
+// ── Retry wrapper ─────────────────────────────────────────────────────────────
+async function withRetry(label, fn, retries = MAX_RETRIES) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      return await fn()
+    } catch (err) {
+      if (attempt === retries) throw err
+      console.warn(`  [retry ${attempt}/${retries}] ${label}: ${err.message}`)
+      await new Promise(r => setTimeout(r, RETRY_DELAY_MS * attempt))
+    }
+  }
+}
+
+// ── On-chain: release standard ALGO vault ────────────────────────────────────
+async function releaseAlgoVault(algodClient, agentAccount, appId) {
   const params = await algodClient.getTransactionParams().do()
   const txn = algosdk.makeApplicationCallTxnFromObject({
     sender: agentAccount.addr,
     suggestedParams: { ...params, fee: 2000, flatFee: true },
-    appIndex: appId,
+    appIndex: Number(appId),
     onComplete: algosdk.OnApplicationComplete.NoOpOC,
-    appArgs: [RELEASE_SELECTOR],
+    appArgs: [SEL_RELEASE],
   })
   const signed = txn.signTxn(agentAccount.sk)
   const { txId } = await algodClient.sendRawTransaction(signed).do()
@@ -53,91 +82,202 @@ async function releaseOnChain(algodClient, agentAccount, appId) {
   return txId
 }
 
+// ── On-chain: opt-in agent wallet to an ASA (idempotent) ─────────────────────
+async function optInToAsa(algodClient, agentAccount, asaId) {
+  try {
+    const info = await algodClient.accountInformation(agentAccount.addr).do()
+    const assets = info.assets || []
+    if (assets.some(a => Number(a["asset-id"]) === Number(asaId))) {
+      console.log(`  ASA opt-in already present for asset ${asaId}`)
+      return
+    }
+  } catch (_) {}
+
+  const params = await algodClient.getTransactionParams().do()
+  const txn = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
+    sender: agentAccount.addr,
+    receiver: agentAccount.addr,
+    amount: 0,
+    assetIndex: Number(asaId),
+    suggestedParams: params,
+  })
+  const signed = txn.signTxn(agentAccount.sk)
+  const { txId } = await algodClient.sendRawTransaction(signed).do()
+  await algosdk.waitForConfirmation(algodClient, txId, 4)
+  console.log(`  ASA opt-in confirmed: ${txId}`)
+}
+
+// ── On-chain: release ASA vault ───────────────────────────────────────────────
+async function releaseAsaVault(algodClient, agentAccount, appId, asaId) {
+  if (asaId) await optInToAsa(algodClient, agentAccount, asaId)
+
+  const params = await algodClient.getTransactionParams().do()
+  const txn = algosdk.makeApplicationCallTxnFromObject({
+    sender: agentAccount.addr,
+    suggestedParams: { ...params, fee: 3000, flatFee: true },
+    appIndex: Number(appId),
+    onComplete: algosdk.OnApplicationComplete.NoOpOC,
+    appArgs: [SEL_RELEASE],
+    ...(asaId ? { foreignAssets: [Number(asaId)] } : {}),
+  })
+  const signed = txn.signTxn(agentAccount.sk)
+  const { txId } = await algodClient.sendRawTransaction(signed).do()
+  await algosdk.waitForConfirmation(algodClient, txId, 4)
+  return txId
+}
+
+// ── Fetch due vaults from Supabase ────────────────────────────────────────────
+async function fetchDueVaults(today) {
+  try {
+    const subs = await supabaseGet(
+      `subscriptions?status=eq.active&next_billing_date=lte.${today}&select=id,name,user_id`
+    )
+    if (Array.isArray(subs) && subs.length > 0) {
+      console.log(`Found ${subs.length} due subscription(s) via DB`)
+      const subIds = subs.map(s => s.id).join(",")
+      const dbVaults = await supabaseGet(
+        `escrow_vaults?status=eq.locked&subscription_id=in.(${subIds})&select=id,app_id,app_address,subscription_id,user_id,amount,vault_type,asa_id`
+      )
+      return { vaults: Array.isArray(dbVaults) ? dbVaults : [], subs }
+    }
+  } catch (err) {
+    console.warn(`DB fetch warning: ${err.message}`)
+  }
+  console.log("DB query returned no rows (RLS may restrict anon access) — checking VAULT_APP_IDS fallback")
+  return { vaults: [], subs: [] }
+}
+
+// ── Main ──────────────────────────────────────────────────────────────────────
 async function main() {
-  console.log("=== Unsubscribely Autonomous Agent ===")
-  console.log(`Network : ${NETWORK}`)
-  console.log(`Time    : ${new Date().toISOString()}`)
+  const startTime = Date.now()
+  console.log("=== Unsubscribely Autonomous Agent v2 ===")
+  console.log(`Network  : ${NETWORK}`)
+  console.log(`Algod    : ${ALGOD_URL}`)
+  console.log(`Time     : ${new Date().toISOString()}`)
+  console.log()
 
   if (!AGENT_MNEMONIC) {
-    console.error("AGENT_WALLET_MNEMONIC not set — add it as a GitHub secret")
+    console.error("AGENT_WALLET_MNEMONIC not set — add it as a GitHub Actions secret")
     process.exit(1)
   }
 
   const agentAccount = algosdk.mnemonicToSecretKey(AGENT_MNEMONIC)
-  console.log(`Agent   : ${agentAccount.addr}`)
+  console.log(`Agent    : ${agentAccount.addr}`)
 
   const algodClient = new algosdk.Algodv2("", ALGOD_URL, "")
 
-  // Check agent wallet balance
+  // Balance check
   try {
     const info = await algodClient.accountInformation(agentAccount.addr).do()
     const balance = Number(info.amount) / 1e6
-    console.log(`Balance : ${balance} ALGO`)
-    if (balance < 0.1) {
-      console.warn("Warning: Agent wallet balance low — fund at https://bank.testnet.algorand.network/")
+    console.log(`Balance  : ${balance} ALGO`)
+    if (balance < LOW_BALANCE_THRESHOLD) {
+      const fundUrl = NETWORK === "mainnet"
+        ? "https://www.algorand.foundation/"
+        : "https://bank.testnet.algorand.network/"
+      console.warn(`WARNING: Agent balance low (< ${LOW_BALANCE_THRESHOLD} ALGO). Fund at: ${fundUrl}`)
+      console.warn("::warning title=Low Agent Balance::Balance below threshold — fund the agent wallet")
+    }
+    if (balance < 0.001) {
+      console.error("CRITICAL: Agent wallet nearly empty — cannot pay fees. Aborting.")
+      process.exit(1)
     }
   } catch (e) {
-    console.warn("Could not fetch agent balance:", e.message)
+    console.warn(`Could not fetch agent balance: ${e.message}`)
   }
 
-  // Try fetching due vaults from Supabase (requires RLS-compatible anon access)
+  // Fetch due vaults
   const today = new Date().toISOString().split("T")[0]
   console.log(`\nChecking subscriptions due on or before ${today}...`)
 
-  let vaults = []
+  let { vaults, subs } = await fetchDueVaults(today)
 
-  const subs = await supabaseGet(
-    `subscriptions?status=eq.active&next_billing_date=lte.${today}&select=id,name,user_id`
-  )
-
-  if (Array.isArray(subs) && subs.length > 0) {
-    console.log(`Found ${subs.length} due subscription(s) via DB`)
-    const subIds = subs.map(s => s.id).join(",")
-    const dbVaults = await supabaseGet(
-      `escrow_vaults?status=eq.locked&vault_type=eq.standard&subscription_id=in.(${subIds})&select=id,app_id,app_address,subscription_id,user_id,amount`
-    )
-    if (Array.isArray(dbVaults)) vaults = dbVaults
-  } else {
-    console.log("DB query returned no rows (RLS may restrict anon access) — checking VAULT_APP_IDS fallback")
-  }
-
-  // Fallback: release specific app IDs passed via env (comma-separated)
+  // Fallback: env-specified vault IDs
   if (vaults.length === 0 && process.env.VAULT_APP_IDS) {
     const ids = process.env.VAULT_APP_IDS.split(",").map(s => s.trim()).filter(Boolean)
-    vaults = ids.map(app_id => ({ id: `manual-${app_id}`, app_id, subscription_id: null, user_id: null }))
-    console.log(`Using ${vaults.length} vault(s) from VAULT_APP_IDS env: ${process.env.VAULT_APP_IDS}`)
+    vaults = ids.map(app_id => ({
+      id: `manual-${app_id}`, app_id,
+      vault_type: "standard", asa_id: null,
+      subscription_id: null, user_id: null,
+    }))
+    console.log(`Using ${vaults.length} vault(s) from VAULT_APP_IDS env`)
   }
 
   if (vaults.length === 0) {
-    console.log("No locked standard vaults to release today.")
+    console.log("No locked vaults to release today.")
+    console.log(`\nDone in ${Date.now() - startTime}ms`)
     return
   }
-  console.log(`Found ${vaults.length} vault(s) to release\n`)
+
+  const standardVaults = vaults.filter(v => v.vault_type !== "asa")
+  const asaVaults      = vaults.filter(v => v.vault_type === "asa")
+  console.log(`\nFound ${vaults.length} vault(s) to release`)
+  if (standardVaults.length) console.log(`  Standard ALGO vaults : ${standardVaults.length}`)
+  if (asaVaults.length)      console.log(`  ASA token vaults     : ${asaVaults.length}`)
+  console.log()
 
   const subsArray = Array.isArray(subs) ? subs : []
   let released = 0, failed = 0
+
   for (const vault of vaults) {
-    const sub = subsArray.find(s => s.id === vault.subscription_id)
-    console.log(`→ Vault ${vault.id} | App #${vault.app_id} | ${sub?.name ?? "?"}`)
+    const sub     = subsArray.find(s => s.id === vault.subscription_id)
+    const isAsa   = vault.vault_type === "asa"
+    const typeTag = isAsa ? "[ASA]" : "[ALGO]"
+    console.log(`→ ${typeTag} Vault ${vault.id} | App #${vault.app_id}${vault.asa_id ? ` | ASA #${vault.asa_id}` : ""} | ${sub?.name ?? "manual"}`)
+
     try {
-      const txId = await releaseOnChain(algodClient, agentAccount, Number(vault.app_id))
-      console.log(`  ✓ Released on-chain: ${txId}`)
+      let txId
+      if (isAsa) {
+        txId = await withRetry(
+          `ASA release App#${vault.app_id}`,
+          () => releaseAsaVault(algodClient, agentAccount, vault.app_id, vault.asa_id)
+        )
+      } else {
+        txId = await withRetry(
+          `ALGO release App#${vault.app_id}`,
+          () => releaseAlgoVault(algodClient, agentAccount, vault.app_id)
+        )
+      }
+
+      console.log(`  ✓ Released: ${txId}`)
       console.log(`  🔗 https://lora.algokit.io/${NETWORK}/transaction/${txId}`)
 
-      // Sync status back to Supabase
-      const status = await supabasePatch(
+      // Sync vault status
+      const dbStatus = await supabasePatch(
         `escrow_vaults?id=eq.${vault.id}`,
         { status: "released", released_at: new Date().toISOString(), txn_id: txId }
       )
-      console.log(`  DB sync: ${status === 204 ? "ok" : `status ${status} (RLS may block — vault will sync on next app visit)`}`)
+
+      // Advance subscription billing date
+      if (vault.subscription_id) {
+        const nextDate = new Date()
+        nextDate.setMonth(nextDate.getMonth() + 1)
+        await supabasePatch(
+          `subscriptions?id=eq.${vault.subscription_id}`,
+          { next_billing_date: nextDate.toISOString().split("T")[0], last_billed_at: new Date().toISOString() }
+        ).catch(() => {})
+      }
+
+      console.log(`  DB sync: ${dbStatus === 204 ? "ok" : `status ${dbStatus}`}`)
       released++
     } catch (err) {
-      console.error(`  ✗ Failed: ${err.message}`)
+      console.error(`  ✗ Failed (all retries exhausted): ${err.message}`)
+      console.error(`  ::error title=Vault Release Failed::App #${vault.app_id} — ${err.message}`)
       failed++
     }
+    console.log()
   }
 
-  console.log(`\n=== Done: ${released} released, ${failed} failed ===`)
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(1)
+  console.log(`=== Summary: ${released} released, ${failed} failed | ${elapsed}s ===`)
+
+  if (failed > 0) {
+    console.error(`::error title=Agent Run Failed::${failed} vault(s) failed to release on ${NETWORK}`)
+    process.exit(1)
+  }
 }
 
-main().catch(err => { console.error(err); process.exit(1) })
+main().catch(err => {
+  console.error("Unhandled error:", err)
+  process.exit(1)
+})

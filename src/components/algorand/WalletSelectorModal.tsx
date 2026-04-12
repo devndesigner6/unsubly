@@ -47,10 +47,15 @@ const TYPE_BADGE: Record<string, string> = {
 }
 
 export function WalletSelectorModal() {
-  const { showWalletSelector, setShowWalletSelector, connectWallet, isConnecting } = useAlgorand()
+  const { showWalletSelector, setShowWalletSelector, connectWallet, isConnecting, network } = useAlgorand()
   const { wallets } = useWallet()
   const [connectingId, setConnectingId] = useState<string | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const networkLabel = network === "mainnet" ? "Mainnet" : "Testnet"
+  const networkBadgeClass = network === "mainnet"
+    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+    : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
 
   if (!showWalletSelector) return null
 
@@ -85,8 +90,13 @@ export function WalletSelectorModal() {
         </button>
 
         <div className="mb-5">
-          <h2 className="text-lg font-semibold text-foreground">Connect Wallet</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2 mb-1">
+            <h2 className="text-lg font-semibold text-foreground">Connect Wallet</h2>
+            <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${networkBadgeClass}`}>
+              {networkLabel}
+            </span>
+          </div>
+          <p className="text-sm text-muted-foreground">
             Choose your Algorand wallet — you'll be prompted to approve the connection.
           </p>
         </div>
@@ -180,7 +190,7 @@ export function WalletSelectorModal() {
           <ol className="list-decimal list-inside space-y-0.5">
             <li>Click a wallet above</li>
             <li>Approve the connection in your wallet app or extension</li>
-            <li>You're connected to Algorand Testnet</li>
+            <li>You're connected to Algorand {networkLabel}</li>
           </ol>
         </div>
 
@@ -194,7 +204,7 @@ export function WalletSelectorModal() {
           >
             @txnlab/use-wallet
           </a>{" "}
-          · Algorand Testnet
+          · Algorand {networkLabel}
         </p>
       </div>
     </div>

@@ -22,6 +22,7 @@ interface AlgorandContextType {
   balance: number
   isLoadingBalance: boolean
   network: AlgorandNetwork
+  networkSwitching: boolean
   showWalletSelector: boolean
   setShowWalletSelector: (show: boolean) => void
   connectWallet: (walletId?: WalletId) => Promise<void>
@@ -34,7 +35,7 @@ interface AlgorandContextType {
   }
   signAndSendTransaction: (txn: algosdk.Transaction) => Promise<string>
   refreshBalance: () => Promise<void>
-  switchNetwork: (network: AlgorandNetwork) => void
+  switchNetwork: (network: AlgorandNetwork) => Promise<void>
 }
 
 const AlgorandContext = createContext<AlgorandContextType | null>(null)
@@ -75,10 +76,15 @@ function AlgorandBridge({
   const { setActiveNetwork } = useNetwork()
 
   const [isConnecting, setIsConnecting] = useState(false)
+  const [networkSwitching, setNetworkSwitching] = useState(false)
   const [balance, setBalance] = useState(0)
   const [isLoadingBalance, setIsLoadingBalance] = useState(false)
   const [showWalletSelector, setShowWalletSelector] = useState(false)
+
+  // Keep both a ref (for sync access inside callbacks) and state (for reactive context consumers)
   const algodClientRef = useRef(createAlgodClient(network))
+  const [algodClientState, setAlgodClientState] = useState(() => createAlgodClient(network))
+
   const hasMounted = useRef(false)
 
   const activeWallet = wallets.find((w) => w.isActive) ?? null
@@ -86,10 +92,11 @@ function AlgorandBridge({
     ? (activeWallet.id as WalletType)
     : null
 
-  const fetchBalance = useCallback(async (address: string) => {
+  const fetchBalance = useCallback(async (address: string, client?: algosdk.Algodv2) => {
     setIsLoadingBalance(true)
     try {
-      const info = await algodClientRef.current.accountInformation(address).do()
+      const c = client ?? algodClientRef.current
+      const info = await c.accountInformation(address).do()
       setBalance(microalgosToAlgo(Number((info as any).amount ?? 0)))
     } catch {
       setBalance(0)
@@ -148,7 +155,6 @@ function AlgorandBridge({
         const wallet = wallets.find((w) => w.id === walletId)
         if (!wallet) throw new Error(`Wallet ${walletId} not found`)
         await wallet.connect()
-        // setActive is a no-op if already active but ensures it's set
         try { wallet.setActive() } catch {}
         toast.success("Wallet connected", { description: wallet.metadata.name })
         setShowWalletSelector(false)
@@ -158,10 +164,8 @@ function AlgorandBridge({
                           msg.toLowerCase().includes("rejected") ||
                           msg.toLowerCase().includes("denied")
         if (!cancelled) {
-          // Show toast for unexpected errors
           toast.error("Failed to connect wallet", { description: msg || "Please try again" })
         }
-        // Re-throw so the modal can show inline error too
         throw err
       } finally {
         setIsConnecting(false)
@@ -198,6 +202,7 @@ function AlgorandBridge({
       const signed = await signTransactions([txn])
       const signedTxn = signed[0]
       if (!signedTxn) throw new Error("Transaction signing failed")
+      // Always use the ref (always current network's client)
       const response = await algodClientRef.current
         .sendRawTransaction(signedTxn)
         .do()
@@ -217,15 +222,38 @@ function AlgorandBridge({
   )
 
   const switchNetwork = useCallback(
-    (net: AlgorandNetwork) => {
-      setNetworkState(net)
-      setStoredNetwork(net)
-      algodClientRef.current = createAlgodClient(net)
-      setActiveNetwork(toNetworkId(net))
-      if (activeAddress) fetchBalance(activeAddress)
-      toast.info(`Switched to ${net === "mainnet" ? "Mainnet" : "Testnet"}`)
+    async (net: AlgorandNetwork) => {
+      if (net === network) return
+      setNetworkSwitching(true)
+      try {
+        // Disconnect wallet first — wallets may not support cross-network signing
+        if (activeWallet) {
+          try { await activeWallet.disconnect() } catch {}
+          setBalance(0)
+          await saveWalletToProfile(null)
+        }
+
+        // Swap out the algod client for the new network
+        const newClient = createAlgodClient(net)
+        algodClientRef.current = newClient
+        setAlgodClientState(newClient)
+
+        // Persist and propagate network choice
+        setStoredNetwork(net)
+        setNetworkState(net)
+        setActiveNetwork(toNetworkId(net))
+
+        const label = net === "mainnet" ? "Mainnet" : "Testnet"
+        toast.success(`Switched to ${label}`, {
+          description: activeWallet
+            ? "Reconnect your wallet to continue."
+            : "Select a wallet to connect.",
+        })
+      } finally {
+        setNetworkSwitching(false)
+      }
     },
-    [activeAddress, fetchBalance, setNetworkState, setActiveNetwork]
+    [network, activeWallet, saveWalletToProfile, setNetworkState, setActiveNetwork]
   )
 
   return (
@@ -234,6 +262,7 @@ function AlgorandBridge({
         walletAddress: activeAddress,
         walletType,
         isConnecting,
+        networkSwitching,
         balance,
         isLoadingBalance,
         network,
@@ -241,7 +270,7 @@ function AlgorandBridge({
         setShowWalletSelector,
         connectWallet,
         disconnectWallet,
-        algodClient: algodClientRef.current,
+        algodClient: algodClientState,
         peraWallet,
         signAndSendTransaction,
         refreshBalance,
@@ -261,8 +290,6 @@ export function AlgorandProvider({ children }: { children: ReactNode }) {
     try {
       return createManager(network)
     } catch {
-      // Wallet SDK failed to init (corrupted localStorage, browser restrictions, etc.)
-      // Reset storage and fall back to a clean testnet manager
       try { localStorage.removeItem("algorand_network") } catch {}
       try { localStorage.removeItem("txnlab-use-wallet") } catch {}
       return new WalletManager({

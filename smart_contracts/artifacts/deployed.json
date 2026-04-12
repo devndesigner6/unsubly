@@ -1,10 +1,20 @@
 {
-  "_note": "Run 'npm run deploy:contracts' after funding the deployer wallet to populate this file with real App IDs.",
-  "_deployer": "PTX3S4RB5WBP2W5YPWLOMIJSBKWTYOIKFUFPS3LGVSGBLNRUZNJF6T7WYY",
-  "_fund_url": "https://bank.testnet.algorand.network/",
-  "EscrowVault": { "status": "pending_deployment" },
-  "TimeLockEscrow": { "status": "pending_deployment" },
-  "MultiSigEscrow": { "status": "pending_deployment" },
-  "DisputeEscrow": { "status": "pending_deployment" },
-  "ASAEscrow": { "status": "pending_deployment" }
+  "_note": "Run 'npm run deploy:contracts' to populate. Set ALGO_NETWORK=mainnet for mainnet deployment.",
+  "_deployer_testnet": "PTX3S4RB5WBP2W5YPWLOMIJSBKWTYOIKFUFPS3LGVSGBLNRUZNJF6T7WYY",
+  "_fund_testnet": "https://bank.testnet.algorand.network/",
+  "_fund_mainnet": "https://www.algorand.foundation/",
+  "testnet": {
+    "EscrowVault":    { "status": "pending_deployment", "appId": null, "appAddress": null },
+    "TimeLockEscrow": { "status": "pending_deployment", "appId": null, "appAddress": null },
+    "MultiSigEscrow": { "status": "pending_deployment", "appId": null, "appAddress": null },
+    "DisputeEscrow":  { "status": "pending_deployment", "appId": null, "appAddress": null },
+    "ASAEscrow":      { "status": "pending_deployment", "appId": null, "appAddress": null }
+  },
+  "mainnet": {
+    "EscrowVault":    { "status": "pending_deployment", "appId": null, "appAddress": null },
+    "TimeLockEscrow": { "status": "pending_deployment", "appId": null, "appAddress": null },
+    "MultiSigEscrow": { "status": "pending_deployment", "appId": null, "appAddress": null },
+    "DisputeEscrow":  { "status": "pending_deployment", "appId": null, "appAddress": null },
+    "ASAEscrow":      { "status": "pending_deployment", "appId": null, "appAddress": null }
+  }
 }
