@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react"
 import { useParams } from "react-router-dom"
-import { supabase } from "@/integrations/supabase/client"
 import { getLoraTransactionUrl, getLoraAddressUrl, shortenAddress } from "@/lib/algorand/constants"
 import {
   RiShieldCheckLine, RiCoinLine, RiFileListLine,
   RiExternalLinkLine, RiCheckDoubleLine, RiLoader4Line,
   RiAlertLine, RiFlashlightLine,
 } from "@remixicon/react"
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string
 
 export default function PublicResumePage() {
   const { token } = useParams<{ token: string }>()
@@ -21,38 +23,20 @@ export default function PublicResumePage() {
     if (!token) return
     const fetchResume = async () => {
       try {
-        // Resolve the share token to a user ID
-        const { data: shareRow, error: shareErr } = await (supabase as any)
-          .from("resume_shares")
-          .select("user_id, wallet_address")
-          .eq("share_token", token)
-          .eq("is_active", true)
-          .maybeSingle()
-
-        if (shareErr) throw shareErr
-        if (!shareRow) throw new Error("This resume link is invalid or has been deactivated.")
-
-        const userId: string = shareRow.user_id
-        let walletAddress: string | null = shareRow.wallet_address ?? null
-
-        // Try to get wallet address from profile if not on share row
-        if (!walletAddress) {
-          const { data: profile } = await (supabase as any)
-            .from("profiles")
-            .select("algorand_address")
-            .eq("id", userId)
-            .maybeSingle()
-          walletAddress = profile?.algorand_address ?? null
-        }
-
-        // Fetch on-chain payment history
-        const { data: payments } = await (supabase as any)
-          .from("onchain_payments")
-          .select("id, algorand_txn_id, amount, note, created_at")
-          .eq("user_id", userId)
-          .order("created_at", { ascending: false })
-
-        setData({ walletAddress, payments: Array.isArray(payments) ? payments : [] })
+        const res = await fetch(
+          `${SUPABASE_URL}/functions/v1/public-resume?token=${encodeURIComponent(token)}`,
+          {
+            method: "GET",
+            headers: {
+              "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+              "Content-Type": "application/json",
+            },
+          }
+        )
+        const result = await res.json()
+        if (!res.ok) throw new Error(result?.error || `Server error ${res.status}`)
+        if (result?.error) throw new Error(result.error)
+        setData(result)
       } catch (err: any) {
         setError(err?.message || "Resume not found")
       } finally {
@@ -146,8 +130,8 @@ export default function PublicResumePage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {(data.payments || []).map((payment: any) => (
-              <div key={payment.id} className="flex items-center gap-4 rounded-xl border border-border bg-card p-4">
+            {(data.payments || []).map((payment: any, idx: number) => (
+              <div key={payment.algorand_txn_id || idx} className="flex items-center gap-4 rounded-xl border border-border bg-card p-4">
                 <div className="flex size-10 items-center justify-center rounded-full bg-primary/10">
                   <RiCheckDoubleLine className="size-5 text-primary" />
                 </div>
