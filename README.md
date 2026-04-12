@@ -228,7 +228,6 @@ Project Link: [https://github.com/devndesigner6/unsubly](https://github.com/devn
 * [Supabase](https://supabase.com)
 * [shadcn/ui](https://ui.shadcn.com)
 * [Remix Icons](https://remixicon.com)
-* [othneildrew/Best-README-Template](https://github.com/othneildrew/Best-README-Template)
 * [Img Shields](https://shields.io)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
