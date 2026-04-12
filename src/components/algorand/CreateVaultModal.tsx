@@ -205,7 +205,9 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
         escrow_address: recipient,
         app_id: appId,
         app_address: appAddress,
-        vault_type: vaultType,
+        vault_type: vaultType === "standard" && AGENT_ADDRESS && isValidAlgorandAddress(AGENT_ADDRESS)
+          ? "agent"
+          : vaultType,
         unlock_time: vaultType === "time_locked" ? new Date(unlockDate).toISOString() : null,
         co_signer_address: vaultType === "multi_sig" ? coSignerAddress : null,
         arbitrator_address: vaultType === "dispute" ? arbitratorAddress : null,

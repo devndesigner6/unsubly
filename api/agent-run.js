@@ -118,8 +118,10 @@ export default async function handler(req, res) {
       let mode = "db-only";
 
       try {
-        // Attempt on-chain release via agent wallet
-        if (algodClient && agentAccount && vault.app_id) {
+        // Attempt on-chain release — only for "agent" vault type (AgentEscrowVault TEAL).
+        // Standard EscrowVault requires creator signature; agent cannot call release() on it.
+        const isAgentVault = vault.vault_type === "agent";
+        if (algodClient && agentAccount && vault.app_id && isAgentVault) {
           try {
             const params = await algodClient.getTransactionParams().do();
             const txn = algosdk.makeApplicationCallTxnFromObject({
@@ -140,6 +142,12 @@ export default async function handler(req, res) {
             );
             mode = "db-only";
           }
+        } else if (algodClient && agentAccount && vault.app_id && !isAgentVault) {
+          // Not an agent vault — agent cannot sign release() for this contract type.
+          // DB-only update will proceed below.
+          results.errors.push(
+            `Vault ${vault.id} skipped on-chain: vault type "${vault.vault_type}" requires creator signature — only AgentEscrowVault supports autonomous agent release.`
+          );
         }
 
         // Update vault status in database

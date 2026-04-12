@@ -29,7 +29,7 @@ export default function DashboardPageContent() {
   const [recentPayments, setRecentPayments] = useState<any[]>([])
   const [agentActions, setAgentActions] = useState<any[]>([])
   const [agentRunning, setAgentRunning] = useState(false)
-  const [agentResult, setAgentResult] = useState<{ released: number; mode?: string; error?: string } | null>(null)
+  const [agentResult, setAgentResult] = useState<{ released: number; mode?: string; error?: string; onChainErrors?: string[] } | null>(null)
 
   async function fetchAgentActions() {
     if (!user) return
@@ -64,6 +64,7 @@ export default function DashboardPageContent() {
       setAgentResult({
         released: data.released ?? 0,
         mode: data.agent_mode,
+        onChainErrors: data.errors?.length ? data.errors : undefined,
       })
       await fetchAgentActions()
     } catch (err: any) {
@@ -440,23 +441,32 @@ export default function DashboardPageContent() {
 
           {/* Agent result feedback */}
           {agentResult && (
-            <div className={`mb-3 flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium ${
-              agentResult.error
-                ? "bg-destructive/10 text-destructive border border-destructive/20"
-                : "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
-            }`}>
-              {agentResult.error
-                ? <><RiAlertLine className="size-3.5 shrink-0" /> {
-                    agentResult.error.toLowerCase().includes("mnemonic") ||
-                    agentResult.error.toLowerCase().includes("wallet") ||
-                    agentResult.error.toLowerCase().includes("sign")
-                      ? "Agent wallet not configured in Vercel — add AGENT_WALLET_MNEMONIC to your Vercel environment variables to enable on-chain releases."
-                      : agentResult.error
-                  }</>
-                : agentResult.released === 0
-                  ? <><RiCheckDoubleLine className="size-3.5 shrink-0" /> No locked vaults found — nothing to release.</>
-                  : <><RiCheckDoubleLine className="size-3.5 shrink-0" /> Released {agentResult.released} vault{agentResult.released !== 1 ? "s" : ""} · {agentResult.mode === "on-chain" ? "On-chain ✓" : "Simulation ✓"}</>
-              }
+            <div className="mb-3 space-y-2">
+              <div className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium ${
+                agentResult.error
+                  ? "bg-destructive/10 text-destructive border border-destructive/20"
+                  : "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+              }`}>
+                {agentResult.error
+                  ? <><RiAlertLine className="size-3.5 shrink-0" /> {
+                      agentResult.error.toLowerCase().includes("mnemonic") ||
+                      agentResult.error.toLowerCase().includes("wallet") ||
+                      agentResult.error.toLowerCase().includes("sign")
+                        ? "Agent wallet not configured — add AGENT_WALLET_MNEMONIC to Vercel environment variables."
+                        : agentResult.error
+                    }</>
+                  : agentResult.released === 0
+                    ? <><RiCheckDoubleLine className="size-3.5 shrink-0" /> No locked vaults found — nothing to release.</>
+                    : <><RiCheckDoubleLine className="size-3.5 shrink-0" /> Released {agentResult.released} vault{agentResult.released !== 1 ? "s" : ""} · {agentResult.mode === "on-chain" ? "On-chain ✓" : "Simulation ✓"}</>
+                }
+              </div>
+              {/* Show on-chain errors so user knows WHY it fell back to simulation */}
+              {agentResult.onChainErrors?.map((err, i) => (
+                <div key={i} className="flex items-start gap-2 rounded-lg px-3 py-2 text-xs bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                  <RiAlertLine className="size-3.5 mt-0.5 shrink-0" />
+                  <span>{err}</span>
+                </div>
+              ))}
             </div>
           )}
 
