@@ -13,6 +13,7 @@ import {
   RiFolderLine,
   RiNotification3Line,
 } from "@remixicon/react"
+
 import { useNavigate } from "react-router-dom"
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
@@ -25,6 +26,25 @@ import {
   setSubscriptionTags,
   fetchProfile
 } from "@/lib/supabase-queries"
+
+function parseCardName(name: string) {
+  try {
+    const p = JSON.parse(name)
+    if (p.__card === true) return p
+  } catch {}
+  return null
+}
+
+function formatPaymentMethodLabel(pm: { name: string }): string {
+  const card = parseCardName(pm.name)
+  if (!card) return pm.name
+  const brand = card.brand
+    ? card.brand.charAt(0).toUpperCase() + card.brand.slice(1)
+    : "Card"
+  const last4 = card.holder ? String(card.holder).slice(-4) : "••••"
+  const suffix = card.nickname ? ` · ${card.nickname}` : ""
+  return `${brand} •••• ${last4}${suffix}`
+}
 
 interface SubscriptionFormProps {
   subscription?: any
@@ -328,7 +348,11 @@ export function SubscriptionForm({ subscription, tagIds: initialTagIds = [] }: S
                 <SelectTrigger><SelectValue placeholder="Select payment method" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">None</SelectItem>
-                  {paymentMethods.map(pm => <SelectItem key={pm.id} value={pm.id}>{pm.name}</SelectItem>)}
+                  {paymentMethods.map(pm => (
+                    <SelectItem key={pm.id} value={pm.id}>
+                      {formatPaymentMethodLabel(pm)}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

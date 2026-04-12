@@ -14,16 +14,45 @@ export default function PublicResumePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const network: "testnet" | "mainnet" =
+    (localStorage.getItem("algorand_network") as "testnet" | "mainnet") || "testnet"
+
   useEffect(() => {
     if (!token) return
     const fetchResume = async () => {
       try {
-        const { data: result, error: err } = await supabase.functions.invoke("public-resume", {
-          body: { token },
-        })
-        if (err) throw err
-        if (result?.error) throw new Error(result.error)
-        setData(result)
+        // Resolve the share token to a user ID
+        const { data: shareRow, error: shareErr } = await (supabase as any)
+          .from("resume_shares")
+          .select("user_id, wallet_address")
+          .eq("share_token", token)
+          .eq("is_active", true)
+          .maybeSingle()
+
+        if (shareErr) throw shareErr
+        if (!shareRow) throw new Error("This resume link is invalid or has been deactivated.")
+
+        const userId: string = shareRow.user_id
+        let walletAddress: string | null = shareRow.wallet_address ?? null
+
+        // Try to get wallet address from profile if not on share row
+        if (!walletAddress) {
+          const { data: profile } = await (supabase as any)
+            .from("profiles")
+            .select("algorand_address")
+            .eq("id", userId)
+            .maybeSingle()
+          walletAddress = profile?.algorand_address ?? null
+        }
+
+        // Fetch on-chain payment history
+        const { data: payments } = await (supabase as any)
+          .from("onchain_payments")
+          .select("id, algorand_txn_id, amount, note, created_at")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+
+        setData({ walletAddress, payments: Array.isArray(payments) ? payments : [] })
       } catch (err: any) {
         setError(err?.message || "Resume not found")
       } finally {
@@ -70,15 +99,19 @@ export default function PublicResumePage() {
                 <p className="text-xs text-muted-foreground">Verified payment history on Algorand blockchain</p>
               </div>
             </div>
-            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 shrink-0">
+            <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold shrink-0 ${
+              network === "mainnet"
+                ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+                : "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
+            }`}>
               <RiFlashlightLine className="size-3" />
-              Algorand Testnet
+              Algorand {network === "mainnet" ? "Mainnet" : "Testnet"}
             </span>
           </div>
 
           {data.walletAddress && (
             <a
-              href={getLoraAddressUrl(data.walletAddress, "testnet")}
+              href={getLoraAddressUrl(data.walletAddress, network)}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-mono mb-4"
@@ -122,16 +155,18 @@ export default function PublicResumePage() {
                   <span className="text-sm font-medium text-foreground truncate block">
                     {payment.note || "Payment"}
                   </span>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <a
-                      href={getLoraTransactionUrl(payment.algorand_txn_id, "testnet")}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-0.5 text-xs text-primary hover:text-primary/80 font-mono"
-                    >
-                      {shortenAddress(payment.algorand_txn_id, 8)} <RiExternalLinkLine className="size-3" />
-                    </a>
-                  </div>
+                  {payment.algorand_txn_id && (
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <a
+                        href={getLoraTransactionUrl(payment.algorand_txn_id, network)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-0.5 text-xs text-primary hover:text-primary/80 font-mono"
+                      >
+                        {shortenAddress(payment.algorand_txn_id, 8)} <RiExternalLinkLine className="size-3" />
+                      </a>
+                    </div>
+                  )}
                 </div>
                 <div className="text-right">
                   <span className="text-sm font-semibold text-foreground">{payment.amount} ALGO</span>
