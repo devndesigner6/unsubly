@@ -1,140 +1,157 @@
-# Unsubscribely
+<div align="center">
+  <a href="https://unsubly2.vercel.app">
+    <img src="public/logo.svg" alt="Unsubscribely Logo" width="80" height="80">
+  </a>
 
-A DeFi-powered subscription management platform built on Algorand. Track subscriptions, lock funds in on-chain escrow vaults, receive ARC-3 NFT payment receipts, and let an autonomous agent handle payment releases automatically — no manual intervention required.
+  <h1 align="center">Unsubscribely</h1>
 
-![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)
-![Algorand](https://img.shields.io/badge/Algorand-AVM-black?logo=algorand&logoColor=white)
-![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
-![Supabase](https://img.shields.io/badge/Supabase-Postgres-3ECF8E?logo=supabase&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-green)
+  <p align="center">
+    A DeFi-powered subscription management platform built on Algorand blockchain.
+    <br />
+    <strong>Track. Control. Save.</strong>
+    <br /><br />
+    <a href="https://unsubly2.vercel.app"><strong>View Live Demo »</strong></a>
+    <br /><br />
+    <a href="https://unsubly2.vercel.app">Live App</a>
+    ·
+    <a href="https://github.com/devndesigner6/unsubly/issues/new?labels=bug">Report Bug</a>
+    ·
+    <a href="https://github.com/devndesigner6/unsubly/issues/new?labels=enhancement">Request Feature</a>
+  </p>
+
+  <br />
+
+  [![TypeScript][typescript-shield]][typescript-url]
+  [![React][react-shield]][react-url]
+  [![Algorand][algorand-shield]][algorand-url]
+  [![AlgoKit][algokit-shield]][algokit-url]
+  [![Supabase][supabase-shield]][supabase-url]
+  [![Vercel][vercel-shield]][vercel-url]
+  [![License][license-shield]][license-url]
+
+</div>
 
 ---
 
-## Problem Statement
+## Table of Contents
 
-Recurring subscription payments are opaque, hard to track, and impossible to govern on-chain. Users have no escrow protection, no programmable release conditions, and no transparent audit trail for their subscription spending. Renewals happen silently — there's no agent watching for you.
+- [About the Project](#about-the-project)
+  - [Screenshots](#screenshots)
+  - [Built With](#built-with)
+- [Features](#features)
+- [Architecture](#architecture)
+- [Smart Contracts](#smart-contracts)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+- [Usage](#usage)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [License](#license)
+- [Contact](#contact)
+- [Acknowledgments](#acknowledgments)
 
-## Solution
+---
 
-Unsubscribely brings subscription payments on-chain with **5 types of Algorand escrow vaults**, a **fully autonomous payment agent** that watches billing dates and releases vaults automatically (A2A — no human click required), an **AI spending optimizer**, and full **ARC-standard compliance**.
+## About the Project
+
+Recurring subscription payments are opaque, hard to track, and impossible to govern on-chain. Users have no escrow protection, no programmable release conditions, and no transparent audit trail for their subscription spending. Renewals happen silently — there is no agent watching for you.
+
+**Unsubscribely** brings subscription payments on-chain with five types of Algorand escrow vaults, a fully autonomous A2A payment agent that watches billing dates and releases vaults automatically (no human click required), ARC-3 NFT payment receipts, and an AI spending optimizer — all built with AlgoKit and deployed on Vercel.
+
+---
+
+### Screenshots
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="public/image_1775979981666.png" alt="Landing Page" width="100%" />
+      <br /><sub><b>Landing Page — Track. Control. Save.</b></sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="public/image_1775980015034.png" alt="Blockchain Section" width="100%" />
+      <br /><sub><b>Blockchain — Audit every payment on-chain</b></sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <img src="public/image_1775980062289.png" alt="Dashboard with Wallet" width="100%" />
+      <br /><sub><b>Dashboard — Connected wallet & escrow vaults</b></sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="public/image_1775980089179.png" alt="Dashboard Wide View" width="100%" />
+      <br /><sub><b>Dashboard — Full subscription manager</b></sub>
+    </td>
+  </tr>
+</table>
+
+---
+
+### Built With
+
+[![TypeScript][typescript-shield]][typescript-url]
+[![React][react-shield]][react-url]
+[![Vite][vite-shield]][vite-url]
+[![TailwindCSS][tailwind-shield]][tailwind-url]
+[![Algorand][algorand-shield]][algorand-url]
+[![AlgoKit][algokit-shield]][algokit-url]
+[![Supabase][supabase-shield]][supabase-url]
+[![Vercel][vercel-shield]][vercel-url]
+
+---
+
+## Features
+
+- **5 Escrow Vault Types** — Standard, Time-Locked, Multi-Sig, Dispute-Resolution, and ASA-Based
+- **A2A Autonomous Agent** — Watches billing dates daily via GitHub Actions and releases vaults on-chain without user intervention
+- **ARC-3 NFT Receipts** — Immutable on-chain payment proof minted after every vault release
+- **ARC-4 ABI Compliance** — All contracts use standardized method selectors compiled to TEAL v11
+- **Kill Switch** — Emergency fund recovery on every vault type; your ALGO is always yours
+- **AI Spending Optimizer** — Gemini-powered portfolio analysis with risk scores and savings recommendations
+- **On-Chain Resume** — A verifiable DeFi payment history linked to your Algorand wallet
+- **Calendar View** — Visual billing calendar with automatic advance-billing detection
+- **Spending Analytics** — Multi-currency breakdowns, trend charts, and yearly projections
+- **CSV Import & Export** — Bulk-import subscriptions from any spreadsheet in seconds
+- **Smart Alerts** — Email notifications before every renewal so you're never surprised
+- **Folders & Tags** — Organize subscriptions with color-coded folders and custom tags
+- **Lora Explorer Integration** — Every transaction links directly to the live Algorand explorer
 
 ---
 
 ## Architecture
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│                    React 19 Frontend                      │
-│   Dashboard · Vaults · Analytics · AI Optimizer · Agent  │
-├──────────┬───────────┬────────────┬──────────────────────┤
-│  Pera /  │ Algorand  │  Supabase  │  Edge Functions      │
-│  Defly / │ AVM (TEAL)│  Postgres  │  auto-release-vaults │
-│  Lute    │ AlgoNode  │  + RLS     │  ai-optimizer        │
-│  Wallet  │ Testnet   │  pg_cron   │  algorand-compile    │
-├──────────┴───────────┴────────────┴──────────────────────┤
-│                  Algorand Testnet / Mainnet               │
-│      ARC-2 Notes · ARC-3 NFTs · ARC-4 ABI Calls         │
-└──────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                      React 19 Frontend                        │
+│   Dashboard · Vaults · Analytics · AI Optimizer · Agent      │
+├──────────┬────────────┬─────────────┬────────────────────────┤
+│  Pera /  │  Algorand  │  Supabase   │  Vercel Serverless     │
+│  Defly / │  AVM TEAL  │  Postgres   │  agent-run.js          │
+│  Lute    │  v11       │  + RLS      │  advance-billing.js    │
+│  Wallet  │  AlgoNode  │  pg_cron    │  ai-optimizer.js       │
+├──────────┴────────────┴─────────────┴────────────────────────┤
+│                   Algorand Testnet / Mainnet                   │
+│        ARC-2 Notes · ARC-3 NFTs · ARC-4 ABI Contracts        │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## On-Chain Capabilities
+## Smart Contracts
 
-### 🏦 Escrow Vaults
-- **5 Vault Types**: Standard, Time-Locked, Multi-Sig, Dispute-Resolution, ASA-Based
-- **ARC-3 NFT Receipts**: Immutable on-chain payment proof minted after vault release
-- **ARC-2 Transaction Notes**: Structured metadata on every transaction (`unsubscribely:j{...}`)
-- **ARC-4 ABI Methods**: Standardized smart contract interfaces (`fund()`, `release()`, `activate_kill_switch()`)
-- **Kill Switch**: Emergency fund recovery mechanism on all vault types
-- **Lora Explorer Integration**: Every vault links directly to the live transaction on Lora
+All contracts are written in Python using **AlgoKit** (`algorand-python` / algopy) and compiled to **TEAL v11** ARC-4 compliant bytecode. ARC56 JSON specs are loaded directly by the React frontend for deployment — no backend middleware needed.
 
-### 🤖 Autonomous Payment Agent
-- **A2A Agent**: Runs daily via GitHub Actions, scans all due subscriptions across all users, and releases linked escrow vaults on-chain — no user action required
-- **Agent Wallet**: A dedicated Algorand wallet signs and submits release transactions autonomously on behalf of users
-- **Agent Activity Dashboard**: Live panel on the dashboard shows every autonomous action, timestamp, amount, on-chain mode badge, and a direct Lora Explorer link
-- **AI Spending Optimizer**: Gemini-powered analysis of the subscription portfolio — risk scores, cost-saving recommendations, vault health metrics
-- **Audit Trail**: Every agent action is logged to the `agent_actions` table with full payload and txid
+| Contract | Purpose |
+|---|---|
+| `EscrowVault` | Standard escrow — creator locks ALGO, releases to recipient |
+| `AgentEscrowVault` | A2A agent-managed — authorized agent wallet releases autonomously on billing date |
+| `TimeLockEscrow` | Time-locked — funds release only after a Unix timestamp elapses |
+| `MultiSigEscrow` | Co-signer required — both creator and co-signer must approve before release |
+| `DisputeEscrow` | Arbitrator-controlled — a designated third party resolves disputes |
+| `ASAEscrow` | ASA token escrow — works with any Algorand Standard Asset |
 
----
-
-## Features
-
-| Feature | Description |
-|---------|-------------|
-| **Escrow Vaults** | Lock subscription funds on Algorand with programmable release conditions |
-| **Time Locks** | Funds auto-release after configurable unlock dates |
-| **Multi-Sig** | Co-signer approval required before fund release |
-| **Dispute Resolution** | Third-party arbitrator for contested payments |
-| **ASA Vaults** | Lock Algorand Standard Assets (not just ALGO) |
-| **Autonomous Agent** | Watches billing dates and releases vaults automatically (A2A) |
-| **NFT Receipts** | ARC-3 compliant receipts minted on vault release |
-| **AI Optimizer** | Portfolio analysis with risk scores and cost-saving insights |
-| **Subscription Tracker** | Full CRUD with folders, tags, categories, multi-currency |
-| **Analytics Dashboard** | Spending trends, category breakdowns, payment calendars |
-| **On-Chain Resume** | Shareable public view of your Algorand payment history |
-| **Payment Alerts** | Configurable email reminders before billing dates |
-
----
-
-## Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Frontend | React 19, TypeScript, Tailwind CSS, Recharts |
-| Blockchain | Algorand SDK (algosdk 3.x), AlgoKit Utils, Pera / Defly / Lute Wallet |
-| Smart Contracts | TEAL v10 (AVM) — 5 contract types |
-| Backend | Supabase (Postgres + RLS + Edge Functions + pg_cron) |
-| AI | Google Gemini 2.5 Flash |
-| Deployment | Algorand Testnet via AlgoNode public API |
-
----
-
-## Project Structure
-
-```
-src/
-├── components/
-│   ├── algorand/          # WalletSelectorModal, CreateVaultModal, EscrowVaultCard
-│   ├── analytics/         # Spending charts & breakdowns
-│   ├── dashboard/         # Metrics, agent activity panel, recent subscriptions
-│   ├── landing/           # Hero, Features, Pricing, CTA
-│   └── ui/                # Design system (Button, Input, Select, Sidebar)
-├── lib/
-│   └── algorand/
-│       ├── algokit.ts     # ARC-2/3 helpers, account validation
-│       ├── constants.ts   # Network configs (Testnet/Mainnet)
-│       ├── context.tsx    # React context for wallet state
-│       └── contract.ts    # TEAL compilation, vault operations
-├── pages/
-│   ├── dashboard/
-│   │   ├── DashboardPageContent.tsx   # Main dashboard + Agent Activity panel
-│   │   ├── EscrowVaultsPage.tsx
-│   │   ├── VaultDetailsPage.tsx
-│   │   ├── AIOptimizerPage.tsx
-│   │   └── OnChainResumePage.tsx
-│   └── auth/              # Login, Register, Password reset, Auth callback
-
-smart_contracts/
-├── EscrowVault.approval.teal
-├── TimeLockEscrow.approval.teal
-├── MultiSigEscrow.approval.teal
-├── DisputeEscrow.approval.teal
-├── ASAEscrow.approval.teal
-└── artifacts/deployed.json    # App IDs populated after deployment
-
-scripts/
-└── deploy.js              # Node.js deployment script for all 5 vault contracts
-
-supabase/
-├── functions/
-│   ├── auto-release-vaults/   # Autonomous A2A agent (runs daily via pg_cron)
-│   ├── ai-optimizer/          # Gemini-powered portfolio analysis
-│   ├── algorand-compile/      # Server-side TEAL compilation
-│   ├── vault-health/          # Vault status monitoring
-│   └── advance-billing/       # Automated billing cycle advancement
-└── migrations/                # Database schema (managed)
-```
+The **AgentEscrowVault** is the core of the A2A autonomous payments implementation. It stores `creator`, `recipient`, and `agent` addresses as on-chain global state. The autonomous agent wallet calls `release()void` via ARC-4 ABI on the billing date — zero user interaction required.
 
 ---
 
@@ -142,123 +159,144 @@ supabase/
 
 ### Prerequisites
 
-- Node.js 18+
-- [Pera Wallet](https://perawallet.app/) (mobile or web), [Defly](https://defly.app/), or [Lute](https://lute.app/)
-- Algorand Testnet account funded via [Testnet Dispenser](https://bank.testnet.algorand.network/)
+- Node.js 20+
+- Python 3.12+ with AlgoKit (`pip install algokit`)
+- A [Supabase](https://supabase.com) project with the schema applied
+- A [Pera Wallet](https://perawallet.app) funded on Algorand Testnet
+- A [Vercel](https://vercel.com) account for deployment
 
-### Install & Run
+### Installation
 
-```bash
-git clone https://github.com/devndesigner6/unsubly.git
-cd unsubly
-npm install
-npm run dev
-```
+1. Clone the repository
+   ```sh
+   git clone https://github.com/devndesigner6/unsubly.git
+   cd unsubly
+   ```
 
-Open `http://localhost:5000`
+2. Install frontend dependencies
+   ```sh
+   npm install
+   ```
 
-### Deploy Smart Contracts (Testnet)
+3. Create a `.env` file at the root:
+   ```env
+   VITE_SUPABASE_URL=your_supabase_project_url
+   VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_anon_key
+   AGENT_WALLET_MNEMONIC=your_25_word_algorand_mnemonic
+   ```
 
-```bash
-# 1. Fund the deployer wallet
-#    Address: PTX3S4RB5WBP2W5YPWLOMIJSBKWTYOIKFUFPS3LGVSGBLNRUZNJF6T7WYY
-#    Faucet:  https://bank.testnet.algorand.network/
+4. *(Optional)* Recompile smart contracts with AlgoKit
+   ```sh
+   algokit compile py smart_contracts/
+   ```
 
-# 2. Deploy all 5 vault contracts
-npm run deploy:contracts
+5. Start the development server
+   ```sh
+   npm run dev
+   ```
 
-# App IDs and Lora Explorer links are saved to smart_contracts/artifacts/deployed.json
-```
-
-### Environment Variables
-
-```env
-VITE_SUPABASE_URL=<your-supabase-url>
-VITE_SUPABASE_PUBLISHABLE_KEY=<your-anon-key>
-TESTNET_MNEMONIC=<25-word deployer mnemonic>
-AGENT_WALLET_MNEMONIC=<25-word agent wallet mnemonic>
-```
-
----
-
-## Smart Contract Design
-
-### Vault Lifecycle
-
-```
-Create → Fund → [Time Lock / Co-Sign / Arbitrate] → Release → Mint ARC-3 Receipt
-                                                        ↓
-                                                   Kill Switch
-                                               (Emergency Recovery)
-```
-
-### TEAL Contract Highlights
-
-- **Global State**: `receiver`, `amount`, `is_funded`, `is_released`, `kill_switch`
-- **ABI Methods**: `fund()`, `release()`, `activate_kill_switch()`, `approve_cosigner()`
-- **Minimum Balance**: 0.3 ALGO reserved for contract operations
-- **Network Aware**: Automatic Testnet/Mainnet switching via connected wallet
+6. Open [http://localhost:5000](http://localhost:5000) in your browser.
 
 ---
 
-## Autonomous Agent — A2A Architecture
+## Usage
 
-```
-GitHub Actions Cron (daily 00:05 UTC)
-    │
-    ▼
-agents/release-agent.mjs  (Node.js — runs in CI, no server required)
-    │
-    ├── Query Supabase: subscriptions WHERE next_billing_date <= today
-    │
-    ├── For each due subscription:
-    │     ├── Find linked escrow vault (status = locked)
-    │     ├── Build release() ARC-4 call (algosdk)
-    │     ├── Sign with agent wallet (AGENT_WALLET_MNEMONIC secret)
-    │     ├── Submit to Algorand Testnet via AlgoNode
-    │     └── Patch escrow_vaults status → "released" + txid in DB
-    │
-    └── Dashboard reads agent_actions → shows live Activity panel
-```
+1. **Sign up** at [unsubly2.vercel.app](https://unsubly2.vercel.app) — completely free, no credit card
+2. **Connect your Pera Wallet** from the dashboard to enable blockchain features
+3. **Add subscriptions** manually or bulk-import via CSV
+4. **Create an escrow vault** — choose a vault type and fund it with ALGO through Pera
+5. The **autonomous agent** checks daily and releases locked vaults on-chain on billing date
+6. **Mint an ARC-3 NFT receipt** after release — permanent, immutable on-chain payment proof
+7. Use the **AI Optimizer** to spot wasted spend and receive actionable savings recommendations
 
 ---
 
-## ARC Compliance
+## Roadmap
 
-| Standard | Usage |
-|----------|-------|
-| **ARC-2** | Structured transaction notes (`unsubscribely:j{...}`) |
-| **ARC-3** | NFT receipt metadata (name, description, image, properties) |
-| **ARC-4** | ABI method signatures for all contract interactions |
-| **ARC-32** | Application specification compliance |
+- [x] 5 escrow vault types (Standard, Time-Lock, Multi-Sig, Dispute, ASA)
+- [x] A2A autonomous payment agent (GitHub Actions daily cron)
+- [x] ARC-3 NFT payment receipts
+- [x] ARC-4 ABI compliant contracts compiled to TEAL v11
+- [x] AI spending optimizer (Gemini-powered)
+- [x] On-chain payment resume
+- [x] Kill switch on all vault types
+- [x] Lora Explorer deep-linking on every transaction
+- [ ] Mainnet deployment
+- [ ] Mobile app (Expo + React Native)
+- [ ] Multi-wallet support (Defly, Lute)
+- [ ] Recurring ASA token payment automation
+- [ ] DAO governance for arbitration pools
 
----
-
-## Demo Flow
-
-1. **Connect Wallet** — Pera, Defly, or Lute on Testnet
-2. **Add Subscriptions** — Netflix, Spotify, etc. with amounts and billing cycles
-3. **Create an Escrow Vault** — Standard, Time-Locked, Multi-Sig, Dispute, or ASA
-4. **Fund the Vault** — signs and submits on Algorand Testnet, view on Lora Explorer
-5. **Release Funds** — manually or wait for the autonomous agent to release automatically
-6. **Mint ARC-3 NFT Receipt** — immutable on-chain proof of payment
-7. **Run AI Optimizer** — get portfolio risk scores and cost-saving recommendations
-8. **Watch Agent Activity** — dashboard panel shows every autonomous release with txid
+See [open issues](https://github.com/devndesigner6/unsubly/issues) for the full list of proposed features and known bugs.
 
 ---
 
-## Screenshots
+## Contributing
 
-> _Coming soon — dashboard, vault creation, AI optimizer, agent activity panel_
+Contributions make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
 
----
+If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also open an issue with the tag `enhancement`.
 
-## Team
-
-- **mesuryabuilds** — Full-stack development, smart contract design, AI & agent integration
+1. Fork the project
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a pull request
 
 ---
 
 ## License
 
-[MIT](LICENSE)
+Distributed under the **Apache License 2.0**. See [`LICENSE`](LICENSE) for the full text.
+
+---
+
+## Contact
+
+**Hemanth Peddada**
+
+- Website: [hemanthme.in](https://hemanthme.in)
+- GitHub: [@devndesigner6](https://github.com/devndesigner6)
+- Twitter / X: [@hemanttbuilds](https://x.com/hemanttbuilds)
+- LinkedIn: [hemanthp15gr6](https://www.linkedin.com/in/hemanthp15gr6)
+- Email: peddadahemanth6@gmail.com
+
+**Project Repository:** [github.com/devndesigner6/unsubly](https://github.com/devndesigner6/unsubly)
+
+**Live App:** [unsubly2.vercel.app](https://unsubly2.vercel.app)
+
+---
+
+## Acknowledgments
+
+- [Algorand Foundation](https://algorand.foundation) — for building the fastest, greenest Layer-1 blockchain
+- [AlgoKit](https://github.com/algorandfoundation/algokit-cli) — the developer toolkit powering the smart contract layer
+- [Pera Wallet](https://perawallet.app) — seamless Algorand wallet integration
+- [AlgoNode](https://algonode.io) — free Algorand API node infrastructure used throughout
+- [Lora Explorer](https://lora.algokit.io) — real-time on-chain transaction visibility
+- [Supabase](https://supabase.com) — open-source Firebase alternative powering the backend
+- [shadcn/ui](https://ui.shadcn.com) — beautifully designed, accessible component system
+- [Remix Icons](https://remixicon.com) — clean, consistent icon library
+- [othneildrew/Best-README-Template](https://github.com/othneildrew/Best-README-Template) — README structure and inspiration
+
+---
+
+<!-- BADGE LINKS -->
+[typescript-shield]: https://img.shields.io/badge/TypeScript-5.9-3178C6?style=for-the-badge&logo=typescript&logoColor=white
+[typescript-url]: https://www.typescriptlang.org
+[react-shield]: https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black
+[react-url]: https://react.dev
+[algorand-shield]: https://img.shields.io/badge/Algorand-TEAL%20v11-black?style=for-the-badge&logo=algorand&logoColor=white
+[algorand-url]: https://algorand.com
+[algokit-shield]: https://img.shields.io/badge/AlgoKit-v2.0-00A97F?style=for-the-badge&logo=algorand&logoColor=white
+[algokit-url]: https://github.com/algorandfoundation/algokit-cli
+[supabase-shield]: https://img.shields.io/badge/Supabase-Postgres-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white
+[supabase-url]: https://supabase.com
+[vercel-shield]: https://img.shields.io/badge/Deployed-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white
+[vercel-url]: https://unsubly2.vercel.app
+[license-shield]: https://img.shields.io/badge/License-Apache%202.0-blue?style=for-the-badge
+[license-url]: https://github.com/devndesigner6/unsubly/blob/main/LICENSE
+[vite-shield]: https://img.shields.io/badge/Vite-7-646CFF?style=for-the-badge&logo=vite&logoColor=white
+[vite-url]: https://vite.dev
+[tailwind-shield]: https://img.shields.io/badge/TailwindCSS-4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white
+[tailwind-url]: https://tailwindcss.com

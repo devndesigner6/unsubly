@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "DeFi subscription management on Algorand — escrow vaults, ARC-3 NFT receipts, and AI spending optimization",
   "author": "devndesigner6",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/devndesigner6/unsubly.git"
