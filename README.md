@@ -1,19 +1,11 @@
 <!-- back to top anchor -->
 <a id="readme-top"></a>
 
-<!-- PROJECT SHIELDS -->
-[![Contributors][contributors-shield]][contributors-url]
-[![Forks][forks-shield]][forks-url]
-[![Stargazers][stars-shield]][stars-url]
-[![Issues][issues-shield]][issues-url]
-[![License][license-shield]][license-url]
-[![LinkedIn][linkedin-shield]][linkedin-url]
-
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
   <a href="https://unsubly2.vercel.app">
-    <img src="screenshots/logo.png" alt="Logo" width="80" height="80">
+    <img src="screenshots/logo.svg" alt="Logo" width="80" height="80">
   </a>
 
   <h3 align="center">Unsubscribely</h3>
@@ -29,6 +21,15 @@
     <a href="https://github.com/devndesigner6/unsubly/issues/new?labels=bug">Report Bug</a>
     &middot;
     <a href="https://github.com/devndesigner6/unsubly/issues/new?labels=enhancement">Request Feature</a>
+  </p>
+
+  <p align="center">
+    <a href="https://github.com/devndesigner6/unsubly/graphs/contributors"><img src="https://img.shields.io/github/contributors/devndesigner6/unsubly.svg?style=for-the-badge" alt="Contributors"></a>
+    <a href="https://github.com/devndesigner6/unsubly/network/members"><img src="https://img.shields.io/github/forks/devndesigner6/unsubly.svg?style=for-the-badge" alt="Forks"></a>
+    <a href="https://github.com/devndesigner6/unsubly/stargazers"><img src="https://img.shields.io/github/stars/devndesigner6/unsubly.svg?style=for-the-badge" alt="Stars"></a>
+    <a href="https://github.com/devndesigner6/unsubly/issues"><img src="https://img.shields.io/github/issues/devndesigner6/unsubly.svg?style=for-the-badge" alt="Issues"></a>
+    <a href="https://github.com/devndesigner6/unsubly/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=for-the-badge" alt="License"></a>
+    <a href="https://linkedin.com/in/hemanthp15gr6"><img src="https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555" alt="LinkedIn"></a>
   </p>
 </div>
 
@@ -233,19 +234,6 @@ Project Link: [https://github.com/devndesigner6/unsubly](https://github.com/devn
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- MARKDOWN LINKS & IMAGES -->
-[contributors-shield]: https://img.shields.io/github/contributors/devndesigner6/unsubly.svg?style=for-the-badge
-[contributors-url]: https://github.com/devndesigner6/unsubly/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/devndesigner6/unsubly.svg?style=for-the-badge
-[forks-url]: https://github.com/devndesigner6/unsubly/network/members
-[stars-shield]: https://img.shields.io/github/stars/devndesigner6/unsubly.svg?style=for-the-badge
-[stars-url]: https://github.com/devndesigner6/unsubly/stargazers
-[issues-shield]: https://img.shields.io/github/issues/devndesigner6/unsubly.svg?style=for-the-badge
-[issues-url]: https://github.com/devndesigner6/unsubly/issues
-[license-shield]: https://img.shields.io/github/license/devndesigner6/unsubly.svg?style=for-the-badge
-[license-url]: https://github.com/devndesigner6/unsubly/blob/main/LICENSE
-[linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
-[linkedin-url]: https://linkedin.com/in/hemanthp15gr6
-
 [TypeScript-shield]: https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white
 [TypeScript-url]: https://www.typescriptlang.org
 [React-shield]: https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB
