@@ -39,39 +39,45 @@ export default async function handler(req, res) {
   try {
     const today = new Date().toISOString().split("T")[0];
 
-    // Step 1: Find user's active subscriptions due today or overdue
-    const { data: dueSubs, error: subsErr } = await supabase
+    // Step 1: Find ALL active subscriptions for this user
+    const { data: activeSubs, error: subsErr } = await supabase
       .from("subscriptions")
       .select("id, name, next_billing_date")
-      .eq("status", "active")
-      .lte("next_billing_date", today);
+      .eq("status", "active");
 
     if (subsErr) throw subsErr;
 
-    if (!dueSubs?.length) {
+    if (!activeSubs?.length) {
       return res
         .status(200)
-        .json({ success: true, message: "No subscriptions due today", released: 0, checked: 0 });
+        .json({ success: true, message: "No active subscriptions found", released: 0, checked: 0 });
     }
 
-    const subIds = dueSubs.map((s) => s.id);
+    const subIds = activeSubs.map((s) => s.id);
 
-    // Step 2: Find locked standard vaults linked to due subscriptions
+    // Step 2: Find ALL locked vaults linked to active subscriptions.
+    // A locked vault means payment is still pending — release it regardless
+    // of whether the billing date appears past-due in the DB (dates may have
+    // been advanced by the auto-advance routine before the vault was released).
     const { data: vaults, error: vaultErr } = await supabase
       .from("escrow_vaults")
-      .select("id, app_id, subscription_id, amount")
+      .select("id, app_id, subscription_id, amount, vault_type")
       .in("subscription_id", subIds)
-      .eq("status", "locked")
-      .eq("vault_type", "standard");
+      .eq("status", "locked");
 
     if (vaultErr) throw vaultErr;
+
+    // Determine which subs are actually due (for reporting purposes)
+    const dueSubs = activeSubs.filter((s) => s.next_billing_date <= today);
 
     if (!vaults?.length) {
       return res.status(200).json({
         success: true,
-        message: "Subscriptions due but no locked standard vaults to release",
+        message: dueSubs.length
+          ? "Subscriptions are due but no locked vaults found to release"
+          : "No locked vaults to release",
         released: 0,
-        checked: dueSubs.length,
+        checked: activeSubs.length,
       });
     }
 
@@ -96,7 +102,7 @@ export default async function handler(req, res) {
     }
 
     const results = {
-      checked: dueSubs.length,
+      checked: activeSubs.length,
       released: 0,
       skipped: 0,
       errors: [],
@@ -106,7 +112,7 @@ export default async function handler(req, res) {
 
     // Step 4: Process each vault
     for (const vault of vaults) {
-      const sub = dueSubs.find((s) => s.id === vault.subscription_id);
+      const sub = activeSubs.find((s) => s.id === vault.subscription_id);
       const subName = sub?.name ?? "Unknown";
       let txid = null;
       let mode = "db-only";

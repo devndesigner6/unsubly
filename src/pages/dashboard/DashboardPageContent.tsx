@@ -417,9 +417,12 @@ export default function DashboardPageContent() {
                   On-chain
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 dark:bg-amber-900/30 px-2.5 py-1 text-xs font-medium text-amber-700 dark:text-amber-300">
-                  <span className="size-1.5 rounded-full bg-amber-500" />
-                  DB Only
+                <span
+                  title="Running in simulation mode — add AGENT_WALLET_MNEMONIC to enable on-chain releases"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground"
+                >
+                  <span className="size-1.5 rounded-full bg-muted-foreground/60" />
+                  Simulation
                 </span>
               )}
               <button
@@ -451,8 +454,8 @@ export default function DashboardPageContent() {
                       : agentResult.error
                   }</>
                 : agentResult.released === 0
-                  ? <><RiCheckDoubleLine className="size-3.5 shrink-0" /> No vaults due right now — all clear.</>
-                  : <><RiCheckDoubleLine className="size-3.5 shrink-0" /> Released {agentResult.released} vault{agentResult.released !== 1 ? "s" : ""} · {agentResult.mode === "on-chain" ? "On-chain ✓" : "DB only"}</>
+                  ? <><RiCheckDoubleLine className="size-3.5 shrink-0" /> No locked vaults found — nothing to release.</>
+                  : <><RiCheckDoubleLine className="size-3.5 shrink-0" /> Released {agentResult.released} vault{agentResult.released !== 1 ? "s" : ""} · {agentResult.mode === "on-chain" ? "On-chain ✓" : "Simulation ✓"}</>
               }
             </div>
           )}

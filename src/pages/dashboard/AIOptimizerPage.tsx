@@ -131,25 +131,16 @@ export default function AIOptimizerPage() {
         currency: userCurrency,
       })
 
-      // Try edge function first, fall back to local API proxy
-      let parsed: AnalysisResult | null = null
-
-      const { data: edgeData, error: edgeError } = await supabase.functions.invoke("ai-optimizer", {
-        body: { subscriptions, vaults, userCurrency, totalMonthly, totalVaultLocked },
+      // Use local API proxy (structured JSON response)
+      const res = await fetch("/api/ai-optimizer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subscriptions, vaults, userCurrency, totalMonthly, totalVaultLocked }),
       })
-
-      if (!edgeError && edgeData && !edgeData.error) {
-        parsed = typeof edgeData.analysis === "object" ? edgeData.analysis : JSON.parse(edgeData.analysis)
-      } else {
-        const res = await fetch("/api/ai-optimizer", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ subscriptions, vaults, userCurrency, totalMonthly, totalVaultLocked }),
-        })
-        const data = await res.json()
-        if (!res.ok || data.error) throw new Error(data.error || "Analysis failed")
-        parsed = typeof data.analysis === "object" ? data.analysis : JSON.parse(data.analysis)
-      }
+      const data = await res.json()
+      if (!res.ok || data.error) throw new Error(data.error || "Analysis failed")
+      const parsed: AnalysisResult =
+        typeof data.analysis === "object" ? data.analysis : JSON.parse(data.analysis)
 
       setAnalysis(parsed)
     } catch (err) {
