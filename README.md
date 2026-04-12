@@ -13,7 +13,7 @@
 <br />
 <div align="center">
   <a href="https://unsubly2.vercel.app">
-    <img src="public/logo-192.png" alt="Logo" width="80" height="80">
+    <img src="screenshots/logo.png" alt="Logo" width="80" height="80">
   </a>
 
   <h3 align="center">Unsubscribely</h3>
@@ -63,12 +63,12 @@
 
 <table>
   <tr>
-    <td><img src="public/image_1775979981666.png" alt="Landing page" width="100%"></td>
-    <td><img src="public/image_1775980015034.png" alt="Blockchain section" width="100%"></td>
+    <td><img src="screenshots/landing.png" alt="Landing page" width="100%"></td>
+    <td><img src="screenshots/blockchain.png" alt="Blockchain section" width="100%"></td>
   </tr>
   <tr>
-    <td><img src="public/image_1775980062289.png" alt="Dashboard with wallet" width="100%"></td>
-    <td><img src="public/image_1775980089179.png" alt="Dashboard wide" width="100%"></td>
+    <td><img src="screenshots/dashboard.png" alt="Dashboard with wallet" width="100%"></td>
+    <td><img src="screenshots/dashboard-wide.png" alt="Dashboard wide" width="100%"></td>
   </tr>
 </table>
 
