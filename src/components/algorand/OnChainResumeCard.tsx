@@ -1,4 +1,4 @@
-import { getAlgoExplorerUrl, shortenAddress } from "@/lib/algorand/constants"
+import { getLoraTransactionUrl, shortenAddress, type AlgorandNetwork } from "@/lib/algorand/constants"
 import { RiCheckDoubleLine, RiExternalLinkLine } from "@remixicon/react"
 
 interface OnChainPayment {
@@ -13,7 +13,12 @@ interface OnChainPayment {
   subscription?: { name: string; logo: string | null } | null
 }
 
-export function OnChainResumeCard({ payment }: { payment: OnChainPayment }) {
+interface Props {
+  payment: OnChainPayment
+  network?: AlgorandNetwork
+}
+
+export function OnChainResumeCard({ payment, network = "testnet" }: Props) {
   return (
     <div className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 transition-shadow hover:shadow-sm">
       <div className="flex size-10 items-center justify-center rounded-full bg-primary/10">
@@ -30,7 +35,7 @@ export function OnChainResumeCard({ payment }: { payment: OnChainPayment }) {
             {shortenAddress(payment.algorand_txn_id, 8)}
           </span>
           <a
-            href={getAlgoExplorerUrl(payment.algorand_txn_id)}
+            href={getLoraTransactionUrl(payment.algorand_txn_id, network)}
             target="_blank"
             rel="noopener noreferrer"
             className="text-primary hover:text-primary/80"

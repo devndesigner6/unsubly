@@ -196,7 +196,7 @@ export default function OnChainResumePage() {
       ) : (
         <div className="space-y-3">
           {payments.map((payment) => (
-            <OnChainResumeCard key={payment.id} payment={payment} />
+            <OnChainResumeCard key={payment.id} payment={payment} network={network} />
           ))}
         </div>
       )}

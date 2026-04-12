@@ -1,4 +1,4 @@
-name: ANOTHERLIFE
+name: Rewrite Author History
 
 on:
   workflow_dispatch:
