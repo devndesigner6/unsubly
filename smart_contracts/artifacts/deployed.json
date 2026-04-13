@@ -4,17 +4,19 @@
   "_fund_testnet": "https://bank.testnet.algorand.network/",
   "_fund_mainnet": "https://www.algorand.foundation/",
   "testnet": {
-    "EscrowVault":    { "status": "pending_deployment", "appId": null, "appAddress": null },
-    "TimeLockEscrow": { "status": "pending_deployment", "appId": null, "appAddress": null },
-    "MultiSigEscrow": { "status": "pending_deployment", "appId": null, "appAddress": null },
-    "DisputeEscrow":  { "status": "pending_deployment", "appId": null, "appAddress": null },
-    "ASAEscrow":      { "status": "pending_deployment", "appId": null, "appAddress": null }
+    "EscrowVault":      { "status": "pending_deployment", "appId": null, "appAddress": null },
+    "AgentEscrowVault": { "status": "pending_deployment", "appId": null, "appAddress": null },
+    "TimeLockEscrow":   { "status": "pending_deployment", "appId": null, "appAddress": null },
+    "MultiSigEscrow":   { "status": "pending_deployment", "appId": null, "appAddress": null },
+    "DisputeEscrow":    { "status": "pending_deployment", "appId": null, "appAddress": null },
+    "ASAEscrow":        { "status": "pending_deployment", "appId": null, "appAddress": null }
   },
   "mainnet": {
-    "EscrowVault":    { "status": "pending_deployment", "appId": null, "appAddress": null },
-    "TimeLockEscrow": { "status": "pending_deployment", "appId": null, "appAddress": null },
-    "MultiSigEscrow": { "status": "pending_deployment", "appId": null, "appAddress": null },
-    "DisputeEscrow":  { "status": "pending_deployment", "appId": null, "appAddress": null },
-    "ASAEscrow":      { "status": "pending_deployment", "appId": null, "appAddress": null }
+    "EscrowVault":      { "status": "pending_deployment", "appId": null, "appAddress": null },
+    "AgentEscrowVault": { "status": "pending_deployment", "appId": null, "appAddress": null },
+    "TimeLockEscrow":   { "status": "pending_deployment", "appId": null, "appAddress": null },
+    "MultiSigEscrow":   { "status": "pending_deployment", "appId": null, "appAddress": null },
+    "DisputeEscrow":    { "status": "pending_deployment", "appId": null, "appAddress": null },
+    "ASAEscrow":        { "status": "pending_deployment", "appId": null, "appAddress": null }
   }
 }

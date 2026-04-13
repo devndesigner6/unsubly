@@ -43,11 +43,12 @@ interface EscrowVaultCardProps {
 }
 
 const VAULT_TYPE_ICON: Record<string, typeof RiLockLine> = {
-  standard: RiLockLine,
+  standard:    RiLockLine,
+  agent:       RiShieldLine,
   time_locked: RiTimeLine,
-  multi_sig: RiGroupLine,
-  dispute: RiShieldLine,
-  asa: RiCoinLine,
+  multi_sig:   RiGroupLine,
+  dispute:     RiShieldLine,
+  asa:         RiCoinLine,
 }
 
 export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {

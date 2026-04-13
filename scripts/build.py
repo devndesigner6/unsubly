@@ -23,11 +23,12 @@ ARTIFACTS_DIR = CONTRACTS_DIR / "artifacts"
 CLIENTS_DIR = ROOT / "frontend_integration" / "clients"
 
 CONTRACT_MODULES = [
-    ("escrow", "EscrowVault"),
-    ("time_locked", "TimeLockEscrow"),
-    ("multi_sig", "MultiSigEscrow"),
-    ("dispute", "DisputeEscrow"),
-    ("asa_escrow", "ASAEscrow"),
+    ("escrow",        "EscrowVault"),
+    ("agent_escrow",  "AgentEscrowVault"),
+    ("time_locked",   "TimeLockEscrow"),
+    ("multi_sig",     "MultiSigEscrow"),
+    ("dispute",       "DisputeEscrow"),
+    ("asa_escrow",    "ASAEscrow"),
 ]
 
 

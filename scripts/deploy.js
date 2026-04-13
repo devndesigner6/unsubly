@@ -35,6 +35,12 @@ const CONTRACT_CONFIGS = [
     numLocalInts: 0, numLocalBytes: 0,
   },
   {
+    name: "AgentEscrowVault",
+    description: "Agent-Managed Escrow Vault (A2A Autonomous Payments)",
+    numGlobalInts: 1, numGlobalBytes: 3,
+    numLocalInts: 0, numLocalBytes: 0,
+  },
+  {
     name: "TimeLockEscrow",
     description: "Time-Locked Escrow Vault",
     numGlobalInts: 2, numGlobalBytes: 2,

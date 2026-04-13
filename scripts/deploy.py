@@ -37,6 +37,12 @@ CONTRACT_CONFIGS = [
         "description": "Standard Escrow Vault",
     },
     {
+        "name": "AgentEscrowVault",
+        "global_schema": transaction.StateSchema(num_uints=1, num_byte_slices=3),
+        "local_schema": transaction.StateSchema(0, 0),
+        "description": "Agent-Managed Escrow Vault (A2A Autonomous Payments)",
+    },
+    {
         "name": "TimeLockEscrow",
         "global_schema": transaction.StateSchema(num_uints=2, num_byte_slices=2),
         "local_schema": transaction.StateSchema(0, 0),

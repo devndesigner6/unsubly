@@ -27,19 +27,21 @@ interface CreateVaultModalProps {
 }
 
 const VAULT_TYPE_ICONS: Record<VaultType, typeof RiLockLine> = {
-  standard: RiLockLine,
+  standard:    RiLockLine,
+  agent:       RiRobotLine,
   time_locked: RiTimeLine,
-  multi_sig: RiGroupLine,
-  dispute: RiShieldLine,
-  asa: RiCoinLine,
+  multi_sig:   RiGroupLine,
+  dispute:     RiShieldLine,
+  asa:         RiCoinLine,
 }
 
 const VAULT_TYPE_DESCRIPTIONS: Record<VaultType, string> = {
-  standard: "Agent auto-releases on billing date",
+  standard:    "Basic escrow — you release manually",
+  agent:       "Agent auto-releases on billing date",
   time_locked: "Auto-releases after a set date",
-  multi_sig: "Requires co-signer approval",
-  dispute: "Arbitrator can resolve disputes",
-  asa: "Lock ASA tokens instead of ALGO",
+  multi_sig:   "Requires co-signer approval",
+  dispute:     "Arbitrator can resolve disputes",
+  asa:         "Lock ASA tokens instead of ALGO",
 }
 
 export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModalProps) {
