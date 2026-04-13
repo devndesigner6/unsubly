@@ -225,6 +225,11 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
         })
       }
 
+      const effectiveVaultType: VaultType =
+        vaultType === "standard" && AGENT_ADDRESS && isValidAlgorandAddress(AGENT_ADDRESS)
+          ? "agent"
+          : vaultType
+
       await supabase.from("onchain_payments" as any).insert({
         user_id: user.id,
         subscription_id: selectedSubscription || null,
@@ -232,11 +237,11 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
         amount: algoAmount,
         sender_address: walletAddress,
         recipient_address: appAddress,
-        note: `${VAULT_TYPE_LABELS[vaultType]} vault created (App ID: ${appId})`,
+        note: `${VAULT_TYPE_LABELS[effectiveVaultType]} vault created (App ID: ${appId})`,
       } as any)
 
       toast.success("Escrow vault created!", {
-        description: `${algoAmount} ALGO locked in ${VAULT_TYPE_LABELS[vaultType]} contract (App ID: ${appId})`,
+        description: `${algoAmount} ALGO locked in ${VAULT_TYPE_LABELS[effectiveVaultType]} contract (App ID: ${appId})`,
       })
 
       onCreated()
@@ -295,7 +300,7 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">Vault Type</label>
             <div className="grid grid-cols-2 gap-2">
-              {(Object.keys(VAULT_TYPE_LABELS) as VaultType[]).map((type) => {
+              {(Object.keys(VAULT_TYPE_LABELS) as VaultType[]).filter((t) => t !== "agent").map((type) => {
                 const Icon = VAULT_TYPE_ICONS[type]
                 return (
                   <button
@@ -492,7 +497,7 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
             className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
           >
             <RiLockLine className="size-4" />
-            {isCreating ? "Deploying Contract..." : `Deploy ${VAULT_TYPE_LABELS[vaultType]} Vault`}
+            {isCreating ? "Deploying Contract..." : `Deploy ${VAULT_TYPE_LABELS[vaultType === "standard" && AGENT_ADDRESS && isValidAlgorandAddress(AGENT_ADDRESS) ? "agent" : vaultType]} Vault`}
           </button>
         </div>
       </div>

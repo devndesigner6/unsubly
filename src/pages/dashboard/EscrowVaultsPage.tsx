@@ -27,7 +27,7 @@ function decodeGlobalState(raw: any[]): Record<string, string | number> {
 }
 
 function vaultTypeFromState(state: Record<string, string | number>): VaultType {
-  if ("agent" in state) return "standard"
+  if ("agent" in state) return "agent"
   if ("co_signer" in state) return "multi_sig"
   if ("arbitrator" in state) return "dispute"
   if ("unlock_time" in state) return "time_locked"
