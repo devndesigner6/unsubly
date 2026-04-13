@@ -630,11 +630,27 @@ export default function VaultDetailsPage() {
       )}
 
       {vault.status === "locked" && isSmartContract && !confirmAction && (
-        <div className="mt-6 flex flex-wrap gap-3">
-          <Button onClick={handleRelease} disabled={isProcessing || !walletAddress}>
-            <RiLockUnlockLine className="mr-1.5 size-4" />
-            {isProcessing ? "Processing…" : "Release Payment"}
-          </Button>
+        <div className="mt-6 space-y-4">
+          {vType === "agent" && (
+            <div className="flex items-start gap-3 rounded-xl border border-green-200 bg-green-50 p-4 dark:border-green-800/40 dark:bg-green-900/20">
+              <RiLockUnlockLine className="mt-0.5 size-5 shrink-0 text-green-600 dark:text-green-400" />
+              <div>
+                <p className="text-sm font-semibold text-green-800 dark:text-green-200">
+                  Agent-Managed Auto-Release
+                </p>
+                <p className="mt-0.5 text-sm text-green-700/80 dark:text-green-300/80">
+                  The autonomous agent wallet will release payment to the recipient on the billing date. No manual action required. Use Kill Switch to cancel and reclaim your ALGO at any time.
+                </p>
+              </div>
+            </div>
+          )}
+          <div className="flex flex-wrap gap-3">
+          {vType !== "agent" && (
+            <Button onClick={handleRelease} disabled={isProcessing || !walletAddress}>
+              <RiLockUnlockLine className="mr-1.5 size-4" />
+              {isProcessing ? "Processing…" : "Release Payment"}
+            </Button>
+          )}
 
           {isMultiSig && !vault.co_signer_approved && (
             <>
@@ -660,6 +676,7 @@ export default function VaultDetailsPage() {
             <RiAlarmWarningLine className="mr-1.5 size-4" />
             Kill Switch
           </Button>
+          </div>
         </div>
       )}
 
