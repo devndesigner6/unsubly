@@ -150,12 +150,13 @@ export default async function handler(req, res) {
           );
         }
 
-        // Update vault status in database
+        // Update vault status in database (include txn_id when released on-chain)
         await supabase
           .from("escrow_vaults")
           .update({
             status: "released",
             released_at: new Date().toISOString(),
+            ...(txid ? { txn_id: txid } : {}),
           })
           .eq("id", vault.id);
 

@@ -639,18 +639,16 @@ export default function VaultDetailsPage() {
                   Agent-Managed Auto-Release
                 </p>
                 <p className="mt-0.5 text-sm text-green-700/80 dark:text-green-300/80">
-                  The autonomous agent wallet will release payment to the recipient on the billing date. No manual action required. Use Kill Switch to cancel and reclaim your ALGO at any time.
+                  The autonomous agent will release funds to the recipient on the billing date. You can also release manually or use Kill Switch to cancel and reclaim your ALGO.
                 </p>
               </div>
             </div>
           )}
           <div className="flex flex-wrap gap-3">
-          {vType !== "agent" && (
-            <Button onClick={handleRelease} disabled={isProcessing || !walletAddress}>
-              <RiLockUnlockLine className="mr-1.5 size-4" />
-              {isProcessing ? "Processing…" : "Release Payment"}
-            </Button>
-          )}
+          <Button onClick={handleRelease} disabled={isProcessing || !walletAddress}>
+            <RiLockUnlockLine className="mr-1.5 size-4" />
+            {isProcessing ? "Processing…" : "Release Payment"}
+          </Button>
 
           {isMultiSig && !vault.co_signer_approved && (
             <>

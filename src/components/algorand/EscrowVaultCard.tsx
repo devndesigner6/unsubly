@@ -403,26 +403,24 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
 
       {vault.status === "locked" && isSmartContract && !confirmAction && (
         <div className="mt-4 space-y-2">
-          {vType === "agent" ? (
+          {vType === "agent" && (
             <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 dark:border-green-800/40 dark:bg-green-900/20">
               <p className="text-xs font-medium text-green-700 dark:text-green-300">
                 Agent will auto-release on billing date
               </p>
               <p className="mt-0.5 text-xs text-green-600/70 dark:text-green-400/70">
-                Use Kill Switch below to cancel and reclaim funds
+                You can also release manually below, or Kill to reclaim your ALGO.
               </p>
             </div>
-          ) : null}
+          )}
           <div className="flex gap-2">
-            {vType !== "agent" && (
-              <button
-                onClick={handleRelease}
-                disabled={isProcessing || !walletAddress}
-                className="flex-1 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-              >
-                {isProcessing ? "Processing…" : "Release Payment"}
-              </button>
-            )}
+            <button
+              onClick={handleRelease}
+              disabled={isProcessing || !walletAddress}
+              className="flex-1 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+            >
+              {isProcessing ? "Processing…" : "Release Payment"}
+            </button>
             <button
               onClick={() => setShowFundModal(true)}
               disabled={isProcessing || !walletAddress}
