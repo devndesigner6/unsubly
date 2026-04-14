@@ -29,7 +29,7 @@ export default function DashboardPageContent() {
   const [recentPayments, setRecentPayments] = useState<any[]>([])
   const [agentActions, setAgentActions] = useState<any[]>([])
   const [agentRunning, setAgentRunning] = useState(false)
-  const [agentResult, setAgentResult] = useState<{ released: number; mode?: string; error?: string; onChainErrors?: string[] } | null>(null)
+  const [agentResult, setAgentResult] = useState<{ released: number; processed?: number; mode?: string; error?: string; onChainErrors?: string[] } | null>(null)
 
   async function fetchAgentActions() {
     if (!user) return
@@ -63,6 +63,7 @@ export default function DashboardPageContent() {
 
       setAgentResult({
         released: data.released ?? 0,
+        processed: data.actions?.length ?? 0,
         mode: data.agent_mode,
         onChainErrors: data.errors?.length ? data.errors : undefined,
       })
@@ -455,9 +456,12 @@ export default function DashboardPageContent() {
                         ? "Agent wallet not configured — add AGENT_WALLET_MNEMONIC to Vercel environment variables."
                         : agentResult.error
                     }</>
-                  : agentResult.released === 0
-                    ? <><RiCheckDoubleLine className="size-3.5 shrink-0" /> No locked vaults found — nothing to release.</>
-                    : <><RiCheckDoubleLine className="size-3.5 shrink-0" /> Released {agentResult.released} vault{agentResult.released !== 1 ? "s" : ""} · {agentResult.mode === "on-chain" ? "On-chain ✓" : "Simulation ✓"}</>
+                  : agentResult.mode === "db-only" && (agentResult.processed ?? 0) > 0
+                    ? <><RiAlertLine className="size-3.5 shrink-0 text-amber-500" /> <span className="text-amber-700 dark:text-amber-400">Simulation only — {agentResult.processed} vault{agentResult.processed !== 1 ? "s" : ""} found but NOT released on-chain. Your ALGO remains locked. Open each vault to recover funds.</span></>
+                    : agentResult.released === 0
+                    ? <><RiCheckDoubleLine className="size-3.5 shrink-0" /> No locked vaults due — nothing to release.</>
+                    : <><RiCheckDoubleLine className="size-3.5 shrink-0" /> Released {agentResult.released} vault{agentResult.released !== 1 ? "s" : ""} on-chain ✓ — check your Pera wallet for incoming ALGO.</>
+
                 }
               </div>
               {/* Show on-chain errors so user knows WHY it fell back to simulation */}

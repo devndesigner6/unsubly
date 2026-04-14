@@ -150,15 +150,19 @@ export default async function handler(req, res) {
           );
         }
 
-        // Update vault status in database (include txn_id when released on-chain)
-        await supabase
-          .from("escrow_vaults")
-          .update({
-            status: "released",
-            released_at: new Date().toISOString(),
-            ...(txid ? { txn_id: txid } : {}),
-          })
-          .eq("id", vault.id);
+        // Only update vault status to "released" when a real on-chain transaction confirmed.
+        // In db-only (simulation) mode the ALGO is still locked in the escrow contract —
+        // updating the DB status would make the funds unrecoverable from the UI.
+        if (mode === "on-chain" && txid) {
+          await supabase
+            .from("escrow_vaults")
+            .update({
+              status: "released",
+              released_at: new Date().toISOString(),
+              txn_id: txid,
+            })
+            .eq("id", vault.id);
+        }
 
         // Log the autonomous action in agent_actions
         await supabase.from("agent_actions").insert({
@@ -173,12 +177,16 @@ export default async function handler(req, res) {
             txid,
             agent_address: agentAccount?.addr ?? null,
             released_at: new Date().toISOString(),
+            note: mode === "db-only"
+              ? "Simulation only — no on-chain tx. Vault remains locked on-chain. Configure AGENT_WALLET_MNEMONIC to enable real releases."
+              : "On-chain release confirmed.",
           },
           txid,
-          status: "success",
+          status: mode === "on-chain" ? "success" : "simulation",
         });
 
-        results.released++;
+        // Only count as "released" when real on-chain tx happened
+        if (mode === "on-chain") results.released++;
         results.actions.push({ vault_id: vault.id, sub_name: subName, mode, txid });
       } catch (err) {
         results.errors.push(`Vault ${vault.id}: ${err.message}`);

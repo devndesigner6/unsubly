@@ -678,6 +678,38 @@ export default function VaultDetailsPage() {
         </div>
       )}
 
+      {/* ── Recovery banner: DB says "released" but on-chain still locked ── */}
+      {vault.status === "released" && isSmartContract && !confirmAction &&
+        onChainState?.appExists === true &&
+        (onChainState?.globalState["status"] === 0 || onChainState?.globalState["status"] === undefined) &&
+        onChainState?.balance > 100_000 && (
+        <div className="mt-6 space-y-4">
+          <div className="flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-700/50 dark:bg-amber-900/20">
+            <RiAlarmWarningLine className="mt-0.5 size-5 shrink-0 text-amber-600 dark:text-amber-400" />
+            <div className="flex-1">
+              <p className="text-sm font-bold text-amber-800 dark:text-amber-200">
+                ALGO still locked on-chain — recover your funds
+              </p>
+              <p className="mt-1 text-sm text-amber-700/80 dark:text-amber-300/80">
+                This vault was marked "released" by the agent in simulation mode, but no real blockchain transaction happened.
+                Your ALGO ({microalgosToAlgo(onChainState.balance).toFixed(6)} ALGO) is still locked in the escrow contract.
+                Use the buttons below to release or reclaim it now.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button onClick={handleRelease} disabled={isProcessing || !walletAddress}>
+                  <RiLockUnlockLine className="mr-1.5 size-4" />
+                  {isProcessing ? "Processing…" : "Release to Recipient"}
+                </Button>
+                <Button variant="destructive" onClick={() => setConfirmAction("kill")} disabled={isProcessing || !walletAddress}>
+                  <RiAlarmWarningLine className="mr-1.5 size-4" />
+                  Reclaim to My Wallet (Kill)
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {(vault.status === "released" || vault.status === "killed") && isSmartContract && !confirmAction && (
         <div className="mt-6 flex flex-wrap items-center gap-3">
           {canMintReceipt && (
