@@ -615,7 +615,7 @@ export default function VaultDetailsPage() {
               <p className="text-sm text-muted-foreground">
                 {confirmAction === "kill"
                   ? "This will immediately return all locked ALGO to your wallet and permanently close the escrow contract. The recipient will receive nothing. This cannot be undone."
-                  : "This will permanently delete the smart contract from the Algorand blockchain and reclaim the minimum balance reserve (MBR). Only do this after funds have been fully released or killed."}
+                  : "This will permanently delete the smart contract from the Algorand blockchain and reclaim the minimum balance reserve (MBR). The contract must have status Released or Killed on-chain first — if funds are still locked, use Kill Switch above to reclaim your ALGO before deleting."}
               </p>
             </div>
           </div>
@@ -678,22 +678,34 @@ export default function VaultDetailsPage() {
         </div>
       )}
 
-      {/* ── Recovery banner: DB says "released" but on-chain still locked ── */}
+      {/* ── Recovery banner: DB says "released" but on-chain may still be locked ──
+          Show when:
+          (a) on-chain state could not be loaded (null) — can't confirm release happened
+          (b) on-chain explicitly shows status=0 (locked) with balance > 0.1 ALGO
+          In both cases we offer Kill + Release so user can recover funds.           */}
       {vault.status === "released" && isSmartContract && !confirmAction &&
-        onChainState?.appExists === true &&
-        (onChainState?.globalState["status"] === 0 || onChainState?.globalState["status"] === undefined) &&
-        onChainState?.balance > 100_000 && (
+        !loadingChain &&
+        (
+          onChainState === null ||
+          (
+            onChainState.appExists === true &&
+            (onChainState.globalState["status"] === 0 || onChainState.globalState["status"] === undefined) &&
+            onChainState.balance > 100_000
+          )
+        ) && (
         <div className="mt-6 space-y-4">
           <div className="flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-700/50 dark:bg-amber-900/20">
             <RiAlarmWarningLine className="mt-0.5 size-5 shrink-0 text-amber-600 dark:text-amber-400" />
             <div className="flex-1">
               <p className="text-sm font-bold text-amber-800 dark:text-amber-200">
-                ALGO still locked on-chain — recover your funds
+                ALGO may still be locked on-chain — recover your funds
               </p>
               <p className="mt-1 text-sm text-amber-700/80 dark:text-amber-300/80">
-                This vault was marked "released" by the agent in simulation mode, but no real blockchain transaction happened.
-                Your ALGO ({microalgosToAlgo(onChainState.balance).toFixed(6)} ALGO) is still locked in the escrow contract.
-                Use the buttons below to release or reclaim it now.
+                {onChainState === null
+                  ? "This vault was marked \"released\" but on-chain status could not be verified. If your ALGO has not arrived in your Pera wallet, it is still locked in the escrow contract."
+                  : `This vault was marked "released" by the agent in simulation mode, but no real blockchain transaction happened. Your ALGO (${microalgosToAlgo(onChainState.balance).toFixed(6)} ALGO) is still locked in the escrow contract.`
+                }
+                {" "}Use the buttons below to release or reclaim it now.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Button onClick={handleRelease} disabled={isProcessing || !walletAddress}>
@@ -716,6 +728,14 @@ export default function VaultDetailsPage() {
             <Button variant="secondary" onClick={handleMintReceipt} disabled={isProcessing || !walletAddress}>
               <RiAwardLine className="mr-1.5 size-4" />
               {isProcessing ? "Minting…" : "Mint ARC-3 Receipt"}
+            </Button>
+          )}
+
+          {/* Kill button shown for "released" vaults in case ALGO is still locked on-chain */}
+          {vault.status === "released" && (
+            <Button variant="destructive" size="sm" onClick={() => setConfirmAction("kill")} disabled={isProcessing || !walletAddress}>
+              <RiAlarmWarningLine className="mr-1.5 size-4" />
+              Kill Switch (reclaim ALGO)
             </Button>
           )}
 
