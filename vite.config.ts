@@ -96,24 +96,33 @@ Vaults: ${JSON.stringify(vaults.map((v: any) => ({ type: v.vault_type, amount: v
 
 Respond with ONLY the JSON structure specified.`;
 
-              const aiRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+              const groqPayload = {
+                model: "llama-3.3-70b-versatile",
+                messages: [
+                  { role: "system", content: systemPrompt },
+                  { role: "user", content: userPrompt },
+                ],
+                temperature: 0.3,
+                max_tokens: 1200,
+                response_format: { type: "json_object" },
+              };
+              const callGroq = () => fetch("https://api.groq.com/openai/v1/chat/completions", {
                 method: "POST",
                 headers: { Authorization: `Bearer ${GROQ_API_KEY}`, "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  model: "llama-3.3-70b-versatile",
-                  messages: [
-                    { role: "system", content: systemPrompt },
-                    { role: "user", content: userPrompt },
-                  ],
-                  temperature: 0.3,
-                  max_tokens: 1200,
-                  response_format: { type: "json_object" },
-                }),
+                body: JSON.stringify(groqPayload),
               });
+
+              let aiRes = await callGroq();
+              if (aiRes.status === 429) {
+                await new Promise((r) => setTimeout(r, 8000));
+                aiRes = await callGroq();
+              }
 
               if (!aiRes.ok) {
                 const errText = await aiRes.text();
                 console.error("[ai-optimizer] Groq error:", aiRes.status, errText);
+                if (aiRes.status === 401) throw new Error("AI service key is invalid — update GROQ_API_KEY.");
+                if (aiRes.status === 429) throw new Error("AI rate limit reached — please wait 30 seconds before running again.");
                 throw new Error(`AI service error ${aiRes.status}`);
               }
 

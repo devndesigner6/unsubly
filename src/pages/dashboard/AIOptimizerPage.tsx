@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { supabase } from "@/integrations/supabase/client"
 import { Button } from "@/components/Button"
@@ -70,15 +70,31 @@ function RiskMeter({ score, label }: { score: number; label: string }) {
   )
 }
 
+const COOLDOWN_SECS = 30
+
 export default function AIOptimizerPage() {
   const { user } = useAuth()
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null)
   const [stats, setStats] = useState<PortfolioStats | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [cooldown, setCooldown] = useState(0)
+  const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  useEffect(() => () => { if (cooldownRef.current) clearInterval(cooldownRef.current) }, [])
+
+  function startCooldown() {
+    setCooldown(COOLDOWN_SECS)
+    cooldownRef.current = setInterval(() => {
+      setCooldown((s) => {
+        if (s <= 1) { clearInterval(cooldownRef.current!); return 0 }
+        return s - 1
+      })
+    }, 1000)
+  }
 
   async function runAnalysis() {
-    if (!user) return
+    if (!user || cooldown > 0) return
     setLoading(true)
     setError(null)
     setAnalysis(null)
@@ -147,6 +163,7 @@ export default function AIOptimizerPage() {
       setError(err instanceof Error ? err.message : "Failed to run analysis")
     } finally {
       setLoading(false)
+      startCooldown()
     }
   }
 
@@ -194,9 +211,9 @@ export default function AIOptimizerPage() {
             <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
               Analyzes your subscriptions, spending patterns, and escrow vaults to find savings and recommend vault strategies.
             </p>
-            <Button onClick={runAnalysis} className="mt-6">
+            <Button onClick={runAnalysis} className="mt-6" disabled={cooldown > 0}>
               <RiSparklingLine className="mr-2 size-4" />
-              Run AI Analysis
+              {cooldown > 0 ? `Wait ${cooldown}s…` : "Run AI Analysis"}
             </Button>
           </div>
         )}
@@ -216,8 +233,9 @@ export default function AIOptimizerPage() {
             <RiAlertLine className="mt-0.5 size-5 shrink-0 text-destructive" />
             <div>
               <p className="text-sm font-medium text-destructive">{error}</p>
-              <Button variant="secondary" onClick={runAnalysis} className="mt-3">
-                <RiRefreshLine className="mr-1.5 size-4" /> Retry
+              <Button variant="secondary" onClick={runAnalysis} className="mt-3" disabled={cooldown > 0 || loading}>
+                <RiRefreshLine className="mr-1.5 size-4" />
+                {cooldown > 0 ? `Retry in ${cooldown}s` : "Retry"}
               </Button>
             </div>
           </div>
@@ -233,8 +251,9 @@ export default function AIOptimizerPage() {
                 <RiLightbulbLine className="size-5 text-primary" />
                 AI Recommendations
               </h2>
-              <Button variant="secondary" onClick={runAnalysis} disabled={loading}>
-                <RiRefreshLine className="mr-1.5 size-4" /> Re-analyze
+              <Button variant="secondary" onClick={runAnalysis} disabled={loading || cooldown > 0}>
+                <RiRefreshLine className="mr-1.5 size-4" />
+                {cooldown > 0 ? `Re-analyze in ${cooldown}s` : "Re-analyze"}
               </Button>
             </div>
 

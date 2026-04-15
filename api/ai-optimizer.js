@@ -58,26 +58,37 @@ Vaults: ${JSON.stringify(vaults.map(v => ({ type: v.vault_type, amount: v.amount
 
 Respond with ONLY the JSON structure specified.`
 
-    const aiRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${GROQ_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        temperature: 0.3,
-        max_tokens: 1200,
-        response_format: { type: "json_object" },
-      }),
-    })
+    const groqPayload = {
+      model: "llama-3.3-70b-versatile",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      temperature: 0.3,
+      max_tokens: 1200,
+      response_format: { type: "json_object" },
+    }
+
+    // Try once, and if rate-limited (429) wait 8s and retry once
+    async function callGroq() {
+      const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${GROQ_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify(groqPayload),
+      })
+      return r
+    }
+
+    let aiRes = await callGroq()
+    if (aiRes.status === 429) {
+      await new Promise((r) => setTimeout(r, 8000))
+      aiRes = await callGroq()
+    }
 
     if (!aiRes.ok) {
       const errText = await aiRes.text()
+      if (aiRes.status === 401) throw new Error("AI service key is invalid — check GROQ_API_KEY in Vercel environment variables and redeploy.")
+      if (aiRes.status === 429) throw new Error("AI rate limit reached — please wait 30 seconds before running again.")
       throw new Error(`AI service error ${aiRes.status}: ${errText}`)
     }
 
