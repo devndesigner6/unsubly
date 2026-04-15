@@ -16,7 +16,7 @@
     <a href="youtu.be/9e5BsjqhUyo?si=ulP2jx9IXAdB-Do9"><strong>Explore the live app »</strong></a>
     <br />
     <br />
-    <a href="https://unsubly2.vercel.app">View Demo</a>
+    <a href="https://youtu.be/9e5BsjqhUyo?si=ulP2jx9IXAdB-Do9">View Demo</a>
     &middot;
     <a href="https://github.com/devndesigner6/unsubly/issues/new?labels=bug">Report Bug</a>
     &middot;
