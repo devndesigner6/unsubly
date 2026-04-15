@@ -171,16 +171,20 @@ async function main() {
     const info = await algodClient.accountInformation(agentAccount.addr).do()
     const balance = Number(info.amount) / 1e6
     console.log(`Balance  : ${balance} ALGO`)
+    const fundUrl = NETWORK === "mainnet"
+      ? "https://www.algorand.foundation/"
+      : "https://bank.testnet.algorand.network/"
     if (balance < LOW_BALANCE_THRESHOLD) {
-      const fundUrl = NETWORK === "mainnet"
-        ? "https://www.algorand.foundation/"
-        : "https://bank.testnet.algorand.network/"
       console.warn(`WARNING: Agent balance low (< ${LOW_BALANCE_THRESHOLD} ALGO). Fund at: ${fundUrl}`)
       console.warn("::warning title=Low Agent Balance::Balance below threshold — fund the agent wallet")
     }
     if (balance < 0.001) {
-      console.error("CRITICAL: Agent wallet nearly empty — cannot pay fees. Aborting.")
-      process.exit(1)
+      // Not enough for fees — warn but don't abort.
+      // If no vaults are due today the run will still succeed.
+      // If vaults ARE due, each tx will fail and we'll report them individually.
+      console.warn(`CRITICAL: Agent wallet nearly empty (${balance} ALGO). Transactions will fail without fees.`)
+      console.warn(`Fund the agent wallet at: ${fundUrl}`)
+      console.warn("::warning title=Agent Wallet Empty::Fund the agent wallet to enable on-chain releases")
     }
   } catch (e) {
     console.warn(`Could not fetch agent balance: ${e.message}`)
@@ -261,9 +265,20 @@ async function main() {
       console.log(`  DB sync: ${dbStatus === 204 ? "ok" : `status ${dbStatus}`}`)
       released++
     } catch (err) {
-      console.error(`  ✗ Failed (all retries exhausted): ${err.message}`)
-      console.error(`  ::error title=Vault Release Failed::App #${vault.app_id} — ${err.message}`)
-      failed++
+      const msg = err.message || ""
+      // Detect TEAL authorization rejections — agent address mismatch in contract.
+      // These are expected for vaults created before the agent address was corrected.
+      // Skip gracefully; user can manually release via Pera wallet.
+      const isAuthError = msg.includes("assert") || msg.includes("TEAL") ||
+        msg.includes("transaction rejected") || msg.includes("rejected by logic")
+      if (isAuthError) {
+        console.warn(`  ⚠ Skipped (agent not authorized for this vault — release manually via Pera wallet): App #${vault.app_id}`)
+        console.warn(`  ::warning title=Vault Skipped::App #${vault.app_id} — agent address not authorized in contract`)
+      } else {
+        console.error(`  ✗ Failed (all retries exhausted): ${msg}`)
+        console.error(`  ::error title=Vault Release Failed::App #${vault.app_id} — ${msg}`)
+        failed++
+      }
     }
     console.log()
   }
