@@ -13,7 +13,7 @@
   <p align="center">
     A DeFi-powered subscription management platform built on Algorand blockchain.
     <br />
-    <a href="youtu.be/9e5BsjqhUyo?si=ulP2jx9IXAdB-Do9"><strong>Explore the live app »</strong></a>
+    <a href="https://unsubly2.vercel.app"><strong>Explore the live app »</strong></a>
     <br />
     <br />
     <a href="https://youtu.be/9e5BsjqhUyo?si=ulP2jx9IXAdB-Do9">View Demo</a>
