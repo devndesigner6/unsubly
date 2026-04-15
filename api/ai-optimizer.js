@@ -23,27 +23,35 @@ export default async function handler(req, res) {
 
     const systemPrompt = `You are an AI financial advisor specializing in subscription management and Algorand blockchain escrow vaults.
 
-CRITICAL: You must respond with ONLY valid JSON. No markdown, no prose, no explanation outside the JSON.
+CRITICAL RULES — violating any of these will cause a hard failure:
+1. Respond with ONLY a single valid JSON object. No markdown, no code fences, no prose outside the JSON.
+2. All number fields must be plain numeric literals (e.g. 19.99). NEVER use expressions, fractions, or division (e.g. NEVER write 199/75).
+3. All string fields must be non-null strings. NEVER use null for any field — use "Unknown" for missing categories, "N/A" for missing values.
+4. "riskScore" must be an integer between 0 and 100.
+5. "risk" must be exactly one of: "low", "medium", or "high".
+6. "priority" must be exactly one of: "high", "medium", or "low".
+7. "recommended" must be exactly one of: "standard", "time-locked", "multi-sig", "dispute", "asa".
+8. "riskLabel" must be exactly one of: "Low", "Medium", or "High".
 
 Return exactly this structure:
 {
   "spending": {
     "summary": "one sentence summary of total spend",
-    "topCategory": "highest spend category name",
-    "monthlyTotal": number,
-    "annualTotal": number,
+    "topCategory": "highest spend category name or Unknown",
+    "monthlyTotal": 0.00,
+    "annualTotal": 0.00,
     "breakdown": [
-      { "name": "subscription name", "monthly": number, "category": "category", "risk": "low|medium|high" }
+      { "name": "subscription name", "monthly": 0.00, "category": "category or Unknown", "risk": "low" }
     ]
   },
   "savings": [
-    { "title": "short title", "description": "specific actionable recommendation", "saving": "e.g. $19/mo", "priority": "high|medium|low" }
+    { "title": "short title", "description": "specific actionable recommendation", "saving": "$19/mo", "priority": "high" }
   ],
   "vaultStrategy": [
-    { "subscription": "name", "recommended": "standard|time-locked|multi-sig|dispute|asa", "reason": "one sentence why" }
+    { "subscription": "name", "recommended": "standard", "reason": "one sentence why" }
   ],
-  "riskScore": number between 0 and 100,
-  "riskLabel": "Low|Medium|High",
+  "riskScore": 50,
+  "riskLabel": "Medium",
   "topAction": "single most important thing to do right now"
 }`
 
@@ -64,8 +72,8 @@ Respond with ONLY the JSON structure specified.`
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
       ],
-      temperature: 0.3,
-      max_tokens: 1200,
+      temperature: 0.1,
+      max_tokens: 1500,
       response_format: { type: "json_object" },
     }
 
