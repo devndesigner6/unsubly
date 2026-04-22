@@ -201,7 +201,7 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
         algodClient, walletAddress, appAddress, algoToMicroalgos(algoAmount), signTransaction
       )
 
-      const { error: insertError } = await supabase.from("escrow_vaults" as any).insert({
+      const baseRow: Record<string, unknown> = {
         user_id: user.id,
         subscription_id: selectedSubscription || null,
         algorand_address: walletAddress,
@@ -218,7 +218,23 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
         arbitrator_address: vaultType === "dispute" ? arbitratorAddress : null,
         agent_address: vaultType === "agent" ? agentAddress : null,
         asset_id: vaultType === "asa" ? Number(assetId) : null,
-      } as any)
+      }
+
+      let { error: insertError } = await supabase.from("escrow_vaults" as any).insert(baseRow as any)
+
+      // Schema-cache fallback: if agent_address column doesn't exist on the
+      // remote DB yet, retry without it so the vault still saves on-chain.
+      if (insertError && /agent_address/i.test((insertError as any)?.message || "")) {
+        const { agent_address: _omit, ...legacyRow } = baseRow
+        const retry = await supabase.from("escrow_vaults" as any).insert(legacyRow as any)
+        insertError = retry.error
+        if (!retry.error) {
+          toast.warning("Vault saved (legacy schema)", {
+            description: "Apply migration 20260409000002_agent_vault_columns.sql in Supabase to enable agent auto-release tracking.",
+            duration: 12000,
+          })
+        }
+      }
 
       if (insertError) {
         console.error("DB insert error:", insertError)

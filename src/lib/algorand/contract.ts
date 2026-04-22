@@ -330,13 +330,12 @@ export async function deleteEscrowContract(
 
 async function sha256Bytes(bytes: Uint8Array): Promise<Uint8Array> {
   const hash = await crypto.subtle.digest("SHA-256", bytes as BufferSource)
-  return new Uint8Array(hash)
-}
-
-function bytesToBase64(bytes: Uint8Array): string {
-  let binary = ""
-  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i])
-  return btoa(binary)
+  // Force a brand-new Uint8Array (not a typed-array view onto an ArrayBuffer)
+  // because algosdk v3's strict type guards reject the latter with the
+  // confusing "Argument must be byte array" error.
+  const out = new Uint8Array(32)
+  out.set(new Uint8Array(hash))
+  return out
 }
 
 export async function mintNFTReceipt(
@@ -364,10 +363,10 @@ export async function mintNFTReceipt(
   const metadataBytes = new TextEncoder().encode(metadataJson)
   const metadataHash = await sha256Bytes(metadataBytes)
 
-  // ARC-3 allows any URI scheme; data: keeps the metadata fully on-chain
-  // (in the asset config) without requiring IPFS pinning infrastructure.
-  // Trailing #arc3 fragment is the ARC-3 marker.
-  const dataUri = `data:application/json;base64,${bytesToBase64(metadataBytes)}#arc3`
+  // ARC-3 marker URL — must be ≤96 bytes (algosdk hard limit). The metadata
+  // hash above cryptographically anchors the JSON; the URL just needs the
+  // `#arc3` fragment + a stable identifier.
+  const assetUrl = `https://unsubscribely.app/r/${vaultAppId}#arc3`
 
   const txn = algosdk.makeAssetCreateTxnWithSuggestedParamsFromObject({
     sender: senderAddress,
@@ -376,13 +375,12 @@ export async function mintNFTReceipt(
     decimals: 0,
     defaultFrozen: false,
     unitName: "RCPT",
-    assetName: `Receipt-${vaultAppId}@arc3`, // ARC-3 marker in name as well
-    assetURL: dataUri,
+    assetName: `Receipt-${vaultAppId}@arc3`,
+    assetURL: assetUrl,
     assetMetadataHash: metadataHash,
     // CRITICAL — leave manager/reserve/freeze/clawback UNDEFINED so the
-    // asset is permanently immutable. (algosdk treats undefined as zero
-    // address, which renders the role unusable forever.)
-    note: new TextEncoder().encode("ARC-3 receipt"),
+    // asset is permanently immutable.
+    note: new TextEncoder().encode(metadataJson.slice(0, 1000)),
   })
 
   const signedTxns = await signTransaction(txn)
