@@ -1,0 +1,52 @@
+17:39:07.842 Running build in Washington, D.C., USA (East) – iad1
+17:39:07.843 Build machine configuration: 2 cores, 8 GB
+17:39:07.969 Cloning github.com/devndesigner6/unsubly (Branch: main, Commit: cc35748)
+17:39:09.139 Cloning completed: 1.170s
+17:39:09.318 Restored build cache from previous deployment (A4QGQ4MckFU7sjBaFoSNX2Q8d5be)
+17:39:09.539 Running "vercel build"
+17:39:10.223 Vercel CLI 51.6.1
+17:39:10.982 Running "install" command: `npm install --legacy-peer-deps`...
+17:39:16.955 
+17:39:16.957 up to date, audited 1266 packages in 6s
+17:39:16.957 
+17:39:16.957 213 packages are looking for funding
+17:39:16.959   run `npm fund` for details
+17:39:16.986 
+17:39:16.987 22 vulnerabilities (9 moderate, 13 high)
+17:39:16.987 
+17:39:16.988 To address issues that do not require attention, run:
+17:39:16.988   npm audit fix
+17:39:16.988 
+17:39:16.988 To address all issues possible (including breaking changes), run:
+17:39:16.989   npm audit fix --force
+17:39:16.989 
+17:39:16.989 Some issues need review, and may require choosing
+17:39:16.989 a different dependency.
+17:39:16.989 
+17:39:16.989 Run `npm audit` for details.
+17:39:17.301 
+17:39:17.301 > unsubscribely@1.0.0 build
+17:39:17.302 > vite build
+17:39:17.302 
+17:39:17.629 [36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+17:39:17.719 transforming...
+17:39:18.949 
+17:39:18.950 [1m[33mwarn[39m[22m - The utility `bg-[radial-gradient(60%_40%_at_50%_30%,theme(colors.primary/15),transparent_70%)]` contains an invalid theme value and was not generated.
+17:39:20.605 [32m✓[39m 219 modules transformed.
+17:39:20.611 [31m✗[39m Build failed in 2.95s
+17:39:20.611 [31merror during build:
+17:39:20.612 [31m[vite]: Rollup failed to resolve import "@assets/32716952a37bb6ea6d8b0143ec5735c2_1776859681399.png" from "/vercel/path0/src/pages/dashboard/DashboardPageContent.tsx".
+17:39:20.612 This is most likely unintended because it can break your application at runtime.
+17:39:20.612 If you do want to externalize this module explicitly add it to
+17:39:20.612 `build.rollupOptions.external`[31m
+17:39:20.612     at viteLog (file:///vercel/path0/node_modules/vite/dist/node/chunks/config.js:33635:57)
+17:39:20.612     at file:///vercel/path0/node_modules/vite/dist/node/chunks/config.js:33669:73
+17:39:20.612     at onwarn (file:///vercel/path0/node_modules/@vitejs/plugin-react-swc/index.js:76:7)
+17:39:20.612     at file:///vercel/path0/node_modules/vite/dist/node/chunks/config.js:33669:28
+17:39:20.613     at onRollupLog (file:///vercel/path0/node_modules/vite/dist/node/chunks/config.js:33664:63)
+17:39:20.613     at onLog (file:///vercel/path0/node_modules/vite/dist/node/chunks/config.js:33467:4)
+17:39:20.613     at file:///vercel/path0/node_modules/vite/node_modules/rollup/dist/es/shared/node-entry.js:20981:32
+17:39:20.613     at Object.logger [as onLog] (file:///vercel/path0/node_modules/vite/node_modules/rollup/dist/es/shared/node-entry.js:22968:9)
+17:39:20.613     at ModuleLoader.handleInvalidResolvedId (file:///vercel/path0/node_modules/vite/node_modules/rollup/dist/es/shared/node-entry.js:21712:26)
+17:39:20.613     at file:///vercel/path0/node_modules/vite/node_modules/rollup/dist/es/shared/node-entry.js:21670:26[39m
+17:39:20.686 Error: Command "npm run build" exited with 1
