@@ -353,7 +353,7 @@ export default function DashboardPageContent() {
             return (
               <div className="lg:col-span-3 relative">
                 <div
-                  className="relative overflow-hidden rounded-[32px] bg-black p-6 sm:p-7 ring-1 ring-emerald-500/30 shadow-[0_20px_60px_-15px_rgba(34,197,94,0.35)] flex flex-col min-h-[340px]"
+                  className="relative overflow-hidden rounded-[32px] bg-black p-6 sm:p-7 ring-1 ring-emerald-500/30 shadow-[0_20px_60px_-15px_rgba(34,197,94,0.35)] flex flex-col aspect-[1.55/1] min-h-[300px]"
                 >
                   {/* Green metallic blob — top */}
                   <div
@@ -379,18 +379,28 @@ export default function DashboardPageContent() {
                   {/* Bottom green accent strip */}
                   <div className="pointer-events-none absolute inset-x-4 bottom-2 h-[3px] rounded-full bg-gradient-to-r from-lime-300 via-emerald-400 to-lime-300 opacity-90 blur-[0.5px]" />
 
-                  {/* Top row: wallet icon + balance */}
+                  {/* Top row: Bauhaus-style wallets icon + balance */}
                   <div className="relative flex items-start justify-between gap-4">
-                    <div className="flex size-14 items-center justify-center rounded-2xl bg-black/85 ring-1 ring-white/15 shadow-lg backdrop-blur-sm">
-                      {activeLogo ? (
-                        <img
-                          src={activeLogo}
-                          alt={activeLabel ?? "Wallet"}
-                          className="size-9 rounded-lg object-contain"
-                        />
-                      ) : (
-                        <RiShieldLine className="size-7 text-white/95" />
-                      )}
+                    {/* Bauhaus-style blue tile with 3 wallet logos peeking out the top */}
+                    <div className="relative shrink-0">
+                      {/* Peeking logos behind the blue card */}
+                      <div className="absolute -top-2.5 left-1/2 z-0 flex -translate-x-1/2 gap-0">
+                        <div className="size-7 -mr-2 -rotate-12 rounded-md bg-white p-0.5 shadow-md ring-1 ring-black/10">
+                          <img src={WALLET_LOGOS.defly} alt="Defly" className="size-full rounded object-contain" />
+                        </div>
+                        <div className={`size-8 z-10 rounded-md bg-white p-0.5 shadow-md ring-1 ring-black/10 ${activeLogo === WALLET_LOGOS.pera ? "ring-2 ring-emerald-400" : ""}`}>
+                          <img src={WALLET_LOGOS.pera} alt="Pera" className="size-full rounded object-contain" />
+                        </div>
+                        <div className="size-7 -ml-2 rotate-12 rounded-md bg-white p-0.5 shadow-md ring-1 ring-black/10">
+                          <img src={WALLET_LOGOS.lute} alt="Lute" className="size-full rounded object-contain" />
+                        </div>
+                      </div>
+                      {/* Blue front card */}
+                      <div className="relative z-10 flex h-[58px] w-[58px] flex-col items-center justify-end rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 pb-1.5 shadow-[0_6px_16px_-4px_rgba(37,99,235,0.6)] ring-1 ring-blue-400/50">
+                        <div className="rounded-md bg-black/30 px-1.5 py-[1px] text-[8px] font-semibold uppercase tracking-wide text-white backdrop-blur-sm">
+                          {walletAddress ? "Linked" : "Wallets"}
+                        </div>
+                      </div>
                     </div>
                     <div className="text-right">
                       <div className="flex items-baseline justify-end gap-1.5 text-white drop-shadow-sm">
@@ -406,7 +416,7 @@ export default function DashboardPageContent() {
                   </div>
 
                   {/* Spacer to push content to dark zone */}
-                  <div className="flex-1 min-h-[36px]" />
+                  <div className="flex-1 min-h-[20px]" />
 
                   {/* Mid section in dark zone */}
                   <div className="relative">
@@ -419,20 +429,22 @@ export default function DashboardPageContent() {
                         : "Connect Pera, Defly or Lute"}
                     </div>
 
-                    <div className="mt-3 flex flex-wrap gap-1.5">
-                      <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-white/85 ring-1 ring-white/10 backdrop-blur">
-                        {vaultStats.total} vault{vaultStats.total !== 1 ? "s" : ""}
-                      </span>
-                      <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-white/85 ring-1 ring-white/10 backdrop-blur">
-                        {vaultStats.totalLocked.toFixed(2)} ALGO locked
-                      </span>
-                      <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-white/85 ring-1 ring-white/10 backdrop-blur">
-                        {vaultStats.killed} kill switch{vaultStats.killed !== 1 ? "es" : ""}
-                      </span>
-                    </div>
+                    {walletAddress && (
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-white/85 ring-1 ring-white/10 backdrop-blur">
+                          {vaultStats.total} vault{vaultStats.total !== 1 ? "s" : ""}
+                        </span>
+                        <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-white/85 ring-1 ring-white/10 backdrop-blur">
+                          {vaultStats.totalLocked.toFixed(2)} ALGO locked
+                        </span>
+                        <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-white/85 ring-1 ring-white/10 backdrop-blur">
+                          {vaultStats.killed} kill switch{vaultStats.killed !== 1 ? "es" : ""}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Bottom row: action + toggle */}
+                  {/* Bottom row: action + toggle (toggle only when connected) */}
                   <div className="relative mt-5 flex items-end justify-between">
                     {walletAddress ? (
                       <a
@@ -451,21 +463,14 @@ export default function DashboardPageContent() {
                         {isConnecting ? "Connecting…" : "Connect wallet"}
                       </button>
                     )}
-                    {/* iOS-style toggle */}
-                    <div
-                      aria-hidden
-                      className={`relative h-6 w-11 rounded-full p-0.5 transition-colors ring-1 ${
-                        walletAddress
-                          ? "bg-emerald-400 ring-emerald-300/60 shadow-[0_0_12px_rgba(74,222,128,0.6)]"
-                          : "bg-white/15 ring-white/20"
-                      }`}
-                    >
+                    {walletAddress && (
                       <div
-                        className={`size-5 rounded-full bg-white shadow transition-transform ${
-                          walletAddress ? "translate-x-5" : "translate-x-0"
-                        }`}
-                      />
-                    </div>
+                        aria-hidden
+                        className="relative h-6 w-11 rounded-full p-0.5 transition-colors ring-1 bg-emerald-400 ring-emerald-300/60 shadow-[0_0_12px_rgba(74,222,128,0.6)]"
+                      >
+                        <div className="size-5 rounded-full bg-white shadow translate-x-5" />
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -481,7 +486,7 @@ export default function DashboardPageContent() {
             const tickHr12 = ((tickHour + 11) % 12) + 1
             const lastAction = agentActions[0]
             return (
-              <div className="lg:col-span-2 relative rounded-3xl bg-card p-6 shadow-[0_10px_40px_-12px_rgba(0,0,0,0.15)] ring-1 ring-black/5 sm:p-7 flex flex-col min-h-[340px]">
+              <div className="lg:col-span-2 relative rounded-3xl bg-card p-6 shadow-[0_10px_40px_-12px_rgba(0,0,0,0.15)] ring-1 ring-black/5 sm:p-7 flex flex-col">
                 {/* Top: icon + tick widget */}
                 <div className="flex items-start justify-between">
                   <img
@@ -500,16 +505,16 @@ export default function DashboardPageContent() {
                   </div>
                 </div>
 
-                {/* Label + title */}
+                {/* Title first, then secondary line */}
                 <div className="mt-6">
-                  <p className="text-sm text-muted-foreground">
-                    <span className="font-semibold text-foreground">Agent</span>
+                  <h2 className="text-2xl font-bold text-foreground sm:text-[26px] leading-tight">
+                    Autonomous Agent
+                  </h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    <span className="font-medium text-foreground/80">{agentStats.isOnChain ? "On-chain" : "Simulation"}</span>
                     <span className="mx-1.5 text-muted-foreground/60">·</span>
                     <span>{agentStats.lastRunAt ? `last tick ${agentStats.lastRunAt.toLocaleTimeString(undefined, {hour: "2-digit", minute: "2-digit"})}` : "idle"}</span>
                   </p>
-                  <h2 className="mt-1 text-2xl font-bold text-foreground sm:text-[26px]">
-                    Autonomous Agent
-                  </h2>
                   {/* Pills */}
                   <div className="mt-3 flex flex-wrap gap-1.5">
                     <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${

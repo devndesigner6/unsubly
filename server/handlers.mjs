@@ -376,14 +376,15 @@ export async function agentRunHandler(req, res) {
 
       try {
         const isAgentVault = vault.vault_type === "agent"
+        // Idempotency for ALL modes (including db-only sim): exactly one
+        // agent_actions row per (vault, billing period). Without this the agent
+        // appends a duplicate row on every tick.
+        const gotLock = await _acquireRunLock(vault.id, sub?.next_billing_date)
+        if (!gotLock) {
+          results.skipped++
+          continue
+        }
         if (algodClient && agentAccount && vault.app_id && isAgentVault) {
-          // Idempotency: don't double-release the same vault for the same period.
-          const gotLock = await _acquireRunLock(vault.id, sub?.next_billing_date)
-          if (!gotLock) {
-            results.errors.push(`Vault ${vault.id} skipped: already released for billing period ${sub?.next_billing_date}`)
-            results.skipped++
-            continue
-          }
           try {
             const params = await algodClient.getTransactionParams().do()
             const txn = algosdk.makeApplicationCallTxnFromObject({
@@ -412,6 +413,9 @@ export async function agentRunHandler(req, res) {
             // We failed — release the lock so a future retry can succeed.
             const sb = _getServiceClient()
             if (sb) await sb.from("agent_run_locks").delete().eq("lock_key", `${vault.id}:${sub?.next_billing_date ?? "no-date"}`)
+            // Skip the simulation row insert below; we want the next retry to be
+            // a real on-chain release, not a misleading sim entry.
+            continue
           }
         } else if (algodClient && agentAccount && vault.app_id && !isAgentVault) {
           results.errors.push(`Vault ${vault.id} skipped: type "${vault.vault_type}" requires creator signature`)
