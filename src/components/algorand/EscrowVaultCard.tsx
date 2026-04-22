@@ -224,7 +224,24 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
   const pills: string[] = [typeLabel, network === "mainnet" ? "MainNet" : "TestNet"]
 
   return (
-    <div className="flex min-h-[360px] flex-col rounded-2xl bg-card text-card-foreground border border-border shadow-[0_4px_24px_-12px_rgba(0,0,0,0.18)] dark:shadow-none transition-shadow hover:shadow-[0_8px_28px_-10px_rgba(0,0,0,0.22)]">
+    <div
+      role="button"
+      tabIndex={0}
+      aria-expanded={expanded}
+      aria-controls={`vault-details-${vault.id}`}
+      onClick={(e) => {
+        if ((e.target as HTMLElement).closest("button, a, input, [role='dialog']")) return
+        setExpanded((x) => !x)
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          if ((e.target as HTMLElement).closest("button, a, input")) return
+          e.preventDefault()
+          setExpanded((x) => !x)
+        }
+      }}
+      className="flex min-h-[360px] cursor-pointer flex-col rounded-2xl bg-card text-card-foreground border border-border shadow-[0_4px_24px_-12px_rgba(0,0,0,0.18)] dark:shadow-none transition-shadow hover:shadow-[0_8px_28px_-10px_rgba(0,0,0,0.22)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/40"
+    >
       {/* Top: logo + status pill */}
       <div className="flex items-start justify-between gap-3 p-5 pb-4">
         <div className="flex size-10 items-center justify-center rounded-full bg-muted overflow-hidden shrink-0">
@@ -476,18 +493,6 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
         </div>
       )}
 
-      {/* Subtle expand toggle — single small chevron, no bar */}
-      <button
-        type="button"
-        onClick={() => setExpanded((e) => !e)}
-        aria-expanded={expanded}
-        aria-controls={`vault-details-${vault.id}`}
-        aria-label={expanded ? "Collapse vault details" : "Expand vault details"}
-        title={expanded ? "Hide vault details" : "Show more vault details"}
-        className="group mx-auto mb-1.5 flex h-4 w-10 items-center justify-center rounded-full text-muted-foreground/40 hover:text-foreground hover:bg-muted/50 transition-colors"
-      >
-        {expanded ? <RiArrowUpSLine className="size-3.5" /> : <RiArrowDownSLine className="size-3.5" />}
-      </button>
     </div>
   )
 }
