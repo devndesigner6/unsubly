@@ -216,6 +216,7 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
         unlock_time: vaultType === "time_locked" ? new Date(unlockDate).toISOString() : null,
         co_signer_address: vaultType === "multi_sig" ? coSignerAddress : null,
         arbitrator_address: vaultType === "dispute" ? arbitratorAddress : null,
+        agent_address: vaultType === "agent" ? agentAddress : null,
         asset_id: vaultType === "asa" ? Number(assetId) : null,
       } as any)
 
