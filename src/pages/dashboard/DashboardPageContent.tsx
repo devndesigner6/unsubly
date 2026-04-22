@@ -18,6 +18,7 @@ import {
 } from "@remixicon/react"
 import { WalletSelectorModal } from "@/components/algorand/WalletSelectorModal"
 import { useState, useEffect, useMemo } from "react"
+import agentLogoUrl from "@assets/32716952a37bb6ea6d8b0143ec5735c2_1776859681399.png"
 
 export default function DashboardPageContent() {
   const { user } = useAuth()
@@ -449,9 +450,11 @@ export default function DashboardPageContent() {
               <div className="relative rounded-3xl bg-card p-6 shadow-[0_10px_40px_-12px_rgba(0,0,0,0.15)] ring-1 ring-black/5 sm:p-7 flex flex-col">
                 {/* Top: icon + tick widget */}
                 <div className="flex items-start justify-between">
-                  <div className="flex size-12 items-center justify-center rounded-2xl bg-foreground text-background shadow-md">
-                    <RiRobotLine className="size-6" />
-                  </div>
+                  <img
+                    src={agentLogoUrl}
+                    alt="Autonomous Agent"
+                    className="size-12 rounded-2xl object-cover shadow-md"
+                  />
                   <div className="overflow-hidden rounded-xl border border-border bg-card text-center shadow-sm">
                     <div className="bg-foreground px-3 py-0.5 text-[9px] font-bold tracking-wider text-background">
                       TICK
