@@ -4,7 +4,9 @@ import { useAuth } from "@/lib/auth-context"
 import { useAlgorand } from "@/lib/algorand/context"
 import { supabase } from "@/integrations/supabase/client"
 import { shortenAddress, getAddressExplorerUrl, getAlgoExplorerUrl, getLoraTransactionUrl, getLoraApplicationUrl, getLoraAddressUrl, microalgosToAlgo, VAULT_TYPE_LABELS, type VaultType } from "@/lib/algorand/constants"
-import { releaseEscrowFunds, killEscrowContract, deleteEscrowContract, approveMultiSig, mintNFTReceipt } from "@/lib/algorand/contract"
+import { releaseEscrowFunds, releaseEscrowFundsWithProof, releaseAgentVaultV2, killEscrowContract, deleteEscrowContract, approveMultiSig, mintNFTReceipt } from "@/lib/algorand/contract"
+import { VaultMemoryTab } from "@/components/vaults/VaultMemoryTab"
+import { ProofOfDeliveryModal } from "@/components/vaults/ProofOfDeliveryModal"
 import { Button } from "@/components/Button"
 import {
   RiArrowLeftLine, RiLoader4Line, RiShieldLine, RiExternalLinkLine,
@@ -38,7 +40,8 @@ export default function VaultDetailsPage() {
   const [actionMsg, setActionMsg] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [chainError, setChainError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<"details" | "history">("details")
+  const [activeTab, setActiveTab] = useState<"details" | "history" | "memory">("details")
+  const [showProofModal, setShowProofModal] = useState(false)
   const [confirmAction, setConfirmAction] = useState<"kill" | "delete" | null>(null)
   const [releasedTxnId, setReleasedTxnId] = useState<string | null>(null)
 
@@ -139,14 +142,24 @@ export default function VaultDetailsPage() {
     return await peraWallet.signTransaction([[{ txn }]])
   }
 
-  const handleRelease = async () => {
+  const handleRelease = async (proof?: string) => {
     if (!walletAddress || !vault?.app_id) return
     setIsProcessing(true)
     setActionMsg("Releasing funds on-chain… (sign in your wallet)")
     try {
-      const txnId = await releaseEscrowFunds(algodClient, walletAddress, vault.app_id, signTransaction)
+      // Agent vaults deployed via deployAgentEscrowContract use the v2 ABI:
+      // release(uint64)uint64 — needs an explicit microAlgo amount and writes
+      // a Box-stored BillingRecord. v1-style vaults take release()void.
+      const isAgentV2 = vault.vault_type === "agent_v2"
+      const amountMicro = Number(vault.amount_microalgos ?? Math.round(Number(vault.amount || 0) * 1_000_000))
+      const txnId = isAgentV2
+        ? await releaseAgentVaultV2(algodClient, walletAddress, vault.app_id, amountMicro, signTransaction, proof)
+        : proof
+          ? await releaseEscrowFundsWithProof(algodClient, walletAddress, vault.app_id, proof, signTransaction)
+          : await releaseEscrowFunds(algodClient, walletAddress, vault.app_id, signTransaction)
+      const noteSuffix = proof ? ` · proof: ${proof.slice(0, 80)}` : ""
       await supabase.from("escrow_vaults" as any).update({ status: "released", txn_id: txnId, released_at: new Date().toISOString() } as any).eq("id", vault.id)
-      await supabase.from("onchain_payments" as any).insert({ user_id: user!.id, subscription_id: vault.subscription_id, algorand_txn_id: txnId, amount: vault.amount, sender_address: vault.app_address || walletAddress, recipient_address: vault.escrow_address || walletAddress, note: `Released from App ${vault.app_id}` } as any)
+      await supabase.from("onchain_payments" as any).insert({ user_id: user!.id, subscription_id: vault.subscription_id, algorand_txn_id: txnId, amount: vault.amount, sender_address: vault.app_address || walletAddress, recipient_address: vault.escrow_address || walletAddress, note: `Released from App ${vault.app_id}${noteSuffix}` } as any)
       setReleasedTxnId(txnId)
       toast.success("Funds released!", {
         description: (
@@ -374,7 +387,22 @@ export default function VaultDetailsPage() {
         >
           Transaction History {payments.length > 0 && <span className="ml-1 text-xs text-muted-foreground">({payments.length})</span>}
         </button>
+        {(vault.vault_type as string) === "agent_v2" && vault.app_id && (
+          <button
+            onClick={() => setActiveTab("memory")}
+            title="View immutable on-chain billing history (Box Storage)"
+            className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${activeTab === "memory" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            On-chain Memory
+          </button>
+        )}
       </div>
+
+      {activeTab === "memory" && vault.app_id && (
+        <div className="rounded-xl border border-border bg-card p-5">
+          <VaultMemoryTab appId={vault.app_id} vaultType={String(vault.vault_type ?? vType)} />
+        </div>
+      )}
 
       {activeTab === "details" && (
       <div className="grid gap-4 lg:grid-cols-2">
@@ -693,9 +721,17 @@ export default function VaultDetailsPage() {
             </div>
           )}
           <div className="flex flex-wrap gap-3">
-          <Button onClick={handleRelease} disabled={isProcessing || !walletAddress}>
+          <Button onClick={() => handleRelease()} disabled={isProcessing || !walletAddress}>
             <RiLockUnlockLine className="mr-1.5 size-4" />
             {isProcessing ? "Processing…" : "Release Payment"}
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => setShowProofModal(true)}
+            disabled={isProcessing || !walletAddress}
+            title="Release and attach an on-chain proof of delivery (URL or hash)"
+          >
+            Release with proof
           </Button>
 
           {isMultiSig && !vault.co_signer_approved && (
@@ -756,7 +792,7 @@ export default function VaultDetailsPage() {
                 {" "}Use the buttons below to release or reclaim it now.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
-                <Button onClick={handleRelease} disabled={isProcessing || !walletAddress}>
+                <Button onClick={() => handleRelease()} disabled={isProcessing || !walletAddress}>
                   <RiLockUnlockLine className="mr-1.5 size-4" />
                   {isProcessing ? "Processing…" : "Release to Recipient"}
                 </Button>
@@ -797,6 +833,15 @@ export default function VaultDetailsPage() {
           </button>
         </div>
       )}
+
+      <ProofOfDeliveryModal
+        open={showProofModal}
+        onClose={() => setShowProofModal(false)}
+        onConfirm={async (proof) => {
+          setShowProofModal(false)
+          await handleRelease(proof)
+        }}
+      />
     </div>
   )
 }

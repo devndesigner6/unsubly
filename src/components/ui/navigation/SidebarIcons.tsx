@@ -95,6 +95,32 @@ export const X402Mark = (p: IconProps) => (
   </svg>
 )
 
+export const RadarMark = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.5" />
+    <circle cx="12" cy="12" r="5" fill="none" stroke="currentColor" strokeWidth="1.5" />
+    <circle cx="12" cy="12" r="1.5" />
+    <path d="M12 12 L20 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+  </svg>
+)
+
+export const DisputeMark = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <path d="M12 3v18M5 7l-2 6h6L7 7H5Zm12 0-2 6h6l-2-6h-2Z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+    <path d="M3 19h18M9 7l3-3 3 3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+  </svg>
+)
+
+export const ApiDocsMark = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <path
+      fillRule="evenodd"
+      d="M5 3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2H5Zm2 4h10v1.5H7V7Zm0 4h10v1.5H7V11Zm0 4h7v1.5H7V15Z"
+      clipRule="evenodd"
+    />
+  </svg>
+)
+
 export const ResumeMark = (p: IconProps) => (
   <svg {...base} {...p}>
     <path

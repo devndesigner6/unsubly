@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/auth-context"
 import { supabase } from "@/integrations/supabase/client"
 import { algoToMicroalgos, VAULT_TYPE_LABELS, type VaultType } from "@/lib/algorand/constants"
 import {
-  deployAgentEscrowContract, deployEscrowContract, deployTimeLockContract,
+  deployAgentEscrowContractV2, deployEscrowContract, deployTimeLockContract,
   deployMultiSigContract, deployDisputeContract, deployASAContract, fundEscrowContract,
 } from "@/lib/algorand/contract"
 import { RiCloseLine, RiLockLine, RiTimeLine, RiGroupLine, RiShieldLine, RiCoinLine, RiRobotLine } from "@remixicon/react"
@@ -183,7 +183,7 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
 
       switch (vaultType) {
         case "agent":
-          deployResult = await deployAgentEscrowContract(
+          deployResult = await deployAgentEscrowContractV2(
             algodClient, walletAddress, recipient, cleanAgent, signTransaction
           )
           break
@@ -230,7 +230,7 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
         escrow_address: recipient,
         app_id: appId,
         app_address: appAddress,
-        vault_type: vaultType,
+        vault_type: vaultType === "agent" ? "agent_v2" : vaultType,
         unlock_time: vaultType === "time_locked" ? new Date(unlockDate).toISOString() : null,
         co_signer_address: vaultType === "multi_sig" ? cleanCoSigner : null,
         arbitrator_address: vaultType === "dispute" ? cleanArbitrator : null,

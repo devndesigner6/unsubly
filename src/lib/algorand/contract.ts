@@ -11,6 +11,7 @@ import type { VaultType } from "./constants"
 
 import EscrowVaultSpec from "../../../smart_contracts/artifacts/EscrowVault/EscrowVault.arc56.json"
 import AgentEscrowVaultSpec from "../../../smart_contracts/artifacts/AgentEscrowVault/AgentEscrowVault.arc56.json"
+import AgentEscrowVaultV2Spec from "../../../smart_contracts/artifacts/AgentEscrowVaultV2/AgentEscrowVaultV2.arc56.json"
 import TimeLockSpec from "../../../smart_contracts/artifacts/TimeLockEscrow/TimeLockEscrow.arc56.json"
 import MultiSigSpec from "../../../smart_contracts/artifacts/MultiSigEscrow/MultiSigEscrow.arc56.json"
 import DisputeSpec from "../../../smart_contracts/artifacts/DisputeEscrow/DisputeEscrow.arc56.json"
@@ -170,6 +171,27 @@ export async function deployAgentEscrowContract(
   )
 }
 
+/**
+ * Deploy an Agent Escrow Vault **v2** (AgentEscrowVaultV2.arc56). v2 adds an
+ * explicit-amount `release(uint64)` method and writes BillingRecord entries
+ * into Box Storage (`h:<cycle>`) for an immutable on-chain audit trail.
+ * Persist the resulting vault with `vault_type: "agent_v2"` so release flows
+ * route to `releaseAgentVaultV2` instead of the v1 `release()void` selector.
+ */
+export async function deployAgentEscrowContractV2(
+  algodClient: algosdk.Algodv2, senderAddress: string,
+  recipientAddress: string, agentAddress: string,
+  signTransaction: SignFn,
+): Promise<DeployResult> {
+  const spec = AgentEscrowVaultV2Spec as Arc56Spec
+  return deployApp(
+    algodClient, senderAddress,
+    loadArtifact(spec),
+    [SEL.createAddrAddr, addrBytes(recipientAddress), addrBytes(agentAddress)],
+    signTransaction,
+  )
+}
+
 /** Deploy a time-locked escrow vault (TimeLockEscrow.arc56). */
 export async function deployTimeLockContract(
   algodClient: algosdk.Algodv2, senderAddress: string, recipientAddress: string,
@@ -278,6 +300,133 @@ export async function releaseEscrowFunds(
   signTransaction: SignFn,
 ): Promise<string> {
   return callMethod(algodClient, senderAddress, appId, SEL.release, signTransaction, true)
+}
+
+/** ARC-4 selector for AgentEscrowVaultV2.release(uint64)uint64. */
+const SEL_RELEASE_V2 = new Uint8Array([0x61, 0x17, 0xcc, 0xb8])
+
+/**
+ * Release funds from an Agent Escrow Vault v2. v2 takes an explicit `amount`
+ * (microAlgos) and writes a BillingRecord into Box Storage. Only the creator
+ * or the named agent can call this.
+ */
+export async function releaseAgentVaultV2(
+  algodClient: algosdk.Algodv2, senderAddress: string, appId: number,
+  amountMicroAlgos: number, signTransaction: SignFn,
+  proof?: string,
+): Promise<string> {
+  const params = await algodClient.getTransactionParams().do()
+  const minFee = Number(params.minFee ?? params.fee ?? 1000) || 1000
+  const noteBytes = proof ? clampNoteBytes(`ub:proof-of-delivery:${proof}`, 900) : undefined
+  const txn = algosdk.makeApplicationCallTxnFromObject({
+    sender: senderAddress, appIndex: appId,
+    onComplete: algosdk.OnApplicationComplete.NoOpOC,
+    suggestedParams: { ...params, fee: minFee * 2, flatFee: true },
+    appArgs: [SEL_RELEASE_V2, algosdk.encodeUint64(amountMicroAlgos)],
+    boxes: [{ appIndex: appId, name: new Uint8Array(0) }],
+    note: noteBytes,
+  })
+  const signedTxns = await signTransaction(txn)
+  const sendResponse = await algodClient.sendRawTransaction(signedTxns[0]).do()
+  const txnId = extractTxId(sendResponse)
+  await algosdk.waitForConfirmation(algodClient, txnId, 4)
+  return txnId
+}
+
+/**
+ * Release vault funds and attach a free-form proof-of-delivery note to the
+ * application call transaction. The note is stored permanently in the
+ * transaction record on Algorand and can be retrieved by anyone — making
+ * it a tamper-proof receipt that the merchant delivered the service.
+ *
+ * Used for v1-style vaults (DisputeEscrow, EscrowVault, MultiSigEscrow,
+ * TimeLockEscrow, ASAEscrow) whose `release()void` selector takes no args.
+ * For Agent Escrow Vault v2, call `releaseAgentVaultV2` instead.
+ */
+export async function releaseEscrowFundsWithProof(
+  algodClient: algosdk.Algodv2, senderAddress: string, appId: number,
+  proof: string, signTransaction: SignFn,
+): Promise<string> {
+  const params = await algodClient.getTransactionParams().do()
+  const minFee = Number(params.minFee ?? params.fee ?? 1000) || 1000
+  const note = clampNoteBytes(`ub:proof-of-delivery:${proof}`, 900)
+  const txn = algosdk.makeApplicationCallTxnFromObject({
+    sender: senderAddress, appIndex: appId,
+    onComplete: algosdk.OnApplicationComplete.NoOpOC,
+    suggestedParams: { ...params, fee: minFee * 2, flatFee: true },
+    appArgs: [SEL.release],
+    note,
+  })
+  const signedTxns = await signTransaction(txn)
+  const sendResponse = await algodClient.sendRawTransaction(signedTxns[0]).do()
+  const txnId = extractTxId(sendResponse)
+  await algosdk.waitForConfirmation(algodClient, txnId, 4)
+  return txnId
+}
+
+/**
+ * Encode a note string and trim it to fit within `maxBytes` UTF-8 bytes
+ * without breaking a multi-byte codepoint. Algorand's per-txn note ceiling
+ * is 1024 bytes; we keep a small safety margin.
+ */
+function clampNoteBytes(s: string, maxBytes: number): Uint8Array {
+  const enc = new TextEncoder()
+  let bytes = enc.encode(s)
+  if (bytes.length <= maxBytes) return bytes
+  // Walk back to a safe codepoint boundary.
+  let str = s
+  while (bytes.length > maxBytes) {
+    str = str.slice(0, -1)
+    bytes = enc.encode(str)
+  }
+  return bytes
+}
+
+// ── Box Storage: AgentEscrowVaultV2 billing history ────────────────────────
+
+export interface BillingRecord {
+  cycle: number
+  timestamp: number  // unix seconds
+  amount: number     // microAlgos
+}
+
+/**
+ * Read all on-chain BillingRecords from an AgentEscrowVaultV2 contract.
+ * Each release writes a box keyed by "h:<cycle>" (uint64 big-endian) holding
+ * a 24-byte struct (timestamp:uint64, amount:uint64, cycle_index:uint64).
+ *
+ * Returns the records sorted oldest → newest. Falls back to an empty array
+ * if the application has no boxes (e.g. legacy v1 vault).
+ */
+export async function getVaultBillingHistory(
+  algodClient: algosdk.Algodv2, appId: number,
+): Promise<BillingRecord[]> {
+  let resp: any
+  try {
+    resp = await algodClient.getApplicationBoxes(appId).do()
+  } catch {
+    return []
+  }
+  const boxes: Array<{ name: Uint8Array }> = resp?.boxes ?? []
+  const out: BillingRecord[] = []
+  for (const b of boxes) {
+    const name = b.name instanceof Uint8Array ? b.name : new Uint8Array(b.name)
+    // We only care about boxes prefixed with "h:" (0x68, 0x3a)
+    if (name.length < 3 || name[0] !== 0x68 || name[1] !== 0x3a) continue
+    try {
+      const value = await algodClient.getApplicationBoxByName(appId, name).do()
+      const v: Uint8Array = value?.value instanceof Uint8Array ? value.value : new Uint8Array(value?.value ?? [])
+      if (v.length < 24) continue
+      const timestamp = Number(algosdk.decodeUint64(v.slice(0, 8), "safe"))
+      const amount = Number(algosdk.decodeUint64(v.slice(8, 16), "safe"))
+      const cycle = Number(algosdk.decodeUint64(v.slice(16, 24), "safe"))
+      out.push({ cycle, timestamp, amount })
+    } catch {
+      // Skip unreadable box but keep going.
+    }
+  }
+  out.sort((a, b) => a.cycle - b.cycle)
+  return out
 }
 
 export async function killEscrowContract(

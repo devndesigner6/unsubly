@@ -11,10 +11,11 @@ import {
   RiAddLine, RiDeleteBinLine, RiEditLine, RiLoader4Line,
   RiSearchLine, RiAlertLine, RiFileListLine,
   RiPlayCircleLine, RiPauseCircleLine, RiCloseCircleLine, RiTimerFlashLine,
-  RiDownloadLine, RiUploadLine, RiForbidLine,
+  RiDownloadLine, RiUploadLine, RiForbidLine, RiSparklingLine,
 } from "@remixicon/react"
 import { useState, useEffect, useMemo, useRef } from "react"
 import CancelHelperModal from "@/components/subscriptions/CancelHelperModal"
+import { SmartImportModal } from "@/components/subscriptions/SmartImportModal"
 
 const statusConfig: Record<string, { label: string; icon: any }> = {
   active: { label: "Active", icon: RiPlayCircleLine },
@@ -26,6 +27,7 @@ const statusConfig: Record<string, { label: string; icon: any }> = {
 export default function SubscriptionsPage() {
   const { user } = useAuth()
   const [subscriptions, setSubscriptions] = useState<any[]>([])
+  const [showSmartImport, setShowSmartImport] = useState(false)
   const [currency, setCurrency] = useState("USD")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -204,6 +206,7 @@ export default function SubscriptionsPage() {
                 className="bg-white/10 text-white hover:bg-white/20 border-0"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={importing}
+                title="Import a subscriptions CSV exported from Unsubscribely"
               >
                 {importing ? (
                   <RiLoader4Line className="mr-2 size-4 animate-spin" />
@@ -211,6 +214,15 @@ export default function SubscriptionsPage() {
                   <RiUploadLine className="mr-2 size-4" />
                 )}
                 Import CSV
+              </Button>
+              <Button
+                variant="secondary"
+                className="bg-white/10 text-white hover:bg-white/20 border-0"
+                onClick={() => setShowSmartImport(true)}
+                title="Detect subscriptions from a pasted email or bank statement"
+              >
+                <RiSparklingLine className="mr-2 size-4" />
+                Smart import
               </Button>
               <Button
                 variant="secondary"
@@ -371,6 +383,12 @@ export default function SubscriptionsPage() {
           onCancelled={loadData}
         />
       )}
+
+      <SmartImportModal
+        open={showSmartImport}
+        onClose={() => setShowSmartImport(false)}
+        onImported={loadData}
+      />
     </div>
   )
 }
