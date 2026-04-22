@@ -220,10 +220,8 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
     ? microalgosToAlgo(onChainBalance).toFixed(4)
     : Number(vault.amount).toFixed(4)
 
-  // Tag pills (max 3)
-  const pills: string[] = [typeLabel]
-  if (network) pills.push(network === "mainnet" ? "MainNet" : "TestNet")
-  if (isSmartContract) pills.push(`App #${vault.app_id}`)
+  // Tag pills — keep to 2 like the reference
+  const pills: string[] = [typeLabel, network === "mainnet" ? "MainNet" : "TestNet"]
 
   return (
     <div className="flex min-h-[360px] flex-col rounded-2xl bg-card text-card-foreground border border-border shadow-[0_4px_24px_-12px_rgba(0,0,0,0.18)] dark:shadow-none transition-shadow hover:shadow-[0_8px_28px_-10px_rgba(0,0,0,0.22)]">
@@ -254,12 +252,11 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
 
       {/* Middle: meta + title + pills */}
       <div className="px-5">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span className="font-medium text-foreground">{typeLabel}</span>
-          <span aria-hidden>·</span>
-          <span>{relativeTime(vault.created_at)}</span>
+        <div className="text-xs">
+          <span className="font-medium text-foreground">{typeLabel}</span>{" "}
+          <span className="text-muted-foreground">{relativeTime(vault.created_at)}</span>
         </div>
-        <h3 className="mt-1.5 text-base font-bold text-foreground leading-tight line-clamp-2">
+        <h3 className="mt-1 text-[17px] font-bold text-foreground leading-snug line-clamp-2">
           {vault.subscription?.name || "Subscription Vault"}
         </h3>
 
@@ -479,17 +476,17 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
         </div>
       )}
 
-      {/* SINGLE expand toggle — subtle, bottom-center, no separator bar */}
+      {/* Subtle expand toggle — single small chevron, no bar */}
       <button
         type="button"
         onClick={() => setExpanded((e) => !e)}
         aria-expanded={expanded}
         aria-controls={`vault-details-${vault.id}`}
         aria-label={expanded ? "Collapse vault details" : "Expand vault details"}
-        title={expanded ? "Hide vault details" : "Show vault details"}
-        className="mx-auto mb-1 flex h-5 w-12 items-center justify-center rounded-full text-muted-foreground/50 hover:text-foreground hover:bg-muted/60 transition-colors"
+        title={expanded ? "Hide vault details" : "Show more vault details"}
+        className="group mx-auto mb-1.5 flex h-4 w-10 items-center justify-center rounded-full text-muted-foreground/40 hover:text-foreground hover:bg-muted/50 transition-colors"
       >
-        {expanded ? <RiArrowUpSLine className="size-4" /> : <RiArrowDownSLine className="size-4" />}
+        {expanded ? <RiArrowUpSLine className="size-3.5" /> : <RiArrowDownSLine className="size-3.5" />}
       </button>
     </div>
   )
