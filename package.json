@@ -21,10 +21,11 @@
     "web3"
   ],
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --port 5000 --host 0.0.0.0",
     "build": "vite build",
     "build:dev": "vite build --mode development",
-    "preview": "vite preview",
+    "preview": "vite preview --port 5000 --host 0.0.0.0",
+    "start": "node server.js",
     "deploy:contracts": "node scripts/deploy.js"
   },
   "dependencies": {
