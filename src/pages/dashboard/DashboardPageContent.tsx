@@ -175,6 +175,30 @@ export default function DashboardPageContent() {
     return { total: subscriptions.length, active: active.length, monthly, upcoming: upcomingSubs.length, upcomingSubs }
   }, [subscriptions])
 
+  const agentStats = useMemo(() => {
+    try {
+      const isOnChain = agentActions.some((a: any) => a?.payload?.mode === "on-chain")
+      const lastRunRaw = agentActions[0]?.created_at
+      const lastRunAt = lastRunRaw ? new Date(lastRunRaw) : null
+      const onChainCount = agentActions.filter((a: any) => a?.payload?.mode === "on-chain").length
+      const today = new Date(); today.setHours(0,0,0,0)
+      const dueToday = subscriptions.filter((s) => s?.status === "active" && s?.next_billing_date && new Date(s.next_billing_date) <= today).length
+      const upcomingSorted = subscriptions
+        .filter((s) => s?.status === "active" && s?.next_billing_date && new Date(s.next_billing_date) > today)
+        .sort((a, b) => new Date(a.next_billing_date).getTime() - new Date(b.next_billing_date).getTime())
+      const nextSub = upcomingSorted[0]
+      const nextHrs = nextSub
+        ? Math.max(1, Math.round((new Date(nextSub.next_billing_date).getTime() - Date.now()) / 3_600_000))
+        : null
+      const agentAddrRaw = agentActions.find((a: any) => a?.payload?.agent_address)?.payload?.agent_address
+        ?? (import.meta.env.VITE_AGENT_WALLET_ADDRESS as string | undefined)
+      const agentAddr = typeof agentAddrRaw === "string" && agentAddrRaw.length >= 12 ? agentAddrRaw : null
+      return { isOnChain, lastRunAt, onChainCount, dueToday, nextSub, nextHrs, agentAddr }
+    } catch {
+      return { isOnChain: false, lastRunAt: null, onChainCount: 0, dueToday: 0, nextSub: null, nextHrs: null, agentAddr: null }
+    }
+  }, [agentActions, subscriptions])
+
   function getGreeting() {
     const hour = new Date().getHours()
     if (hour < 12) return "Good morning"
@@ -406,43 +430,27 @@ export default function DashboardPageContent() {
         </div>
 
         {/* Agentic Activity Panel — designed to *feel* autonomous, not generic */}
-        {(() => {
-          const isOnChain = agentActions.some((a: any) => a.payload?.mode === "on-chain")
-          const lastRunAt = agentActions[0]?.created_at ? new Date(agentActions[0].created_at) : null
-          const onChainCount = agentActions.filter((a: any) => a.payload?.mode === "on-chain").length
-          const today = new Date(); today.setHours(0,0,0,0)
-          const dueToday = subscriptions.filter((s) => s.status === "active" && s.next_billing_date && new Date(s.next_billing_date) <= today).length
-          const upcomingSorted = subscriptions
-            .filter((s) => s.status === "active" && s.next_billing_date && new Date(s.next_billing_date) > today)
-            .sort((a, b) => new Date(a.next_billing_date).getTime() - new Date(b.next_billing_date).getTime())
-          const nextSub = upcomingSorted[0]
-          const nextHrs = nextSub
-            ? Math.max(1, Math.round((new Date(nextSub.next_billing_date).getTime() - Date.now()) / 3_600_000))
-            : null
-          const agentAddr = agentActions.find((a: any) => a.payload?.agent_address)?.payload?.agent_address
-            || (import.meta.env.VITE_AGENT_WALLET_ADDRESS as string | undefined)
-          return (
-        <div className="mt-6 overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-slate-100 shadow-lg">
+        <div className="mt-6 overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100 shadow-lg">
           {/* Top status bar */}
           <div className="flex flex-wrap items-center gap-3 border-b border-white/10 bg-black/20 px-5 py-3">
             <div className="flex items-center gap-2">
-              <span className={`relative flex size-2 ${isOnChain ? "" : "opacity-60"}`}>
-                <span className={`absolute inset-0 animate-ping rounded-full ${isOnChain ? "bg-emerald-400" : "bg-amber-400"} opacity-75`} />
-                <span className={`relative inline-flex size-2 rounded-full ${isOnChain ? "bg-emerald-400" : "bg-amber-400"}`} />
+              <span className={`relative flex size-2 ${agentStats.isOnChain ? "" : "opacity-60"}`}>
+                <span className={`absolute inset-0 animate-ping rounded-full ${agentStats.isOnChain ? "bg-emerald-400" : "bg-amber-400"} opacity-75`} />
+                <span className={`relative inline-flex size-2 rounded-full ${agentStats.isOnChain ? "bg-emerald-400" : "bg-amber-400"}`} />
               </span>
               <span className="font-mono text-[11px] uppercase tracking-wider text-slate-300">
-                agent.status = {isOnChain ? "live" : "simulation"}
+                agent.status = {agentStats.isOnChain ? "live" : "simulation"}
               </span>
             </div>
             <span className="font-mono text-[11px] text-slate-500">·</span>
             <span className="font-mono text-[11px] text-slate-400">
               network <span className="text-slate-200">{network}</span>
             </span>
-            {lastRunAt && (
+            {agentStats.lastRunAt && (
               <>
                 <span className="font-mono text-[11px] text-slate-500">·</span>
                 <span className="font-mono text-[11px] text-slate-400">
-                  last_tick <span className="text-slate-200">{lastRunAt.toLocaleTimeString()}</span>
+                  last_tick <span className="text-slate-200">{agentStats.lastRunAt.toLocaleTimeString()}</span>
                 </span>
               </>
             )}
@@ -467,11 +475,11 @@ export default function DashboardPageContent() {
                 <RiBrainLine className="size-3" /> agent
               </div>
               <p className="mt-1 truncate font-mono text-[13px] text-slate-100">
-                {agentAddr ? `${agentAddr.slice(0,6)}…${agentAddr.slice(-6)}` : "not configured"}
+                {agentStats.agentAddr ? `${agentStats.agentAddr.slice(0,6)}…${agentStats.agentAddr.slice(-6)}` : "not configured"}
               </p>
-              {agentAddr && (
+              {agentStats.agentAddr && (
                 <a
-                  href={getAddressExplorerUrl(agentAddr, network)}
+                  href={getAddressExplorerUrl(agentStats.agentAddr, network)}
                   target="_blank" rel="noopener noreferrer"
                   className="mt-0.5 inline-flex items-center gap-0.5 text-[10px] text-slate-400 hover:text-emerald-300"
                 >
@@ -483,25 +491,25 @@ export default function DashboardPageContent() {
               <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-slate-500">
                 <RiTimeLine className="size-3" /> due now
               </div>
-              <p className={`mt-1 font-mono text-2xl font-semibold ${dueToday > 0 ? "text-amber-300" : "text-slate-100"}`}>
-                {dueToday}
+              <p className={`mt-1 font-mono text-2xl font-semibold ${agentStats.dueToday > 0 ? "text-amber-300" : "text-slate-100"}`}>
+                {agentStats.dueToday}
               </p>
-              <p className="text-[10px] text-slate-500">{dueToday === 0 ? "queue empty" : "ready to release"}</p>
+              <p className="text-[10px] text-slate-500">{agentStats.dueToday === 0 ? "queue empty" : "ready to release"}</p>
             </div>
             <div className="bg-slate-950/60 p-4">
               <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-slate-500">
                 <RiCalendarCheckLine className="size-3" /> next eta
               </div>
               <p className="mt-1 font-mono text-2xl font-semibold text-slate-100">
-                {nextHrs == null ? "—" : nextHrs < 24 ? `${nextHrs}h` : `${Math.round(nextHrs/24)}d`}
+                {agentStats.nextHrs == null ? "—" : agentStats.nextHrs < 24 ? `${agentStats.nextHrs}h` : `${Math.round(agentStats.nextHrs/24)}d`}
               </p>
-              <p className="truncate text-[10px] text-slate-500">{nextSub?.name ?? "no upcoming"}</p>
+              <p className="truncate text-[10px] text-slate-500">{agentStats.nextSub?.name ?? "no upcoming"}</p>
             </div>
             <div className="bg-slate-950/60 p-4">
               <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-slate-500">
                 <RiCheckDoubleLine className="size-3" /> on-chain
               </div>
-              <p className="mt-1 font-mono text-2xl font-semibold text-emerald-300">{onChainCount}</p>
+              <p className="mt-1 font-mono text-2xl font-semibold text-emerald-300">{agentStats.onChainCount}</p>
               <p className="text-[10px] text-slate-500">confirmed releases</p>
             </div>
           </div>
@@ -588,7 +596,6 @@ export default function DashboardPageContent() {
           )}
           </div>
         </div>
-        ) })()}
 
         {/* Recent Subscriptions */}
         <div className="mt-6 rounded-2xl border border-border bg-card shadow-sm">
