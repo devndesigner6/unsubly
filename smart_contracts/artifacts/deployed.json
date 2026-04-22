@@ -3,9 +3,28 @@
   "_fund_testnet": "https://bank.testnet.algorand.network/",
   "_fund_mainnet": "https://www.algorand.foundation/",
   "testnet": {
-    "ServiceRegistry":   { "appId": null, "appAddress": null, "deployed_at": null, "txid": null },
-    "AgentEscrowVaultV2_template": { "appId": null, "appAddress": null, "deployed_at": null, "txid": null, "_note": "Used as ARC-56 reference template; user vaults are still per-user-deployed." },
-    "NFTReceiptIssuer":  { "appId": null, "appAddress": null, "deployed_at": null, "txid": null, "_note": "Reserved — NFT receipts will be minted via inner-txn from each vault, not from a singleton issuer." }
+    "ServiceRegistry": {
+      "appId": 759205676,
+      "appAddress": "WKR4OXTB7SP77ATEKYUJUXA2IA5ENQ2FWUQX3BNAQAVH5ADJXV7RT6V2IM",
+      "deployed_at": "2026-04-22T06:55:00Z",
+      "txid": "6U4QHXQDITWVECUON5GNPRVVLXR5LFIV2KWINJSJSMJXU5ZKGSSA",
+      "lora_url": "https://lora.algokit.io/testnet/application/759205676"
+    },
+    "AgentEscrowVaultV2_template": {
+      "appId": 759205677,
+      "appAddress": "N2WCQAEMYQB2GPL2YSLRGPMQ63TFTM2WXGEBQBQMEJ3EM7F6PRB57S6XIY",
+      "deployed_at": "2026-04-22T06:55:00Z",
+      "txid": "LRNVQ6T2KGKFRW3GPEJRFGST3LIUT4GDKMPTUY23UMUXOVW7IQ3A",
+      "lora_url": "https://lora.algokit.io/testnet/application/759205677",
+      "_note": "Used as ARC-56 reference template; user vaults are still per-user-deployed."
+    },
+    "NFTReceiptIssuer": {
+      "appId": null,
+      "appAddress": null,
+      "deployed_at": null,
+      "txid": null,
+      "_note": "Reserved — NFT receipts are minted via inner-txn from each vault, not from a singleton issuer."
+    }
   },
   "mainnet": {
     "ServiceRegistry":   { "appId": null, "appAddress": null, "deployed_at": null, "txid": null },

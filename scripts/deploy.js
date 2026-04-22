@@ -99,8 +99,42 @@ async function compileTeal(algodClient, tealSource) {
   return Buffer.from(result.result, "base64")
 }
 
-async function deployContract(algodClient, senderAddress, senderSk, approvalBinary, clearBinary, config) {
+function loadArc56(name) {
+  const path = join(ARTIFACTS_DIR, name, `${name}.arc56.json`)
+  if (!existsSync(path)) return null
+  return JSON.parse(readFileSync(path, "utf-8"))
+}
+
+function buildCreateAppArgs(arc56, deployerAddress) {
+  // Find the ABI method that has create=NoOp action
+  const createMethod = arc56?.methods?.find(m => (m.actions?.create || []).includes("NoOp"))
+  if (!createMethod) return [] // bare create
+
+  const sigArgs = createMethod.args.map(a => a.type).join(",")
+  const signature = `${createMethod.name}(${sigArgs})${createMethod.returns?.type || "void"}`
+  const selector = new algosdk.ABIMethod({
+    name: createMethod.name,
+    args: createMethod.args,
+    returns: createMethod.returns || { type: "void" },
+  }).getSelector()
+
+  const encoded = createMethod.args.map(a => {
+    const t = algosdk.ABIType.from(a.type)
+    // Sensible defaults: addresses → deployer; uint64 → 0
+    if (a.type === "address") return t.encode(deployerAddress)
+    if (a.type.startsWith("uint")) return t.encode(BigInt(0))
+    if (a.type === "string") return t.encode("")
+    if (a.type === "bool") return t.encode(false)
+    return t.encode(BigInt(0))
+  })
+
+  console.log(`    ABI create: ${signature}`)
+  return [selector, ...encoded]
+}
+
+async function deployContract(algodClient, senderAddress, senderSk, approvalBinary, clearBinary, config, arc56) {
   const suggestedParams = await algodClient.getTransactionParams().do()
+  const appArgs = buildCreateAppArgs(arc56, senderAddress)
 
   const txn = algosdk.makeApplicationCreateTxnFromObject({
     sender: senderAddress,
@@ -112,6 +146,7 @@ async function deployContract(algodClient, senderAddress, senderSk, approvalBina
     numGlobalInts: config.numGlobalInts,
     numLocalByteSlices: config.numLocalBytes,
     numLocalInts: config.numLocalInts,
+    appArgs: appArgs.length ? appArgs : undefined,
   })
 
   const signedTxn = txn.signTxn(senderSk)
@@ -119,7 +154,8 @@ async function deployContract(algodClient, senderAddress, senderSk, approvalBina
   console.log(`    TxID: ${txid}`)
 
   const result = await algosdk.waitForConfirmation(algodClient, txid, 4)
-  return Number(result["application-index"])
+  const appIdx = result["application-index"] ?? result.applicationIndex
+  return Number(appIdx)
 }
 
 async function main() {
@@ -154,17 +190,30 @@ async function main() {
 
   const deployed = {}
 
-  for (const config of CONTRACT_CONFIGS) {
+  // Only deploy SINGLETON contracts here. Per-user vaults are created by each
+  // user from the UI signed by their own wallet.
+  const ONLY_SINGLETONS = process.env.DEPLOY_ALL !== "1"
+  const targets = ONLY_SINGLETONS
+    ? CONTRACT_CONFIGS.filter(c => c.singleton || c.template)
+    : CONTRACT_CONFIGS
+
+  console.log(`Deploying ${targets.length} contract(s)${ONLY_SINGLETONS ? " (singletons only — set DEPLOY_ALL=1 for all)" : ""}\n`)
+
+  for (const config of targets) {
     console.log(`\nDeploying ${config.name} (${config.description})...`)
     try {
       const approvalTeal = loadTeal(config.name, "approval")
       const clearTeal = loadTeal(config.name, "clear")
+      const arc56 = loadArc56(config.name)
 
       const approvalBinary = await compileTeal(algodClient, approvalTeal)
       const clearBinary = await compileTeal(algodClient, clearTeal)
 
-      const appId = await deployContract(algodClient, senderAddress, senderSk, approvalBinary, clearBinary, config)
-      const appAddress = algosdk.getApplicationAddress(appId)
+      const appId = await deployContract(algodClient, senderAddress, senderSk, approvalBinary, clearBinary, config, arc56)
+      const appAddrObj = algosdk.getApplicationAddress(appId)
+      const appAddress = typeof appAddrObj === "string"
+        ? appAddrObj
+        : algosdk.encodeAddress(appAddrObj.publicKey)
 
       deployed[config.name] = {
         app_id: appId,
