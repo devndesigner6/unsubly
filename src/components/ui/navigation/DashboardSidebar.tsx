@@ -13,48 +13,39 @@ import {
 } from "@/components/Sidebar"
 import { siteConfig } from "@/lib/siteConfig"
 import {
-  RiDashboardLine,
-  RiFileListLine,
-  RiCalendarLine,
-  RiPieChartLine,
-  RiSettings4Line,
-  RiFolderLine,
-  RiPriceTag3Line,
-  RiBankCardLine,
-  RiShieldLine,
-  RiFileChartLine,
-  RiExchangeLine,
-  RiSparklingLine,
-  RiStoreLine,
-} from "@remixicon/react"
+  DashboardMark, SubscriptionsMark, CalendarMark, AnalyticsMark,
+  FoldersMark, TagsMark, PaymentMark,
+  VaultsMark, OptimizerMark, RegistryMark, ResumeMark, TransactionsMark,
+  SettingsMark,
+} from "./SidebarIcons"
 import { Link, useLocation } from "react-router-dom"
 import * as React from "react"
 import { UserProfile } from "./UserProfile"
 import { useUpcomingCount } from "@/hooks/useUpcomingCount"
 
 const mainNavigation = [
-  { name: "Dashboard", href: siteConfig.baseLinks.dashboard, icon: RiDashboardLine },
-  { name: "Subscriptions", href: siteConfig.baseLinks.subscriptions, icon: RiFileListLine },
-  { name: "Calendar", href: siteConfig.baseLinks.calendar, icon: RiCalendarLine },
-  { name: "Analytics", href: siteConfig.baseLinks.analytics, icon: RiPieChartLine },
+  { name: "Dashboard", href: siteConfig.baseLinks.dashboard, icon: DashboardMark },
+  { name: "Subscriptions", href: siteConfig.baseLinks.subscriptions, icon: SubscriptionsMark },
+  { name: "Calendar", href: siteConfig.baseLinks.calendar, icon: CalendarMark },
+  { name: "Analytics", href: siteConfig.baseLinks.analytics, icon: AnalyticsMark },
 ] as const
 
 const organizationNavigation = [
-  { name: "Folders", href: "/folders", icon: RiFolderLine },
-  { name: "Tags", href: "/tags", icon: RiPriceTag3Line },
-  { name: "Payment Methods", href: "/payment-methods", icon: RiBankCardLine },
+  { name: "Folders", href: "/folders", icon: FoldersMark },
+  { name: "Tags", href: "/tags", icon: TagsMark },
+  { name: "Payment Methods", href: "/payment-methods", icon: PaymentMark },
 ] as const
 
 const algorandNavigation = [
-  { name: "Escrow Vaults", href: "/escrow-vaults", icon: RiShieldLine },
-  { name: "AI Optimizer", href: "/ai-optimizer", icon: RiSparklingLine },
-  { name: "Service Registry", href: "/service-registry", icon: RiStoreLine },
-  { name: "On-Chain Resume", href: "/onchain-resume", icon: RiFileChartLine },
-  { name: "Transactions", href: "/transactions", icon: RiExchangeLine },
+  { name: "Escrow Vaults", href: "/escrow-vaults", icon: VaultsMark },
+  { name: "AI Optimizer", href: "/ai-optimizer", icon: OptimizerMark },
+  { name: "Service Registry", href: "/service-registry", icon: RegistryMark },
+  { name: "On-Chain Resume", href: "/onchain-resume", icon: ResumeMark },
+  { name: "Transactions", href: "/transactions", icon: TransactionsMark },
 ] as const
 
 const settingsNavigation = [
-  { name: "Settings", href: siteConfig.baseLinks.settings, icon: RiSettings4Line },
+  { name: "Settings", href: siteConfig.baseLinks.settings, icon: SettingsMark },
 ] as const
 
 export function DashboardSidebar({

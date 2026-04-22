@@ -8,12 +8,14 @@ import {
 import { releaseEscrowFunds, killEscrowContract, deleteEscrowContract, fundEscrowContract } from "@/lib/algorand/contract"
 import {
   RiLockLine, RiLockUnlockLine, RiShieldLine, RiExternalLinkLine,
-  RiAlarmWarningLine, RiDeleteBinLine, RiCodeLine, RiTimeLine,
+  RiAlarmWarningLine, RiDeleteBinLine, RiTimeLine,
   RiGroupLine, RiCoinLine, RiCheckLine, RiRefreshLine, RiAddLine,
+  RiArrowDownSLine, RiArrowUpSLine,
 } from "@remixicon/react"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/lib/auth-context"
 import { toast } from "sonner"
+import { VaultTypeIllustration } from "./VaultTypeIllustration"
 
 interface EscrowVault {
   id: string
@@ -42,15 +44,6 @@ interface EscrowVaultCardProps {
   onUpdate: () => void
 }
 
-const VAULT_TYPE_ICON: Record<string, typeof RiLockLine> = {
-  standard:    RiLockLine,
-  agent:       RiShieldLine,
-  time_locked: RiTimeLine,
-  multi_sig:   RiGroupLine,
-  dispute:     RiShieldLine,
-  asa:         RiCoinLine,
-}
-
 export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
   const { user } = useAuth()
   const { walletAddress, algodClient, peraWallet, network } = useAlgorand()
@@ -62,9 +55,11 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
   const [loadingBalance, setLoadingBalance] = useState(false)
   const [showFundModal, setShowFundModal] = useState(false)
   const [fundAmount, setFundAmount] = useState("")
+  const [expanded, setExpanded] = useState(false)
 
   const isSmartContract = !!vault.app_id
   const vType = (vault.vault_type || "standard") as VaultType
+  const typeLabel = VAULT_TYPE_LABELS[vType]
 
   const fetchOnChainBalance = useCallback(async () => {
     if (!vault.app_address || !isSmartContract) return
@@ -83,6 +78,10 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
   useEffect(() => {
     fetchOnChainBalance()
   }, [fetchOnChainBalance])
+
+  const signTransaction = async (txn: any): Promise<Uint8Array[]> => {
+    return await peraWallet.signTransaction([[{ txn }]])
+  }
 
   const handleFund = async () => {
     const algoAmt = parseFloat(fundAmount)
@@ -115,28 +114,6 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
     }
   }
 
-  const VTypeIcon = VAULT_TYPE_ICON[vType] || RiShieldLine
-
-  const statusColors: Record<string, string> = {
-    locked: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
-    released: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-    killed: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
-    pending: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
-  }
-
-  const statusIcons: Record<string, typeof RiLockLine> = {
-    locked: RiLockLine,
-    released: RiLockUnlockLine,
-    killed: RiAlarmWarningLine,
-    pending: RiShieldLine,
-  }
-
-  const StatusIcon = statusIcons[vault.status] || RiShieldLine
-
-  const signTransaction = async (txn: any): Promise<Uint8Array[]> => {
-    return await peraWallet.signTransaction([[{ txn }]])
-  }
-
   const handleRelease = async () => {
     if (!walletAddress || !user || !vault.app_id) return
     setIsProcessing(true)
@@ -150,19 +127,14 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
         user_id: user.id, subscription_id: vault.subscription_id, algorand_txn_id: txnId,
         amount: vault.amount, sender_address: vault.app_address || walletAddress,
         recipient_address: vault.escrow_address || walletAddress,
-        note: `Payment released from ${VAULT_TYPE_LABELS[vType]} contract (App ${vault.app_id})`,
+        note: `Payment released from ${typeLabel} contract (App ${vault.app_id})`,
       } as any)
       setReleasedTxnId(txnId)
       toast.success("Funds released!", {
         description: (
           <span>
             {vault.amount} ALGO sent.{" "}
-            <a
-              href={getLoraTransactionUrl(txnId, network)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline font-medium"
-            >
+            <a href={getLoraTransactionUrl(txnId, network)} target="_blank" rel="noopener noreferrer" className="underline font-medium">
               View on Lora ↗
             </a>
           </span>
@@ -191,7 +163,7 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
       await supabase.from("onchain_payments" as any).insert({
         user_id: user.id, subscription_id: vault.subscription_id, algorand_txn_id: txnId,
         amount: 0, sender_address: vault.app_address || walletAddress, recipient_address: walletAddress,
-        note: `Kill switch activated on ${VAULT_TYPE_LABELS[vType]} contract (App ${vault.app_id})`,
+        note: `Kill switch activated on ${typeLabel} contract (App ${vault.app_id})`,
       } as any)
       toast.success("Kill switch activated", { description: "Funds returned to your wallet" })
       onUpdate()
@@ -217,11 +189,10 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
       const msg: string = err?.message || ""
       const isAssertFail = msg.includes("assert") || msg.includes("logic eval") || msg.includes("opcodes")
       const isUserRejected = msg.toLowerCase().includes("rejected") || msg.toLowerCase().includes("cancel")
-
       if (isAssertFail) {
         await supabase.from("escrow_vaults" as any).delete().eq("id", vault.id)
         toast.warning("Removed from your vault list", {
-          description: "The on-chain contract could not be deleted (wallet mismatch or already settled). Your 0.1 ALGO min-balance remains on-chain.",
+          description: "The on-chain contract could not be deleted (wallet mismatch or already settled).",
           duration: 8000,
         })
         onUpdate()
@@ -239,192 +210,85 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
   const activeTxnId = releasedTxnId || (vault.status !== "locked" ? vault.txn_id : null)
 
   return (
-    <div className="rounded-xl border border-border bg-card p-5 transition-shadow hover:shadow-md">
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-3">
-          {vault.subscription?.logo ? (
-            <img src={vault.subscription.logo} alt={vault.subscription.name} className="size-10 rounded-lg object-cover" />
-          ) : (
-            <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10">
-              <VTypeIcon className="size-5 text-primary" />
-            </div>
-          )}
-          <div>
-            <h3 className="text-sm font-semibold text-foreground">
+    <div className="rounded-3xl bg-card shadow-[0_8px_30px_-8px_rgba(0,0,0,0.12)] ring-1 ring-black/5 overflow-hidden flex flex-col transition-shadow hover:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.18)]">
+      {/* Hero illustration */}
+      <div className="relative p-3">
+        <VaultTypeIllustration type={vType} status={vault.status} className="h-44 w-full" />
+        {/* Floating CTA pill on hero (like reference "Directions" button) */}
+        <div className="absolute bottom-5 right-5">
+          <button
+            type="button"
+            onClick={() => setExpanded((e) => !e)}
+            aria-expanded={expanded}
+            aria-controls={`vault-details-${vault.id}`}
+            className="rounded-full bg-black/55 px-4 py-2 text-xs font-semibold text-white backdrop-blur-md ring-1 ring-white/15 transition-colors hover:bg-black/70"
+          >
+            {expanded ? "Collapse" : "Details"}
+          </button>
+        </div>
+        {/* Type badge bottom-left of hero */}
+        <div className="absolute bottom-5 left-5">
+          <div className="text-white drop-shadow">
+            <p className="text-[11px] font-semibold uppercase tracking-wider opacity-80">
+              {typeLabel}
+            </p>
+            <p className="text-base font-bold leading-tight">
               {vault.subscription?.name || "Subscription Vault"}
-            </h3>
-            <div className="flex items-center gap-1.5">
-              {isSmartContract && onChainBalance !== null ? (
-                <p className="text-xs font-medium text-foreground">
-                  {microalgosToAlgo(onChainBalance).toFixed(6)} ALGO
-                  <span className="ml-1 text-primary/70 font-normal">(on-chain)</span>
-                </p>
-              ) : (
-                <p className="text-xs text-muted-foreground">
-                  {vault.amount} {vault.currency}
-                </p>
-              )}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Compact body */}
+      <div className="px-5 pb-5">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-xs font-medium text-muted-foreground">
+              {isSmartContract ? "On-chain balance" : "Amount"}
+            </p>
+            <div className="mt-0.5 flex items-baseline gap-1">
+              <span className="text-xl font-bold text-foreground tabular-nums">
+                {isSmartContract && onChainBalance !== null
+                  ? microalgosToAlgo(onChainBalance).toFixed(4)
+                  : Number(vault.amount).toFixed(4)}
+              </span>
+              <span className="text-xs font-medium text-muted-foreground">{vault.currency}</span>
               {isSmartContract && (
                 <button
                   onClick={() => fetchOnChainBalance()}
                   disabled={loadingBalance}
-                  className="text-muted-foreground hover:text-primary transition-colors"
+                  className="ml-1 text-muted-foreground hover:text-primary"
                   title="Refresh on-chain balance"
                 >
-                  <RiRefreshLine className={`size-3 ${loadingBalance ? "animate-spin" : ""}`} />
+                  <RiRefreshLine className={`size-3.5 ${loadingBalance ? "animate-spin" : ""}`} />
                 </button>
               )}
             </div>
           </div>
-        </div>
-        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${statusColors[vault.status]}`}>
-          <StatusIcon className="size-3" />
-          {vault.status.charAt(0).toUpperCase() + vault.status.slice(1)}
-        </span>
-      </div>
 
-      {isSmartContract && (
-        <div className="mt-2 flex items-center gap-1.5 text-xs text-primary flex-wrap">
-          <RiCodeLine className="size-3" />
-          <span className="font-medium">{VAULT_TYPE_LABELS[vType]} Contract</span>
-          <span className="text-muted-foreground">•</span>
-          <a
-            href={getLoraApplicationUrl(vault.app_id!, network)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-0.5 text-primary hover:text-primary/80"
-          >
-            App #{vault.app_id} <RiExternalLinkLine className="size-2.5" />
-          </a>
-          {vault.app_address && (
-            <>
-              <span className="text-muted-foreground">•</span>
-              <a
-                href={getLoraAddressUrl(vault.app_address, network)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-0.5 text-muted-foreground hover:text-primary"
-              >
-                {shortenAddress(vault.app_address, 4)} <RiExternalLinkLine className="size-2.5" />
-              </a>
-            </>
-          )}
-        </div>
-      )}
-
-      {/* Type-specific info */}
-      {vType === "time_locked" && vault.unlock_time && (
-        <div className="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground">
-          <RiTimeLine className="size-3" />
-          Unlocks: {new Date(vault.unlock_time).toLocaleString()}
-        </div>
-      )}
-      {vType === "multi_sig" && vault.co_signer_address && (
-        <div className="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground">
-          <RiGroupLine className="size-3" />
-          Co-signer: {shortenAddress(vault.co_signer_address)}
-        </div>
-      )}
-      {vType === "dispute" && vault.arbitrator_address && (
-        <div className="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground">
-          <RiShieldLine className="size-3" />
-          Arbitrator: {shortenAddress(vault.arbitrator_address)}
-        </div>
-      )}
-      {vType === "asa" && vault.asset_id && (
-        <div className="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground">
-          <RiCoinLine className="size-3" />
-          ASA ID: {vault.asset_id}
-        </div>
-      )}
-      {vType === "agent" && (
-        <div className="mt-1.5 flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
-          <RiShieldLine className="size-3" />
-          Autonomous agent release enabled
-        </div>
-      )}
-
-      {/* Lora release banner — shown immediately after release or for already-released vaults */}
-      {(vault.status === "released" || releasedTxnId) && activeTxnId && (
-        <div className="mt-3 flex items-start gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2.5 dark:border-green-800/40 dark:bg-green-900/20">
-          <RiCheckLine className="mt-0.5 size-3.5 shrink-0 text-green-600 dark:text-green-400" />
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-green-800 dark:text-green-300">
-              Funds released on-chain
+          {/* Quick stats column */}
+          <div className="text-right text-xs text-muted-foreground">
+            <p>Created</p>
+            <p className="mt-0.5 font-medium text-foreground">
+              {new Date(vault.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
             </p>
-            <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
-              <a
-                href={getLoraTransactionUrl(activeTxnId, network)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-0.5 font-semibold text-green-700 hover:text-green-900 dark:text-green-400 dark:hover:text-green-200"
-              >
-                View on Lora <RiExternalLinkLine className="size-3" />
-              </a>
-              <span className="text-green-600/50 dark:text-green-500/50">|</span>
-              <span className="font-mono text-green-600 dark:text-green-500">
-                {shortenAddress(activeTxnId, 6)}
-              </span>
-            </div>
           </div>
         </div>
-      )}
 
-      {action && (
-        <div className="mt-3 rounded-md bg-primary/5 border border-primary/20 px-3 py-2">
-          <p className="text-xs text-primary font-medium animate-pulse">{action}</p>
-        </div>
-      )}
-
-      {confirmAction && (
-        <div className="mt-3 rounded-md bg-destructive/5 border border-destructive/20 px-3 py-3">
-          <p className="text-xs text-destructive font-medium mb-2">
-            {confirmAction === "kill"
-              ? "Are you sure? This will return all funds to your wallet and cannot be undone."
-              : "Are you sure? This will delete the contract from the blockchain."}
-          </p>
-          <div className="flex gap-2">
-            <button
-              onClick={confirmAction === "kill" ? handleKillSwitch : handleDelete}
-              className="rounded-md bg-destructive px-3 py-1.5 text-xs font-medium text-destructive-foreground"
-            >
-              Confirm
-            </button>
-            <button
-              onClick={() => setConfirmAction(null)}
-              className="rounded-md bg-muted px-3 py-1.5 text-xs font-medium text-foreground"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
-      {vault.status === "locked" && isSmartContract && !confirmAction && (
-        <div className="mt-4 space-y-2">
-          {vType === "agent" && (
-            <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 dark:border-green-800/40 dark:bg-green-900/20">
-              <p className="text-xs font-medium text-green-700 dark:text-green-300">
-                Agent will auto-release on billing date
-              </p>
-              <p className="mt-0.5 text-xs text-green-600/70 dark:text-green-400/70">
-                You can also release manually below, or Kill to reclaim your ALGO.
-              </p>
-            </div>
-          )}
-          <div className="flex gap-2">
+        {/* Inline action row (locked vaults) */}
+        {vault.status === "locked" && isSmartContract && !confirmAction && (
+          <div className="mt-4 flex gap-2">
             <button
               onClick={handleRelease}
               disabled={isProcessing || !walletAddress}
-              className="flex-1 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+              className="flex-1 rounded-lg bg-foreground px-3 py-2 text-xs font-semibold text-background transition-colors hover:bg-foreground/90 disabled:opacity-50"
             >
               {isProcessing ? "Processing…" : "Release Payment"}
             </button>
             <button
               onClick={() => setShowFundModal(true)}
               disabled={isProcessing || !walletAddress}
-              className="flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-50"
+              className="flex items-center gap-1 rounded-lg border border-border bg-background px-3 py-2 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-50"
             >
               <RiAddLine className="size-3.5" />
               Fund
@@ -432,73 +296,193 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
             <button
               onClick={() => setConfirmAction("kill")}
               disabled={isProcessing}
-              className="flex items-center gap-1.5 rounded-lg bg-destructive px-3 py-2 text-xs font-medium text-destructive-foreground transition-colors hover:bg-destructive/90 disabled:opacity-50"
+              className="flex items-center gap-1 rounded-lg bg-destructive px-3 py-2 text-xs font-semibold text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
             >
               <RiAlarmWarningLine className="size-3.5" />
               Kill
             </button>
           </div>
-        </div>
-      )}
+        )}
 
-      {showFundModal && (
-        <div className="mt-3 rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
-          <p className="text-xs font-medium text-foreground">Add ALGO to vault on-chain</p>
-          <div className="flex gap-2">
-            <input
-              type="number"
-              min="0.001"
-              step="0.001"
-              placeholder="Amount (ALGO)"
-              value={fundAmount}
-              onChange={e => setFundAmount(e.target.value)}
-              className="flex-1 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-            />
-            <button
-              onClick={handleFund}
-              disabled={!fundAmount || parseFloat(fundAmount) <= 0}
-              className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50"
-            >
-              Send
-            </button>
-            <button
-              onClick={() => { setShowFundModal(false); setFundAmount("") }}
-              className="rounded-md bg-muted px-3 py-1.5 text-xs font-medium text-foreground"
-            >
-              Cancel
-            </button>
+        {/* Status banners */}
+        {(vault.status === "released" || releasedTxnId) && activeTxnId && (
+          <div className="mt-3 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs dark:border-emerald-900/40 dark:bg-emerald-900/20">
+            <RiCheckLine className="size-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+            <a href={getLoraTransactionUrl(activeTxnId, network)} target="_blank" rel="noopener noreferrer"
+              className="font-semibold text-emerald-700 dark:text-emerald-300 hover:underline">
+              View release on Lora ↗
+            </a>
           </div>
-        </div>
-      )}
+        )}
 
-      {vault.status === "locked" && !isSmartContract && (
-        <div className="mt-3 rounded-md bg-muted/50 border border-border px-3 py-2">
-          <p className="text-xs text-muted-foreground">Legacy vault (no on-chain contract)</p>
-        </div>
-      )}
+        {action && (
+          <div className="mt-3 rounded-md bg-primary/5 border border-primary/20 px-3 py-2">
+            <p className="text-xs text-primary font-medium animate-pulse">{action}</p>
+          </div>
+        )}
 
-      {(vault.status === "released" || vault.status === "killed") && isSmartContract && !confirmAction && (
-        <div className="mt-3">
-          <button
-            onClick={() => setConfirmAction("delete")}
-            disabled={isProcessing || !walletAddress}
-            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors"
-          >
-            <RiDeleteBinLine className="size-3.5" />
-            Delete Contract (reclaim MBR)
-          </button>
-        </div>
-      )}
+        {confirmAction && (
+          <div className="mt-3 rounded-md border border-destructive/20 bg-destructive/5 px-3 py-3">
+            <p className="text-xs font-medium text-destructive mb-2">
+              {confirmAction === "kill"
+                ? "Are you sure? This returns all funds to your wallet and cannot be undone."
+                : "Are you sure? This deletes the contract from the blockchain."}
+            </p>
+            <div className="flex gap-2">
+              <button onClick={confirmAction === "kill" ? handleKillSwitch : handleDelete}
+                className="rounded-md bg-destructive px-3 py-1.5 text-xs font-semibold text-destructive-foreground">
+                Confirm
+              </button>
+              <button onClick={() => setConfirmAction(null)}
+                className="rounded-md bg-muted px-3 py-1.5 text-xs font-medium text-foreground">
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
 
-      <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-        <span>
-          Created {new Date(vault.created_at).toLocaleDateString()}
-          {vault.released_at && ` • ${vault.status === "killed" ? "Killed" : "Released"} ${new Date(vault.released_at).toLocaleDateString()}`}
-        </span>
-        <Link to={`/escrow-vaults/${vault.id}`} className="font-medium text-primary hover:text-primary/80 transition-colors">
-          Details →
-        </Link>
+        {showFundModal && (
+          <div className="mt-3 rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
+            <p className="text-xs font-medium text-foreground">Add ALGO to vault on-chain</p>
+            <div className="flex gap-2">
+              <input
+                type="number" min="0.001" step="0.001" placeholder="Amount (ALGO)"
+                value={fundAmount} onChange={e => setFundAmount(e.target.value)}
+                className="flex-1 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs text-foreground"
+              />
+              <button onClick={handleFund} disabled={!fundAmount || parseFloat(fundAmount) <= 0}
+                className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50">
+                Send
+              </button>
+              <button onClick={() => { setShowFundModal(false); setFundAmount("") }}
+                className="rounded-md bg-muted px-3 py-1.5 text-xs font-medium text-foreground">
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* === Inline expanded panel — pushes neighbors down via grid auto-rows === */}
+        {expanded && (
+          <div id={`vault-details-${vault.id}`} role="region" aria-label="Vault details" className="mt-5 border-t border-border pt-4 space-y-3">
+            <div className="grid grid-cols-3 gap-3 text-xs">
+              <Stat label="Network" value={network === "mainnet" ? "MainNet" : "TestNet"} />
+              <Stat label="Currency" value={vault.currency} />
+              <Stat label="Status" value={vault.status} capitalize />
+            </div>
+
+            {isSmartContract && (
+              <div className="rounded-lg bg-muted/50 p-3 space-y-1.5 text-xs">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-muted-foreground">App ID</span>
+                  <a href={getLoraApplicationUrl(vault.app_id!, network)} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 font-mono font-medium text-primary hover:underline">
+                    #{vault.app_id} <RiExternalLinkLine className="size-3" />
+                  </a>
+                </div>
+                {vault.app_address && (
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-muted-foreground">App address</span>
+                    <a href={getLoraAddressUrl(vault.app_address, network)} target="_blank" rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 font-mono font-medium text-foreground hover:text-primary">
+                      {shortenAddress(vault.app_address, 6)} <RiExternalLinkLine className="size-3" />
+                    </a>
+                  </div>
+                )}
+                {vault.escrow_address && (
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-muted-foreground">Recipient</span>
+                    <span className="font-mono font-medium text-foreground">
+                      {shortenAddress(vault.escrow_address, 6)}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Type-specific real-data row */}
+            {vType === "time_locked" && vault.unlock_time && (
+              <DetailRow icon={RiTimeLine} label="Unlocks" value={new Date(vault.unlock_time).toLocaleString()} />
+            )}
+            {vType === "multi_sig" && vault.co_signer_address && (
+              <DetailRow icon={RiGroupLine} label="Co-signer" value={shortenAddress(vault.co_signer_address)} />
+            )}
+            {vType === "dispute" && vault.arbitrator_address && (
+              <DetailRow icon={RiShieldLine} label="Arbitrator" value={shortenAddress(vault.arbitrator_address)} />
+            )}
+            {vType === "asa" && vault.asset_id && (
+              <DetailRow icon={RiCoinLine} label="ASA ID" value={String(vault.asset_id)} />
+            )}
+            {vType === "agent" && (
+              <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs dark:border-emerald-900/40 dark:bg-emerald-900/20">
+                <RiShieldLine className="size-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span className="text-emerald-700 dark:text-emerald-300">
+                  Autonomous agent will release this vault automatically on the billing date.
+                </span>
+              </div>
+            )}
+
+            {vault.released_at && (
+              <p className="text-xs text-muted-foreground">
+                {vault.status === "killed" ? "Killed" : "Released"} on {new Date(vault.released_at).toLocaleString()}
+              </p>
+            )}
+
+            {(vault.status === "released" || vault.status === "killed") && isSmartContract && !confirmAction && (
+              <button
+                onClick={() => setConfirmAction("delete")}
+                disabled={isProcessing || !walletAddress}
+                className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors"
+              >
+                <RiDeleteBinLine className="size-3.5" />
+                Delete contract (reclaim MBR)
+              </button>
+            )}
+
+            {vault.status === "locked" && !isSmartContract && (
+              <div className="rounded-md bg-muted/50 border border-border px-3 py-2">
+                <p className="text-xs text-muted-foreground">Legacy vault (no on-chain contract)</p>
+              </div>
+            )}
+
+            <Link to={`/escrow-vaults/${vault.id}`}
+              className="block text-center text-xs font-medium text-primary hover:underline">
+              Open full details →
+            </Link>
+          </div>
+        )}
+
+        {/* Expand chevron at bottom always */}
+        <button
+          type="button"
+          onClick={() => setExpanded((e) => !e)}
+          aria-expanded={expanded}
+          aria-controls={`vault-details-${vault.id}`}
+          aria-label={expanded ? "Collapse vault details" : "Expand vault details"}
+          className="mt-3 flex w-full items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+        >
+          {expanded ? <RiArrowUpSLine className="size-5" /> : <RiArrowDownSLine className="size-5" />}
+        </button>
       </div>
+    </div>
+  )
+}
+
+function Stat({ label, value, capitalize }: { label: string; value: string; capitalize?: boolean }) {
+  return (
+    <div className="rounded-lg bg-muted/40 px-2.5 py-2">
+      <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
+      <p className={`mt-0.5 text-xs font-semibold text-foreground ${capitalize ? "capitalize" : ""}`}>{value}</p>
+    </div>
+  )
+}
+
+function DetailRow({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
+  return (
+    <div className="flex items-center gap-2 text-xs">
+      <Icon className="size-3.5 text-muted-foreground" />
+      <span className="text-muted-foreground">{label}:</span>
+      <span className="font-medium text-foreground">{value}</span>
     </div>
   )
 }
