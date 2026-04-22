@@ -317,7 +317,24 @@ export async function agentRunHandler(req, res) {
       return jsonRes(res, 200, { success: true, message: "No active subscriptions", released: 0, checked: 0 })
     }
 
-    const subIds = activeSubs.map((s) => s.id)
+    // Only act on subscriptions that are actually due today or earlier. Releasing
+    // a vault before the billing date would be a real bug — funds would leave
+    // the user's escrow a day (or a month) early.
+    const todayISO = new Date().toISOString().slice(0, 10)
+    const dueSubs = activeSubs.filter((s) => !s.next_billing_date || s.next_billing_date <= todayISO)
+    const notYetDue = activeSubs.length - dueSubs.length
+
+    if (!dueSubs.length) {
+      return jsonRes(res, 200, {
+        success: true,
+        message: notYetDue > 0
+          ? `${notYetDue} subscription${notYetDue !== 1 ? "s" : ""} found but none are due yet.`
+          : "No active subscriptions",
+        released: 0, checked: activeSubs.length, not_yet_due: notYetDue,
+      })
+    }
+
+    const subIds = dueSubs.map((s) => s.id)
     const { data: vaults } = await supabase
       .from("escrow_vaults")
       .select("id, app_id, subscription_id, amount, vault_type")
@@ -325,7 +342,11 @@ export async function agentRunHandler(req, res) {
       .eq("status", "locked")
 
     if (!vaults?.length) {
-      return jsonRes(res, 200, { success: true, message: "No locked vaults", released: 0, checked: activeSubs.length })
+      return jsonRes(res, 200, {
+        success: true,
+        message: "No locked vaults for due subscriptions",
+        released: 0, checked: activeSubs.length, not_yet_due: notYetDue,
+      })
     }
 
     const mnemonic = process.env.AGENT_WALLET_MNEMONIC
