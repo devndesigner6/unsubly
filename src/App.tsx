@@ -37,7 +37,6 @@ import OnChainResumePage from "@/pages/dashboard/OnChainResumePage"
 import TransactionHistoryPage from "@/pages/dashboard/TransactionHistoryPage"
 import AIOptimizerPage from "@/pages/dashboard/AIOptimizerPage"
 import CoSignerApprovalPage from "@/pages/CoSignerApprovalPage"
-import PublicResumePage from "@/pages/PublicResumePage"
 import NotFoundPage from "@/pages/NotFoundPage"
 
 // Fetch live exchange rates once at startup — fire and forget, falls back to static rates
@@ -88,7 +87,6 @@ export default function App() {
 
             {/* Public / no-auth routes */}
             <Route path="/auth/callback" element={<AuthCallbackPage />} />
-            <Route path="/resume/:token" element={<PublicResumePage />} />
             <Route path="/vault-approve/:vaultId" element={<CoSignerApprovalPage />} />
 
             {/* Auth */}

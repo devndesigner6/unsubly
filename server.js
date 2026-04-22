@@ -1,10 +1,22 @@
-const http = require("http")
-const fs   = require("fs")
-const path = require("path")
+import http from "http"
+import fs from "fs"
+import path from "path"
+import { fileURLToPath, pathToFileURL } from "url"
+
+import {
+  aiOptimizerHandler,
+  agentRunHandler,
+  advanceBillingHandler,
+  agentRegistryHandler,
+} from "./server/handlers.mjs"
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname  = path.dirname(__filename)
 
 const DIST = path.join(__dirname, "dist")
 const PORT = process.env.PORT || 3000
 const START_TIME = Date.now()
+const TRUST_PROXY_HOPS = Number(process.env.TRUST_PROXY_HOPS || "1")
 
 // ── MIME types ──────────────────────────────────────────────────────────────
 const MIME = {
@@ -26,7 +38,7 @@ const MIME = {
   ".webmanifest": "application/manifest+json",
 }
 
-// ── Security headers applied to every response ──────────────────────────────
+// ── Security headers ────────────────────────────────────────────────────────
 const SECURITY_HEADERS = {
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "SAMEORIGIN",
@@ -36,27 +48,22 @@ const SECURITY_HEADERS = {
   "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
 }
 
-// ── Rate limiter (sliding window, per IP) ────────────────────────────────────
-// 200 requests per 60-second window per IP.
-const RATE_WINDOW_MS  = 60_000
-const RATE_LIMIT      = 200
-const rateLedger      = new Map() // ip → { count, windowStart }
+// ── Per-IP rate limiter ─────────────────────────────────────────────────────
+const RATE_WINDOW_MS = 60_000
+const RATE_LIMIT     = 200
+const rateLedger     = new Map()
 
 function isRateLimited(ip) {
-  const now  = Date.now()
+  const now = Date.now()
   const entry = rateLedger.get(ip)
-
   if (!entry || now - entry.windowStart >= RATE_WINDOW_MS) {
     rateLedger.set(ip, { count: 1, windowStart: now })
     return false
   }
-
   entry.count++
-  if (entry.count > RATE_LIMIT) return true
-  return false
+  return entry.count > RATE_LIMIT
 }
 
-// Clean stale entries every 5 minutes so the Map doesn't grow forever
 setInterval(() => {
   const now = Date.now()
   for (const [ip, entry] of rateLedger.entries()) {
@@ -64,26 +71,52 @@ setInterval(() => {
   }
 }, 5 * 60_000)
 
-// ── Helper: write headers + security headers ─────────────────────────────────
 function respond(res, status, extraHeaders, body) {
   res.writeHead(status, { ...SECURITY_HEADERS, ...extraHeaders })
   if (body !== undefined) res.end(body)
 }
 
-// ── Helper: get real client IP ───────────────────────────────────────────────
+/**
+ * Get the real client IP, trusting only the FIRST `TRUST_PROXY_HOPS` entries
+ * of X-Forwarded-For (the trusted proxy chain). Anything beyond that is
+ * client-supplied and easily spoofed, so it's discarded.
+ */
 function getIP(req) {
-  return (
-    req.headers["x-forwarded-for"]?.split(",")[0].trim() ||
-    req.socket?.remoteAddress ||
-    "unknown"
-  )
+  const xff = req.headers["x-forwarded-for"]
+  if (xff && TRUST_PROXY_HOPS > 0) {
+    const chain = String(xff).split(",").map((s) => s.trim()).filter(Boolean)
+    // Walk back from the right (closest proxy) the number of hops we trust
+    const trustedIdx = Math.max(0, chain.length - TRUST_PROXY_HOPS)
+    return chain[trustedIdx] || req.socket?.remoteAddress || "unknown"
+  }
+  return req.socket?.remoteAddress || "unknown"
 }
 
-// ── Server ───────────────────────────────────────────────────────────────────
-const server = http.createServer(function (req, res) {
+// ── Wrap an async handler so its errors don't crash the server ──────────────
+function wrap(handler) {
+  return async (req, res) => {
+    try {
+      await handler(req, res)
+    } catch (err) {
+      console.error("[handler] uncaught:", err)
+      if (!res.headersSent) {
+        respond(res, 500, { "Content-Type": "application/json" },
+          JSON.stringify({ error: "Internal server error" }))
+      }
+    }
+  }
+}
+
+const apiRoutes = {
+  "/api/ai-optimizer":   wrap(aiOptimizerHandler),
+  "/api/agent-run":      wrap(agentRunHandler),
+  "/api/advance-billing":wrap(advanceBillingHandler),
+  "/api/agent/registry": wrap(agentRegistryHandler),
+}
+
+const server = http.createServer(async function (req, res) {
   const ip = getIP(req)
 
-  // Rate limiting
   if (isRateLimited(ip)) {
     respond(res, 429, { "Content-Type": "application/json", "Retry-After": "60" },
       JSON.stringify({ error: "Too many requests. Please wait a moment." }))
@@ -92,26 +125,27 @@ const server = http.createServer(function (req, res) {
 
   let urlPath = req.url.split("?")[0]
 
-  // ── Health / monitoring endpoint ─────────────────────────────────────────
+  // ── Health endpoint ─────────────────────────────────────────────────────
   if (urlPath === "/api/health") {
-    const uptimeSeconds = Math.floor((Date.now() - START_TIME) / 1000)
-    const payload = {
-      status: "ok",
-      uptime: uptimeSeconds,
-      timestamp: new Date().toISOString(),
-      version: process.env.npm_package_version || "unknown",
-      node: process.version,
-    }
+    const uptime = Math.floor((Date.now() - START_TIME) / 1000)
     respond(res, 200, { "Content-Type": "application/json", "Cache-Control": "no-store" },
-      JSON.stringify(payload))
+      JSON.stringify({
+        status: "ok", uptime, timestamp: new Date().toISOString(),
+        version: process.env.npm_package_version || "unknown", node: process.version,
+      }))
     return
   }
 
-  // ── Static file serving ──────────────────────────────────────────────────
+  // ── API routes ──────────────────────────────────────────────────────────
+  if (apiRoutes[urlPath]) {
+    // Apply security headers but let the handler control content-type
+    for (const [k, v] of Object.entries(SECURITY_HEADERS)) res.setHeader(k, v)
+    return apiRoutes[urlPath](req, res)
+  }
+
+  // ── Static file serving ─────────────────────────────────────────────────
   if (urlPath === "/") urlPath = "/index.html"
   const filePath = path.join(DIST, urlPath)
-
-  // Directory traversal guard
   if (!filePath.startsWith(DIST)) {
     respond(res, 403, {}, "Forbidden")
     return
@@ -150,7 +184,8 @@ const server = http.createServer(function (req, res) {
   }
 })
 
-server.listen(PORT, "0.0.0.0", function () {
+server.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`)
-  console.log(`Health check: http://0.0.0.0:${PORT}/api/health`)
+  console.log(`Health: http://0.0.0.0:${PORT}/api/health`)
+  console.log(`Trusting ${TRUST_PROXY_HOPS} proxy hop(s) for client IP detection`)
 })

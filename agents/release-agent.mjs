@@ -17,11 +17,15 @@ const DEFAULT_ALGOD = NETWORK === "mainnet"
   ? "https://mainnet-api.algonode.cloud"
   : "https://testnet-api.algonode.cloud"
 
-const SUPABASE_URL   = process.env.SUPABASE_URL || "https://ipnywrvwszqlaykbkske.supabase.co"
-const SUPABASE_ANON  = process.env.SUPABASE_ANON_KEY ||
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlwbnl3cnZ3c3pxbGF5a2Jrc2tlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4OTg0NDksImV4cCI6MjA4ODQ3NDQ0OX0.xUcUpKQ52PVFGAjKokKDwhf9p8RZYmEOgMmu7HAm-sk"
+const SUPABASE_URL   = process.env.SUPABASE_URL
+const SUPABASE_ANON  = process.env.SUPABASE_ANON_KEY
 const ALGOD_URL      = process.env.ALGOD_URL || DEFAULT_ALGOD
 const AGENT_MNEMONIC = process.env.AGENT_WALLET_MNEMONIC
+
+if (!SUPABASE_URL || !SUPABASE_ANON) {
+  console.error("FATAL: SUPABASE_URL and SUPABASE_ANON_KEY must be set as environment variables / GitHub Action secrets")
+  process.exit(1)
+}
 
 // ARC-4 method selectors (sha512_256 of signature, first 4 bytes)
 const SEL_RELEASE = new Uint8Array([0x07, 0x6b, 0xbd, 0x4d]) // release()void
@@ -252,14 +256,30 @@ async function main() {
         { status: "released", released_at: new Date().toISOString(), txn_id: txId }
       )
 
-      // Advance subscription billing date
+      // Advance subscription billing date — respect the actual billing cycle.
       if (vault.subscription_id) {
-        const nextDate = new Date()
-        nextDate.setMonth(nextDate.getMonth() + 1)
-        await supabasePatch(
-          `subscriptions?id=eq.${vault.subscription_id}`,
-          { next_billing_date: nextDate.toISOString().split("T")[0], last_billed_at: new Date().toISOString() }
-        ).catch(() => {})
+        try {
+          const subRows = await supabaseGet(
+            `subscriptions?id=eq.${vault.subscription_id}&select=billing_cycle,next_billing_date`
+          )
+          const subRow = Array.isArray(subRows) ? subRows[0] : null
+          const cycle = subRow?.billing_cycle || "monthly"
+          const baseStr = subRow?.next_billing_date || new Date().toISOString().split("T")[0]
+          const next = new Date(baseStr + "T00:00:00")
+          switch (cycle) {
+            case "weekly":    next.setDate(next.getDate() + 7); break
+            case "quarterly": next.setMonth(next.getMonth() + 3); break
+            case "yearly":    next.setFullYear(next.getFullYear() + 1); break
+            case "monthly":
+            default:          next.setMonth(next.getMonth() + 1); break
+          }
+          await supabasePatch(
+            `subscriptions?id=eq.${vault.subscription_id}`,
+            { next_billing_date: next.toISOString().split("T")[0], last_billed_at: new Date().toISOString() }
+          )
+        } catch (advErr) {
+          console.warn(`  ⚠ Could not advance billing date: ${advErr.message}`)
+        }
       }
 
       console.log(`  DB sync: ${dbStatus === 204 ? "ok" : `status ${dbStatus}`}`)

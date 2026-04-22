@@ -340,8 +340,22 @@ export async function mintNFTReceipt(
   const signedTxns = await signTransaction(txn)
   const sendResponse = await algodClient.sendRawTransaction(signedTxns[0]).do()
   const txnId = extractTxId(sendResponse)
-  const result = await algosdk.waitForConfirmation(algodClient, txnId, 4)
-  const assetId = Number((result as any)["asset-index"] ?? (result as any).assetIndex ?? 0)
+  const result = await algosdk.waitForConfirmation(algodClient, txnId, 4) as any
+  // algosdk v3 returns assetIndex as a bigint at multiple possible paths
+  const rawId =
+    result?.assetIndex ??
+    result?.["asset-index"] ??
+    result?.applicationIndex ??
+    result?.["application-index"] ??
+    result?.["created-asset-index"] ??
+    0
+  const assetId = typeof rawId === "bigint" ? Number(rawId) : Number(rawId)
+  if (!assetId) {
+    throw new Error(
+      `NFT receipt minted but assetId could not be parsed from confirmation. txnId=${txnId}. ` +
+      `Inspect the txn on Lora to retrieve the asset id manually.`
+    )
+  }
   return { assetId, txnId }
 }
 

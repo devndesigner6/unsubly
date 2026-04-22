@@ -128,15 +128,34 @@ To get a local copy up and running, follow these steps.
    ```env
    VITE_SUPABASE_URL=your_supabase_url
    VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_anon_key
+   GROQ_API_KEY=your_groq_api_key
    AGENT_WALLET_MNEMONIC=your_25_word_algorand_mnemonic
+   # Set after you deploy ServiceRegistry to testnet:
+   SERVICE_REGISTRY_APP_ID=
    ```
-4. Start the dev server
+4. Start the dev server (binds 0.0.0.0:5000 — works on both localhost and Replit)
    ```sh
    npm run dev
    ```
-5. To recompile smart contracts (optional, pre-compiled artifacts are included)
+5. (Optional) recompile smart contracts. Includes the new v2 + registry contracts:
    ```sh
-   algokit compile py smart_contracts/
+   algokit compile py smart_contracts/escrow
+   algokit compile py smart_contracts/agent_escrow
+   algokit compile py smart_contracts/agent_escrow_v2
+   algokit compile py smart_contracts/service_registry
+   algokit compile py smart_contracts/time_locked
+   algokit compile py smart_contracts/multi_sig
+   algokit compile py smart_contracts/dispute
+   algokit compile py smart_contracts/asa_escrow
+   ```
+6. Deploy contracts (requires a funded testnet account):
+   ```sh
+   TESTNET_MNEMONIC="..." node scripts/deploy.js
+   ```
+7. Production build + serve:
+   ```sh
+   npm run build
+   npm run start
    ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
