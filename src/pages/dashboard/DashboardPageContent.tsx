@@ -31,6 +31,7 @@ export default function DashboardPageContent() {
   const [agentActions, setAgentActions] = useState<any[]>([])
   const [agentRunning, setAgentRunning] = useState(false)
   const [agentResult, setAgentResult] = useState<{ released: number; processed?: number; mode?: string; error?: string; onChainErrors?: string[] } | null>(null)
+  const [showAllAgentActions, setShowAllAgentActions] = useState(false)
 
   async function fetchAgentActions() {
     if (!user) return
@@ -429,121 +430,123 @@ export default function DashboardPageContent() {
           )}
         </div>
 
-        {/* Agentic Activity Panel — designed to *feel* autonomous, not generic */}
-        <div className="mt-6 overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100 shadow-lg">
-          {/* Top status bar */}
-          <div className="flex flex-wrap items-center gap-3 border-b border-white/10 bg-black/20 px-5 py-3">
-            <div className="flex items-center gap-2">
-              <span className={`relative flex size-2 ${agentStats.isOnChain ? "" : "opacity-60"}`}>
-                <span className={`absolute inset-0 animate-ping rounded-full ${agentStats.isOnChain ? "bg-emerald-400" : "bg-amber-400"} opacity-75`} />
-                <span className={`relative inline-flex size-2 rounded-full ${agentStats.isOnChain ? "bg-emerald-400" : "bg-amber-400"}`} />
-              </span>
-              <span className="font-mono text-[11px] uppercase tracking-wider text-slate-300">
-                agent.status = {agentStats.isOnChain ? "live" : "simulation"}
-              </span>
+        {/* Agentic Activity Panel — clean wallet-card aesthetic */}
+        <div className="mt-6 rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-7">
+          {/* Header: avatar + name + status pill */}
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex size-11 items-center justify-center rounded-full bg-muted">
+                <RiRobotLine className="size-5 text-foreground/70" />
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-foreground">Autonomous Agent</h2>
+                <p className="text-xs text-muted-foreground">
+                  {agentStats.agentAddr
+                    ? <>
+                        {`${agentStats.agentAddr.slice(0, 6)}…${agentStats.agentAddr.slice(-6)}`}
+                        <a
+                          href={getAddressExplorerUrl(agentStats.agentAddr, network)}
+                          target="_blank" rel="noopener noreferrer"
+                          className="ml-1.5 inline-flex items-center text-muted-foreground hover:text-primary"
+                          title="View on explorer"
+                        ><RiExternalLinkLine className="size-3" /></a>
+                      </>
+                    : "Wallet not configured"}
+                </p>
+              </div>
             </div>
-            <span className="font-mono text-[11px] text-slate-500">·</span>
-            <span className="font-mono text-[11px] text-slate-400">
-              network <span className="text-slate-200">{network}</span>
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium ${
+                agentStats.isOnChain
+                  ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                  : "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+              }`}
+              title={agentStats.isOnChain ? "Releasing on-chain" : "Add AGENT_WALLET_MNEMONIC to enable on-chain releases"}
+            >
+              <span className="relative flex size-1.5">
+                <span className={`absolute inset-0 animate-ping rounded-full ${agentStats.isOnChain ? "bg-emerald-500" : "bg-amber-500"} opacity-75`} />
+                <span className={`relative inline-flex size-1.5 rounded-full ${agentStats.isOnChain ? "bg-emerald-500" : "bg-amber-500"}`} />
+              </span>
+              {agentStats.isOnChain ? "Live · On-chain" : "Simulation"}
             </span>
-            {agentStats.lastRunAt && (
-              <>
-                <span className="font-mono text-[11px] text-slate-500">·</span>
-                <span className="font-mono text-[11px] text-slate-400">
-                  last_tick <span className="text-slate-200">{agentStats.lastRunAt.toLocaleTimeString()}</span>
-                </span>
-              </>
-            )}
-            <div className="ml-auto">
-              <button
-                onClick={runAgent}
-                disabled={agentRunning}
-                className="inline-flex items-center gap-1.5 rounded-md border border-emerald-400/30 bg-emerald-400/10 px-3 py-1.5 text-xs font-semibold text-emerald-300 hover:bg-emerald-400/20 transition-colors disabled:opacity-50"
+          </div>
+
+          {/* Big "Available" section */}
+          <div className="mt-6">
+            <p className="text-sm text-muted-foreground">Subscriptions due now</p>
+            <div className="mt-2 flex items-center gap-3">
+              <div className="relative flex size-12 shrink-0 items-center justify-center">
+                <div className="absolute inset-0 rounded-full border-2 border-dashed border-border" />
+                <div className="flex size-9 items-center justify-center rounded-full bg-foreground text-background">
+                  <RiBrainLine className="size-4" />
+                </div>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-4xl font-bold text-foreground sm:text-5xl">{agentStats.dueToday}</span>
+                {agentStats.nextHrs != null && (
+                  <span className="text-xs text-muted-foreground">
+                    next in {agentStats.nextHrs < 24 ? `${agentStats.nextHrs}h` : `${Math.round(agentStats.nextHrs / 24)}d`}
+                    {agentStats.nextSub?.name ? ` · ${agentStats.nextSub.name}` : ""}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Action pills */}
+          <div className="mt-5 flex flex-wrap items-center gap-2">
+            <button
+              onClick={runAgent}
+              disabled={agentRunning}
+              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-50"
+            >
+              {agentRunning
+                ? <><RiLoader4Line className="size-4 animate-spin" /> Running…</>
+                : <><RiPulseLine className="size-4" /> Trigger tick</>}
+            </button>
+            {agentStats.agentAddr && (
+              <a
+                href={getAddressExplorerUrl(agentStats.agentAddr, network)}
+                target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
               >
-                {agentRunning
-                  ? <><RiLoader4Line className="size-3.5 animate-spin" /> Tick in progress…</>
-                  : <><RiPulseLine className="size-3.5" /> Trigger tick</>
-                }
-              </button>
-            </div>
+                <RiExternalLinkLine className="size-4" /> Explorer
+              </a>
+            )}
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-muted-foreground"
+              title="Total confirmed on-chain releases by this agent"
+            >
+              <RiCheckDoubleLine className="size-4" /> {agentStats.onChainCount} on-chain
+            </span>
           </div>
 
-          {/* Identity + KPI strip */}
-          <div className="grid grid-cols-2 gap-px bg-white/5 sm:grid-cols-4">
-            <div className="bg-slate-950/60 p-4">
-              <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-slate-500">
-                <RiBrainLine className="size-3" /> agent
-              </div>
-              <p className="mt-1 truncate font-mono text-[13px] text-slate-100">
-                {agentStats.agentAddr ? `${agentStats.agentAddr.slice(0,6)}…${agentStats.agentAddr.slice(-6)}` : "not configured"}
-              </p>
-              {agentStats.agentAddr && (
-                <a
-                  href={getAddressExplorerUrl(agentStats.agentAddr, network)}
-                  target="_blank" rel="noopener noreferrer"
-                  className="mt-0.5 inline-flex items-center gap-0.5 text-[10px] text-slate-400 hover:text-emerald-300"
-                >
-                  view on explorer <RiExternalLinkLine className="size-2.5" />
-                </a>
-              )}
-            </div>
-            <div className="bg-slate-950/60 p-4">
-              <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-slate-500">
-                <RiTimeLine className="size-3" /> due now
-              </div>
-              <p className={`mt-1 font-mono text-2xl font-semibold ${agentStats.dueToday > 0 ? "text-amber-300" : "text-slate-100"}`}>
-                {agentStats.dueToday}
-              </p>
-              <p className="text-[10px] text-slate-500">{agentStats.dueToday === 0 ? "queue empty" : "ready to release"}</p>
-            </div>
-            <div className="bg-slate-950/60 p-4">
-              <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-slate-500">
-                <RiCalendarCheckLine className="size-3" /> next eta
-              </div>
-              <p className="mt-1 font-mono text-2xl font-semibold text-slate-100">
-                {agentStats.nextHrs == null ? "—" : agentStats.nextHrs < 24 ? `${agentStats.nextHrs}h` : `${Math.round(agentStats.nextHrs/24)}d`}
-              </p>
-              <p className="truncate text-[10px] text-slate-500">{agentStats.nextSub?.name ?? "no upcoming"}</p>
-            </div>
-            <div className="bg-slate-950/60 p-4">
-              <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-slate-500">
-                <RiCheckDoubleLine className="size-3" /> on-chain
-              </div>
-              <p className="mt-1 font-mono text-2xl font-semibold text-emerald-300">{agentStats.onChainCount}</p>
-              <p className="text-[10px] text-slate-500">confirmed releases</p>
-            </div>
-          </div>
-
-          {/* Body — keep light theme inside the dark frame for readability */}
-          <div className="bg-card p-5">
-
-          {/* Agent result feedback */}
+          {/* Run feedback (non-empty only) */}
           {agentResult && (
-            <div className="mb-3 space-y-2">
-              <div className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium ${
+            <div className="mt-5 space-y-2">
+              <div className={`flex items-start gap-2 rounded-xl px-4 py-3 text-xs font-medium ${
                 agentResult.error
                   ? "bg-destructive/10 text-destructive border border-destructive/20"
-                  : "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+                  : agentResult.mode === "db-only" && (agentResult.processed ?? 0) > 0
+                    ? "bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800"
+                    : "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
               }`}>
                 {agentResult.error
-                  ? <><RiAlertLine className="size-3.5 shrink-0" /> {
+                  ? <><RiAlertLine className="size-3.5 mt-0.5 shrink-0" /><span>{
                       agentResult.error.toLowerCase().includes("mnemonic") ||
                       agentResult.error.toLowerCase().includes("wallet") ||
                       agentResult.error.toLowerCase().includes("sign")
                         ? "Agent wallet not configured — add AGENT_WALLET_MNEMONIC to Vercel environment variables."
                         : agentResult.error
-                    }</>
+                    }</span></>
                   : agentResult.mode === "db-only" && (agentResult.processed ?? 0) > 0
-                    ? <><RiAlertLine className="size-3.5 shrink-0 text-amber-500" /> <span className="text-amber-700 dark:text-amber-400">Simulation only — {agentResult.processed} vault{agentResult.processed !== 1 ? "s" : ""} found but NOT released on-chain. Your ALGO remains locked. Open each vault to recover funds.</span></>
+                    ? <><RiAlertLine className="size-3.5 mt-0.5 shrink-0" /><span>Simulation only — {agentResult.processed} vault{agentResult.processed !== 1 ? "s" : ""} found but NOT released on-chain. Open each vault to recover funds.</span></>
                     : agentResult.released === 0
-                    ? <><RiCheckDoubleLine className="size-3.5 shrink-0" /> No locked vaults due — nothing to release.</>
-                    : <><RiCheckDoubleLine className="size-3.5 shrink-0" /> Released {agentResult.released} vault{agentResult.released !== 1 ? "s" : ""} on-chain ✓ — check your Pera wallet for incoming ALGO.</>
-
-                }
+                      ? <><RiCheckDoubleLine className="size-3.5 mt-0.5 shrink-0" /><span>No locked vaults due — nothing to release.</span></>
+                      : <><RiCheckDoubleLine className="size-3.5 mt-0.5 shrink-0" /><span>Released {agentResult.released} vault{agentResult.released !== 1 ? "s" : ""} on-chain — check your Pera wallet for incoming ALGO.</span></>}
               </div>
-              {/* Show on-chain errors so user knows WHY it fell back to simulation */}
               {agentResult.onChainErrors?.map((err, i) => (
-                <div key={i} className="flex items-start gap-2 rounded-lg px-3 py-2 text-xs bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                <div key={i} className="flex items-start gap-2 rounded-xl px-4 py-3 text-xs bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
                   <RiAlertLine className="size-3.5 mt-0.5 shrink-0" />
                   <span>{err}</span>
                 </div>
@@ -551,50 +554,76 @@ export default function DashboardPageContent() {
             </div>
           )}
 
+          {/* Dashed divider */}
+          <div className="mt-6 border-t border-dashed border-border" />
+
+          {/* Last release header */}
+          <div className="mt-4 flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-foreground">Last release</h3>
+            {agentActions.length > 1 && (
+              <button
+                onClick={() => setShowAllAgentActions(v => !v)}
+                className="text-xs font-medium text-muted-foreground hover:text-foreground"
+              >
+                {showAllAgentActions ? "Show less" : `See all (${agentActions.length})`}
+              </button>
+            )}
+          </div>
+
+          {/* Last release / activity list */}
           {agentActions.length === 0 ? (
-            <div className="rounded-xl bg-card/60 border border-border/50 px-4 py-4 text-sm text-muted-foreground text-center">
-              <RiCheckDoubleLine className="mx-auto mb-2 size-6 opacity-40" />
-              <p>No autonomous actions yet.</p>
-              <p className="text-xs mt-1">
-                Hit <strong>Run Now</strong> to check for due subscriptions and release linked vaults automatically.
+            <div className="mt-3 rounded-xl border border-dashed border-border px-4 py-6 text-center">
+              <RiCheckDoubleLine className="mx-auto mb-2 size-5 text-muted-foreground/50" />
+              <p className="text-sm text-muted-foreground">No autonomous releases yet.</p>
+              <p className="mt-0.5 text-xs text-muted-foreground/70">
+                Hit <strong>Trigger tick</strong> to check for due subscriptions.
               </p>
             </div>
           ) : (
-            <div className="space-y-2">
-              {agentActions.map((action: any) => {
+            <div className="mt-3 space-y-2">
+              {(showAllAgentActions ? agentActions : agentActions.slice(0, 1)).map((action: any) => {
                 const p = action.payload ?? {}
-                const date = new Date(action.created_at).toLocaleString()
+                const initial = (p.subscription_name ?? "S").charAt(0).toUpperCase()
+                const created = new Date(action.created_at)
+                const dateStr = created.toLocaleDateString(undefined, { day: "2-digit", month: "2-digit", year: "2-digit" })
+                  + " " + created.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
                 return (
-                  <div key={action.id} className="flex items-start gap-3 rounded-xl bg-card/70 border border-border/50 px-4 py-3">
-                    <RiCheckDoubleLine className="mt-0.5 size-4 shrink-0 text-emerald-600" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">
-                        Auto-released: {p.subscription_name ?? "Subscription"}
+                  <div key={action.id} className="flex items-center gap-3 rounded-xl px-2 py-2">
+                    <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold text-foreground/70">
+                      {initial}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-foreground">
+                        {p.subscription_name ?? "Subscription"}
                       </p>
-                      <p className="text-xs text-muted-foreground">
-                        {p.amount ? `${Number(p.amount).toFixed(2)} ALGO` : ""} · {date}
-                        {action.txid && (
+                      <p className="truncate text-xs text-muted-foreground">
+                        Released to vault{action.txid && (
                           <> · <a
                             href={getLoraTransactionUrl(action.txid, network)}
                             target="_blank" rel="noopener noreferrer"
                             className="text-primary hover:underline"
-                          >View tx ↗</a></>
+                          >tx ↗</a></>
                         )}
                       </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-semibold text-foreground">
+                        {p.amount ? `${Number(p.amount).toFixed(2)} ALGO` : "—"}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">{dateStr}</p>
                     </div>
                     <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
                       p.mode === "on-chain"
                         ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
                         : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
                     }`}>
-                      {p.mode === "on-chain" ? "On-chain" : "Simulated"}
+                      {p.mode === "on-chain" ? "On-chain" : "Sim"}
                     </span>
                   </div>
                 )
               })}
             </div>
           )}
-          </div>
         </div>
 
         {/* Recent Subscriptions */}
