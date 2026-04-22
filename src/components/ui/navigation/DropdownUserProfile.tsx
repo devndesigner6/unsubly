@@ -12,11 +12,9 @@ import {
   DropdownMenuSubMenuTrigger,
   DropdownMenuTrigger,
 } from "@/components/DropdownMenu"
-import { ArrowUpRight, Monitor, Moon, Sun, Wallet } from "lucide-react"
+import { Monitor, Moon, Sun } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
-import { useAlgorand } from "@/lib/algorand/context"
 import { useTheme } from "next-themes"
-import { Link } from "react-router-dom"
 import * as React from "react"
 
 export type DropdownUserProfileProps = {
@@ -28,7 +26,6 @@ export function DropdownUserProfile({ children, align = "start" }: DropdownUserP
   const [mounted, setMounted] = React.useState(false)
   const { theme, setTheme } = useTheme()
   const { user, signOut } = useAuth()
-  const { walletAddress, disconnectWallet } = useAlgorand()
 
   React.useEffect(() => { setMounted(true) }, [])
 
@@ -39,12 +36,6 @@ export function DropdownUserProfile({ children, align = "start" }: DropdownUserP
       <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
       <DropdownMenuContent align={align} className="sm:!min-w-[calc(var(--radix-dropdown-menu-trigger-width))]">
         <DropdownMenuLabel>{user?.email || "User"}</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuGroup>
-          <Link to="/settings">
-            <DropdownMenuItem>Settings</DropdownMenuItem>
-          </Link>
-        </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuSubMenu>
@@ -65,17 +56,6 @@ export function DropdownUserProfile({ children, align = "start" }: DropdownUserP
           </DropdownMenuSubMenu>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        {walletAddress && (
-          <>
-            <DropdownMenuGroup>
-              <DropdownMenuItem onClick={disconnectWallet}>
-                <Wallet className="size-4 shrink-0" aria-hidden="true" />
-                Disconnect wallet ({walletAddress.slice(0, 6)}…{walletAddress.slice(-4)})
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-          </>
-        )}
         <DropdownMenuGroup>
           <DropdownMenuItem onClick={signOut}>Sign out</DropdownMenuItem>
         </DropdownMenuGroup>

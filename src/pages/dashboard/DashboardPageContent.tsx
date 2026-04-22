@@ -23,7 +23,7 @@ import { WALLET_LOGOS, WALLET_LABELS } from "@/lib/algorand/walletLogos"
 
 export default function DashboardPageContent() {
   const { user } = useAuth()
-  const { walletAddress, balance, isConnecting, isLoadingBalance, network, setShowWalletSelector, walletType } = useAlgorand()
+  const { walletAddress, balance, isConnecting, isLoadingBalance, network, setShowWalletSelector, walletType, disconnectWallet } = useAlgorand()
   const [subscriptions, setSubscriptions] = useState<any[]>([])
   const [profile, setProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -464,14 +464,32 @@ export default function DashboardPageContent() {
                         {isConnecting ? "Connecting…" : "Connect wallet"}
                       </button>
                     )}
-                    {walletAddress && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (walletAddress) {
+                          void disconnectWallet()
+                        } else {
+                          setShowWalletSelector(true)
+                        }
+                      }}
+                      disabled={isConnecting}
+                      aria-label={walletAddress ? "Disconnect wallet" : "Connect wallet"}
+                      title={walletAddress ? "Click to disconnect wallet" : "Click to connect wallet"}
+                      className={[
+                        "relative h-6 w-11 rounded-full p-0.5 transition-colors ring-1 disabled:opacity-60",
+                        walletAddress
+                          ? "bg-emerald-400 ring-emerald-300/60 shadow-[0_0_12px_rgba(74,222,128,0.6)]"
+                          : "bg-red-500 ring-red-400/60 shadow-[0_0_12px_rgba(239,68,68,0.55)]",
+                      ].join(" ")}
+                    >
                       <div
-                        aria-hidden
-                        className="relative h-6 w-11 rounded-full p-0.5 transition-colors ring-1 bg-emerald-400 ring-emerald-300/60 shadow-[0_0_12px_rgba(74,222,128,0.6)]"
-                      >
-                        <div className="size-5 rounded-full bg-white shadow translate-x-5" />
-                      </div>
-                    )}
+                        className={[
+                          "size-5 rounded-full bg-white shadow transition-transform",
+                          walletAddress ? "translate-x-5" : "translate-x-0",
+                        ].join(" ")}
+                      />
+                    </button>
                   </div>
                 </div>
               </div>
