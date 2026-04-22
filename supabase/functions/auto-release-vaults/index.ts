@@ -1,4 +1,18 @@
 /**
+ * @deprecated 2026-04-22 — Kept as a fallback only.
+ *
+ * The CANONICAL agent runner is `agents/release-agent.mjs` (GitHub Actions
+ * cron) which calls `/api/agent-run` in `server/handlers.mjs`. That path is
+ * what the UI's "Run agent now" button hits and what is documented in the
+ * track submission. Do not add features here — port them to the canonical
+ * runner.
+ *
+ * This file remains so an existing pg_cron schedule keeps working as a
+ * safety net. Delete with `supabase functions delete auto-release-vaults`
+ * once you've confirmed the canonical agent is running reliably.
+ *
+ * ────────────────────────────────────────────────────────────────────────
+ *
  * auto-release-vaults — Autonomous Payment Agent Edge Function
  *
  * Handles autonomous vault releases for due subscriptions.

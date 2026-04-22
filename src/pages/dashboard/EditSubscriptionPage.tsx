@@ -5,8 +5,10 @@ import { fetchSubscriptionById, deleteSubscription, fetchSubscriptionTags } from
 import { formatCurrency } from "@/lib/currency"
 import { Button } from "@/components/Button"
 import { toast } from "sonner"
-import { RiArrowLeftLine, RiDeleteBinLine, RiLoader4Line, RiAlertLine, RiEditLine } from "@remixicon/react"
+import { RiArrowLeftLine, RiDeleteBinLine, RiLoader4Line, RiAlertLine, RiEditLine, RiCloseCircleLine } from "@remixicon/react"
 import { useState, useEffect } from "react"
+import { useAlgorand } from "@/lib/algorand/context"
+import { cancelSubscriptionOnChain } from "@/lib/algorand/cancel"
 
 export default function EditSubscriptionPage() {
   const { id } = useParams()
@@ -18,6 +20,9 @@ export default function EditSubscriptionPage() {
   const [error, setError] = useState("")
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [isCancelling, setIsCancelling] = useState(false)
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+  const { walletAddress, algodClient, peraWallet } = useAlgorand()
 
   useEffect(() => {
     if (!id) return
@@ -37,6 +42,41 @@ export default function EditSubscriptionPage() {
     }
     load()
   }, [id])
+
+  const handleCancelOnChain = async () => {
+    if (!id || !user) return
+    setIsCancelling(true)
+    try {
+      const signTransaction = async (txn: any): Promise<Uint8Array[]> => {
+        return await peraWallet.signTransaction([[{ txn }]])
+      }
+      const result = await cancelSubscriptionOnChain({
+        subscriptionId: id,
+        userId: user.id,
+        walletAddress,
+        algodClient,
+        signTransaction,
+      })
+      if (result.dbUpdated && result.vaultsKilled > 0) {
+        toast.success(`Cancelled. Killed ${result.vaultsKilled} vault(s) on-chain — funds refunded to your wallet.`)
+        navigate("/subscriptions")
+      } else if (result.dbUpdated && result.errors.length === 0) {
+        toast.success("Subscription cancelled.")
+        navigate("/subscriptions")
+      } else if (result.dbUpdated) {
+        // Sub status was changed but on-chain kill failed → stay on page so user can retry from the vault details page.
+        toast.warning(`Cancelled in app. On-chain kill failed: ${result.errors.join("; ")}. Visit the vault page to kill manually.`)
+      } else {
+        // DB update itself failed — keep user here, do not navigate.
+        toast.error(result.errors.join("; ") || "Cancellation failed")
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Cancellation failed")
+    } finally {
+      setIsCancelling(false)
+      setShowCancelConfirm(false)
+    }
+  }
 
   const handleDelete = async () => {
     if (!id) return
@@ -117,15 +157,46 @@ export default function EditSubscriptionPage() {
                   Cancel
                 </Button>
               </div>
+            ) : showCancelConfirm ? (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="destructive"
+                  className="border-white/20"
+                  onClick={handleCancelOnChain}
+                  disabled={isCancelling}
+                >
+                  {isCancelling ? <RiLoader4Line className="mr-2 size-4 animate-spin" /> : null}
+                  {isCancelling ? "Cancelling on-chain…" : "Confirm Cancel + Refund"}
+                </Button>
+                <Button
+                  variant="secondary"
+                  className="bg-white/20 text-white hover:bg-white/30 border-white/20"
+                  onClick={() => setShowCancelConfirm(false)}
+                  disabled={isCancelling}
+                >
+                  Keep
+                </Button>
+              </div>
             ) : (
-              <Button
-                variant="secondary"
-                className="bg-white/20 text-white hover:bg-white/30 border-white/20"
-                onClick={() => setShowDeleteConfirm(true)}
-              >
-                <RiDeleteBinLine className="mr-2 size-4" />
-                Delete
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="secondary"
+                  className="bg-white/20 text-white hover:bg-white/30 border-white/20"
+                  onClick={() => setShowCancelConfirm(true)}
+                  title={walletAddress ? "Cancel subscription and kill linked vault on-chain (refunds remaining funds)" : "Connect wallet to also kill linked vault"}
+                >
+                  <RiCloseCircleLine className="mr-2 size-4" />
+                  Cancel
+                </Button>
+                <Button
+                  variant="secondary"
+                  className="bg-white/20 text-white hover:bg-white/30 border-white/20"
+                  onClick={() => setShowDeleteConfirm(true)}
+                >
+                  <RiDeleteBinLine className="mr-2 size-4" />
+                  Delete
+                </Button>
+              </div>
             )}
           </div>
         </div>

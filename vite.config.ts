@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -70,6 +71,12 @@ export default defineConfig(({ mode }) => {
     optimizeDeps: {
       include: ["buffer", "@perawallet/connect"],
       esbuildOptions: { define: { global: "globalThis" } },
+    },
+    test: {
+      environment: "happy-dom",
+      globals: true,
+      include: ["src/**/*.test.ts", "src/**/*.test.tsx", "server/**/*.test.mjs"],
+      coverage: { provider: "v8", reporter: ["text", "html"] },
     },
   };
 });

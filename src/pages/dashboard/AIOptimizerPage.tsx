@@ -147,10 +147,17 @@ export default function AIOptimizerPage() {
         currency: userCurrency,
       })
 
-      // Use local API proxy (structured JSON response)
+      // Use local API proxy (structured JSON response).
+      // Server requires Bearer auth so anonymous traffic can't burn the LLM quota.
+      const { data: sessionData } = await supabase.auth.getSession()
+      const token = sessionData?.session?.access_token
+      if (!token) throw new Error("Please sign in to run the AI optimizer")
       const res = await fetch("/api/ai-optimizer", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
         body: JSON.stringify({ subscriptions, vaults, userCurrency, totalMonthly, totalVaultLocked }),
       })
       const data = await res.json()

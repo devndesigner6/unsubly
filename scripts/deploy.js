@@ -64,6 +64,21 @@ const CONTRACT_CONFIGS = [
     numGlobalInts: 2, numGlobalBytes: 2,
     numLocalInts: 0, numLocalBytes: 0,
   },
+  // ── Singleton contracts (one app for the whole platform) ──────────────────
+  {
+    name: "ServiceRegistry",
+    description: "A2A on-chain service registry (Box-Storage)",
+    numGlobalInts: 2, numGlobalBytes: 1,
+    numLocalInts: 0, numLocalBytes: 0,
+    singleton: true,
+  },
+  {
+    name: "AgentEscrowVaultV2",
+    description: "Agent Escrow v2 with on-chain billing history (Box-Storage)",
+    numGlobalInts: 2, numGlobalBytes: 3,
+    numLocalInts: 0, numLocalBytes: 0,
+    template: true, // deploys one canonical instance for spec discovery only
+  },
 ]
 
 function loadTeal(name, kind) {

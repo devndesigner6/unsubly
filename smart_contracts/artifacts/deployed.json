@@ -1,22 +1,15 @@
 {
-  "_note": "Run 'npm run deploy:contracts' to populate. Set ALGO_NETWORK=mainnet for mainnet deployment.",
-  "_deployer_testnet": "PTX3S4RB5WBP2W5YPWLOMIJSBKWTYOIKFUFPS3LGVSGBLNRUZNJF6T7WYY",
+  "_note": "Per-user vaults are deployed by each user from the UI (signed by their wallet). Singleton contracts (registry, agent_v2 templates, NFT issuer) are deployed once via `node scripts/deploy.js`. App ids below are the SINGLETONS only.",
   "_fund_testnet": "https://bank.testnet.algorand.network/",
   "_fund_mainnet": "https://www.algorand.foundation/",
   "testnet": {
-    "EscrowVault":      { "status": "pending_deployment", "appId": null, "appAddress": null },
-    "AgentEscrowVault": { "status": "pending_deployment", "appId": null, "appAddress": null },
-    "TimeLockEscrow":   { "status": "pending_deployment", "appId": null, "appAddress": null },
-    "MultiSigEscrow":   { "status": "pending_deployment", "appId": null, "appAddress": null },
-    "DisputeEscrow":    { "status": "pending_deployment", "appId": null, "appAddress": null },
-    "ASAEscrow":        { "status": "pending_deployment", "appId": null, "appAddress": null }
+    "ServiceRegistry":   { "appId": null, "appAddress": null, "deployed_at": null, "txid": null },
+    "AgentEscrowVaultV2_template": { "appId": null, "appAddress": null, "deployed_at": null, "txid": null, "_note": "Used as ARC-56 reference template; user vaults are still per-user-deployed." },
+    "NFTReceiptIssuer":  { "appId": null, "appAddress": null, "deployed_at": null, "txid": null, "_note": "Reserved — NFT receipts will be minted via inner-txn from each vault, not from a singleton issuer." }
   },
   "mainnet": {
-    "EscrowVault":      { "status": "pending_deployment", "appId": null, "appAddress": null },
-    "AgentEscrowVault": { "status": "pending_deployment", "appId": null, "appAddress": null },
-    "TimeLockEscrow":   { "status": "pending_deployment", "appId": null, "appAddress": null },
-    "MultiSigEscrow":   { "status": "pending_deployment", "appId": null, "appAddress": null },
-    "DisputeEscrow":    { "status": "pending_deployment", "appId": null, "appAddress": null },
-    "ASAEscrow":        { "status": "pending_deployment", "appId": null, "appAddress": null }
+    "ServiceRegistry":   { "appId": null, "appAddress": null, "deployed_at": null, "txid": null },
+    "AgentEscrowVaultV2_template": { "appId": null, "appAddress": null, "deployed_at": null, "txid": null },
+    "NFTReceiptIssuer":  { "appId": null, "appAddress": null, "deployed_at": null, "txid": null }
   }
 }

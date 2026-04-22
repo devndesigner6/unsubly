@@ -1,25 +1,38 @@
 export type AlgorandNetwork = "testnet" | "mainnet"
 
+// Allow overriding via env (paid Nodely / self-hosted node) — falls back to public algonode.
+const ENV_TESTNET_ALGOD = import.meta.env.VITE_ALGOD_TESTNET_URL as string | undefined
+const ENV_MAINNET_ALGOD = import.meta.env.VITE_ALGOD_MAINNET_URL as string | undefined
+const ENV_TESTNET_INDEXER = import.meta.env.VITE_INDEXER_TESTNET_URL as string | undefined
+const ENV_MAINNET_INDEXER = import.meta.env.VITE_INDEXER_MAINNET_URL as string | undefined
+const ENV_ALGOD_TOKEN = (import.meta.env.VITE_ALGOD_TOKEN as string | undefined) ?? ""
+
 export const ALGORAND_TESTNET = {
-  algodToken: "",
-  algodServer: "https://testnet-api.algonode.cloud",
+  algodToken: ENV_ALGOD_TOKEN,
+  algodServer: ENV_TESTNET_ALGOD || "https://testnet-api.algonode.cloud",
   algodPort: 443,
-  indexerServer: "https://testnet-idx.algonode.cloud",
+  indexerServer: ENV_TESTNET_INDEXER || "https://testnet-idx.algonode.cloud",
   indexerPort: 443,
   network: "testnet" as const,
 }
 
 export const ALGORAND_MAINNET = {
-  algodToken: "",
-  algodServer: "https://mainnet-api.algonode.cloud",
+  algodToken: ENV_ALGOD_TOKEN,
+  algodServer: ENV_MAINNET_ALGOD || "https://mainnet-api.algonode.cloud",
   algodPort: 443,
-  indexerServer: "https://mainnet-idx.algonode.cloud",
+  indexerServer: ENV_MAINNET_INDEXER || "https://mainnet-idx.algonode.cloud",
   indexerPort: 443,
   network: "mainnet" as const,
 }
 
 export const MIN_BALANCE_MICROALGOS = 100_000
 export const MICROALGOS_PER_ALGO = 1_000_000
+
+// USDCa (USDC on Algorand) asset IDs — the same on testnet faucets / mainnet.
+export const USDCA_ASSET_ID: Record<AlgorandNetwork, number> = {
+  testnet: 10458941,   // USDC testnet ASA
+  mainnet: 31566704,   // USDC mainnet ASA
+}
 
 export function getNetworkConfig(network: AlgorandNetwork) {
   return network === "mainnet" ? ALGORAND_MAINNET : ALGORAND_TESTNET

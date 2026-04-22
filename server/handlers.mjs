@@ -8,6 +8,8 @@
 
 import { createClient } from "@supabase/supabase-js"
 import algosdk from "algosdk"
+import { withX402 } from "./x402-algorand.mjs"
+import { rateLimitAllow } from "./rate-limit.mjs"
 
 // ── Common helpers ──────────────────────────────────────────────────────────
 
@@ -75,10 +77,50 @@ async function getAuthedUserAndClient(req) {
 // structured analysis. Bounded body size to keep a malicious caller from
 // burning the server's Groq quota.
 //
+// x402 layer: when X402_PAY_TO_ADDRESS is set, the endpoint additionally
+// requires an HTTP 402 → Algorand payment → retry round-trip. This is
+// what makes the call agentic-commerce-track compliant. When unset the
+// endpoint behaves as a normal authed REST call (dev-friendly).
+//
+// Lazily-built x402 wrapper for the core handler. Built once on first call.
+let _aiOptimizerWrapped = null
+function _getAiOptimizerHandler() {
+  if (_aiOptimizerWrapped) return _aiOptimizerWrapped
+  const payTo = process.env.X402_PAY_TO_ADDRESS
+  if (!payTo) {
+    _aiOptimizerWrapped = _aiOptimizerCore
+    return _aiOptimizerWrapped
+  }
+  const price = Number(process.env.X402_PRICE_MICROALGOS || "1000")
+  const network = process.env.X402_NETWORK || "algorand-testnet"
+  _aiOptimizerWrapped = withX402(
+    {
+      payTo, priceMicroalgos: price, network,
+      description: "Unsubscribely AI optimizer — single analysis call",
+    },
+    _aiOptimizerCore,
+  )
+  console.log(`[x402] ai-optimizer protected: ${price} microALGO → ${payTo} on ${network}`)
+  return _aiOptimizerWrapped
+}
+
 export async function aiOptimizerHandler(req, res) {
+  return _getAiOptimizerHandler()(req, res)
+}
+
+// The actual handler, wrapped by x402 if configured.
+async function _aiOptimizerCore(req, res) {
   if (req.method !== "POST") return jsonRes(res, 405, { error: "Method Not Allowed" })
 
   try {
+    // Persistent per-user rate-limit (10 calls / hour). Survives restarts,
+    // shared across instances. Keyed on the auth token so one stolen JWT
+    // can't fan-out across IPs to bypass the limit.
+    const authHeader = req.headers.authorization || ""
+    const tokenForLimit = authHeader.replace(/^Bearer\s+/i, "").slice(0, 80) || (req.socket?.remoteAddress ?? "anon")
+    const allowed = await rateLimitAllow("ai_optimizer", tokenForLimit, 10, 3600)
+    if (!allowed) return jsonRes(res, 429, { error: "Rate limit: 10 calls/hour. Please wait." })
+
     // Auth FIRST so anonymous traffic can't burn our LLM quota.
     await getAuthedUserAndClient(req)
 
@@ -272,7 +314,10 @@ export async function agentRunHandler(req, res) {
           txid, status: mode === "on-chain" ? "success" : "simulation",
         })
 
-        results.released++
+        // Only count as released when the on-chain txn confirmed.
+        // db-only mode is a simulation — counting it would mislead ops.
+        if (mode === "on-chain" && txid) results.released++
+        else results.skipped++
         results.actions.push({ vault_id: vault.id, sub_name: subName, mode, txid })
       } catch (err) {
         results.errors.push(`Vault ${vault.id}: ${err.message}`)

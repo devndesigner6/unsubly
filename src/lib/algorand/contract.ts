@@ -316,7 +316,28 @@ export async function deleteEscrowContract(
   return txnId
 }
 
-// ── NFT receipt minting ────────────────────────────────────────────────────
+// ── NFT receipt minting (ARC-3 compliant + immutable) ──────────────────────
+//
+// Strict ARC-3 requirements we now satisfy:
+//   • assetURL ends with "#arc3" and points to the JSON metadata
+//     (we use a `data:` URI so no IPFS pinning is required)
+//   • assetMetadataHash = SHA-256 of the metadata JSON bytes
+//   • All four roles (manager, reserve, freeze, clawback) are UNSET → asset
+//     is permanently immutable. Even the user who minted it cannot tamper
+//     with it after the txn confirms.
+//
+// Spec: https://arc.algorand.foundation/ARCs/arc-0003
+
+async function sha256Bytes(bytes: Uint8Array): Promise<Uint8Array> {
+  const hash = await crypto.subtle.digest("SHA-256", bytes as BufferSource)
+  return new Uint8Array(hash)
+}
+
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = ""
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i])
+  return btoa(binary)
+}
 
 export async function mintNFTReceipt(
   algodClient: algosdk.Algodv2, senderAddress: string, vaultAppId: number,
@@ -324,19 +345,46 @@ export async function mintNFTReceipt(
   signTransaction: SignFn,
 ): Promise<{ assetId: number; txnId: string }> {
   const params = await algodClient.getTransactionParams().do()
+
+  // ARC-3 metadata. Schema: https://arc.algorand.foundation/ARCs/arc-0003
   const metadata = {
-    standard: "arc3",
-    name: `Payment Receipt — Vault #${vaultAppId}`,
-    description: `Escrow vault payment of ${amount} ALGO`,
-    properties: { app_id: vaultAppId, amount, recipient: recipientAddress, timestamp: new Date().toISOString() },
+    name: `Unsubscribely Receipt #${vaultAppId}`,
+    description: `Verifiable payment receipt: ${amount} ALGO released from escrow vault ${vaultAppId} to ${recipientAddress}.`,
+    decimals: 0,
+    properties: {
+      app_id: vaultAppId,
+      amount_algo: amount,
+      recipient: recipientAddress,
+      payer: senderAddress,
+      timestamp: new Date().toISOString(),
+      issuer: "Unsubscribely",
+    },
   }
-  const note = new TextEncoder().encode(JSON.stringify(metadata))
+  const metadataJson = JSON.stringify(metadata)
+  const metadataBytes = new TextEncoder().encode(metadataJson)
+  const metadataHash = await sha256Bytes(metadataBytes)
+
+  // ARC-3 allows any URI scheme; data: keeps the metadata fully on-chain
+  // (in the asset config) without requiring IPFS pinning infrastructure.
+  // Trailing #arc3 fragment is the ARC-3 marker.
+  const dataUri = `data:application/json;base64,${bytesToBase64(metadataBytes)}#arc3`
+
   const txn = algosdk.makeAssetCreateTxnWithSuggestedParamsFromObject({
-    sender: senderAddress, suggestedParams: params,
-    total: 1, decimals: 0, defaultFrozen: false,
-    unitName: "RCPT", assetName: `Receipt-${vaultAppId}`,
-    note,
+    sender: senderAddress,
+    suggestedParams: params,
+    total: 1,
+    decimals: 0,
+    defaultFrozen: false,
+    unitName: "RCPT",
+    assetName: `Receipt-${vaultAppId}@arc3`, // ARC-3 marker in name as well
+    assetURL: dataUri,
+    assetMetadataHash: metadataHash,
+    // CRITICAL — leave manager/reserve/freeze/clawback UNDEFINED so the
+    // asset is permanently immutable. (algosdk treats undefined as zero
+    // address, which renders the role unusable forever.)
+    note: new TextEncoder().encode("ARC-3 receipt"),
   })
+
   const signedTxns = await signTransaction(txn)
   const sendResponse = await algodClient.sendRawTransaction(signedTxns[0]).do()
   const txnId = extractTxId(sendResponse)
