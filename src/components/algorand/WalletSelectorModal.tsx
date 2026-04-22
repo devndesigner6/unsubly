@@ -99,7 +99,7 @@ export function WalletSelectorModal() {
             </span>
           </div>
           <p className="text-sm text-muted-foreground">
-            Choose your Algorand wallet — you'll be prompted to approve the connection.
+            Choose your Algorand wallet, you'll be prompted to approve the connection.
           </p>
         </div>
 

@@ -41,7 +41,7 @@ export default function SettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [passwordError, setPasswordError] = useState("")
   const [passwordSuccess, setPasswordSuccess] = useState(false)
-  // sendingTestAlert removed — email reminders are coming soon
+  // sendingTestAlert removed, email reminders are coming soon
 
   // Delete account
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -154,15 +154,15 @@ export default function SettingsPage() {
     if (!user || deleteConfirmText !== "DELETE") return
     setIsDeleting(true)
 
-    // Helper — delete from a table silently; ignore 404 / RLS / missing table errors
+    // Helper, delete from a table silently; ignore 404 / RLS / missing table errors
     async function tryDelete(table: string, column: string, value: string) {
       try {
         await (supabase.from(table as any) as any).delete().eq(column, value)
-      } catch (_) { /* table may not exist in this environment — that's fine */ }
+      } catch (_) { /* table may not exist in this environment, that's fine */ }
     }
 
     try {
-      // Step 1 — wipe every application data table; failures are silent
+      // Step 1, wipe every application data table; failures are silent
       await tryDelete("resume_shares",   "user_id", user.id)
       await tryDelete("onchain_payments","user_id", user.id)
       await tryDelete("agent_actions",   "user_id", user.id)
@@ -170,7 +170,7 @@ export default function SettingsPage() {
       await tryDelete("subscriptions",   "user_id", user.id)
       await tryDelete("profiles",        "id",      user.id)
 
-      // Step 2 — obfuscate the email so the original address is free to re-register.
+      // Step 2, obfuscate the email so the original address is free to re-register.
       // GoTrue's DELETE /user (405) is disabled in Lovable's Supabase, so instead we
       // rename the email to a throwaway address. If Supabase requires email confirmation
       // the rename won't take immediate effect, but all data is already gone above.
@@ -178,9 +178,9 @@ export default function SettingsPage() {
       const { error: updateErr } = await supabase.auth.updateUser({ email: ghostEmail })
 
       if (updateErr) {
-        // Email rename failed (e.g. confirmation required) — data is still gone; sign out.
+        // Email rename failed (e.g. confirmation required), data is still gone; sign out.
         toast.success("Account data deleted", {
-          description: "All your subscriptions, vaults, and profile have been permanently removed. Your login email may still be reserved — use a different address or add +1 to re-register.",
+          description: "All your subscriptions, vaults, and profile have been permanently removed. Your login email may still be reserved, use a different address or add +1 to re-register.",
           duration: 8000,
         })
       } else {
@@ -446,7 +446,7 @@ export default function SettingsPage() {
             <h2 className="text-lg font-semibold text-destructive">Danger Zone</h2>
           </div>
           <p className="mb-4 text-sm text-muted-foreground">
-            Permanently delete your account and all associated data — subscriptions, escrow vaults, on-chain payment records, NFT receipts, and your profile. This cannot be undone. If you sign up again with the same email, you will start completely fresh.
+            Permanently delete your account and all associated data, subscriptions, escrow vaults, on-chain payment records, NFT receipts, and your profile. This cannot be undone. If you sign up again with the same email, you will start completely fresh.
           </p>
           {!showDeleteConfirm ? (
             <Button

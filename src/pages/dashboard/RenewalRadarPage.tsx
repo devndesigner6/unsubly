@@ -167,7 +167,7 @@ export default function RenewalRadarPage() {
           <div className="text-xs uppercase tracking-wide text-gray-500">Total due</div>
           <div className="mt-1 space-y-0.5 text-sm">
             {totals.length === 0 ? (
-              <span className="text-gray-400">—</span>
+              <span className="text-gray-400">,</span>
             ) : totals.map(([cur, amt]) => (
               <div key={cur} className="font-medium text-gray-900 dark:text-gray-50">
                 {formatCurrency(amt, cur)}

@@ -35,7 +35,7 @@ export const currencies: Record<
   SAR: { name: "Saudi Riyal", symbol: "﷼", locale: "ar-SA" },
 }
 
-// Exchange rates relative to USD — seeded with fallback values, overwritten at runtime by initExchangeRates()
+// Exchange rates relative to USD, seeded with fallback values, overwritten at runtime by initExchangeRates()
 let exchangeRates: Record<string, number> = {
   USD: 1,
   EUR: 0.92,
@@ -157,7 +157,7 @@ export async function fetchExchangeRates(
 /**
  * Fetch live rates once on startup and update the module-level store so that
  * convertCurrency() automatically uses current data everywhere in the app.
- * Safe to call multiple times — subsequent calls are no-ops if rates are fresh.
+ * Safe to call multiple times, subsequent calls are no-ops if rates are fresh.
  */
 let _ratesInitialized = false
 export async function initExchangeRates(): Promise<void> {

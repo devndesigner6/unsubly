@@ -8,7 +8,7 @@
  *      remaining balance is refunded to the user wallet (no orphaned funds).
  *   4. Updates the vault row with status='killed' + kill txid.
  *
- * Returns a result object for UI feedback. Never throws — it surfaces
+ * Returns a result object for UI feedback. Never throws, it surfaces
  * partial-success states (e.g., DB cancelled but on-chain kill failed) so
  * the UI can show what happened.
  */
@@ -68,7 +68,7 @@ export async function cancelSubscriptionOnChain(opts: {
 
   // 3. Kill on-chain (requires connected wallet)
   if (!opts.walletAddress) {
-    result.errors.push("Wallet not connected — vault left locked. Reconnect and use the Kill button on the vault page.")
+    result.errors.push("Wallet not connected, vault left locked. Reconnect and use the Kill button on the vault page.")
     return result
   }
 

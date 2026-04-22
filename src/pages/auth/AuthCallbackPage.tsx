@@ -15,7 +15,7 @@ export default function AuthCallbackPage() {
     // and fires auth state change events. We just need to listen.
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "PASSWORD_RECOVERY") {
-        // User clicked the reset-password link — send them to set a new password
+        // User clicked the reset-password link, send them to set a new password
         navigate("/reset-password", { replace: true })
       } else if (event === "SIGNED_IN" && session) {
         // Magic link sign-in (not password recovery)
@@ -31,7 +31,7 @@ export default function AuthCallbackPage() {
         return
       }
       if (session) {
-        // Already have a session — go to dashboard
+        // Already have a session, go to dashboard
         navigate("/dashboard", { replace: true })
       }
     })

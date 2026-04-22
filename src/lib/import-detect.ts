@@ -47,7 +47,7 @@ function detectMerchant(text: string): { name: string; confidence: number } {
     if (re.test(text)) return { name: m, confidence: 0.9 }
   }
   // Try "from <Brand>" / "by <Brand>" patterns.
-  const m = text.match(/(?:from|by|—|by:)\s+([A-Z][A-Za-z0-9 .&]{2,30})/)
+  const m = text.match(/(?:from|by|,|by:)\s+([A-Z][A-Za-z0-9 .&]{2,30})/)
   if (m) return { name: m[1].trim(), confidence: 0.5 }
   return { name: "", confidence: 0 }
 }
@@ -237,6 +237,6 @@ function normaliseMerchant(desc: string): string {
     .replace(/[^A-Za-z0-9 .&]/g, " ")
     .replace(/\s+/g, " ")
     .trim()
-  // Take the first 3-4 word tokens — usually the merchant name.
+  // Take the first 3-4 word tokens, usually the merchant name.
   return cleaned.split(" ").slice(0, 4).join(" ")
 }

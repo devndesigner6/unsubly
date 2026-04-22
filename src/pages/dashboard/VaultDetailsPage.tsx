@@ -148,7 +148,7 @@ export default function VaultDetailsPage() {
     setActionMsg("Releasing funds on-chain… (sign in your wallet)")
     try {
       // Agent vaults deployed via deployAgentEscrowContract use the v2 ABI:
-      // release(uint64)uint64 — needs an explicit microAlgo amount and writes
+      // release(uint64)uint64, needs an explicit microAlgo amount and writes
       // a Box-stored BillingRecord. v1-style vaults take release()void.
       const isAgentV2 = vault.vault_type === "agent_v2"
       const amountMicro = Number(vault.amount_microalgos ?? Math.round(Number(vault.amount || 0) * 1_000_000))
@@ -328,7 +328,7 @@ export default function VaultDetailsPage() {
         </div>
       </div>
 
-      {/* Lora release banner — shown after release action or for already-released vaults */}
+      {/* Lora release banner, shown after release action or for already-released vaults */}
       {(() => {
         const activeTxnId = releasedTxnId || (vault.status === "released" ? vault.txn_id : null)
         if (!activeTxnId) return null
@@ -463,7 +463,7 @@ export default function VaultDetailsPage() {
           </dl>
         </div>
 
-        {/* Parties — co-signer / arbitrator / agent */}
+        {/* Parties, co-signer / arbitrator / agent */}
         {(vault.co_signer_address || vault.arbitrator_address || vault.agent_address) && (
           <div className="rounded-xl border border-border bg-card p-5">
             <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
@@ -531,7 +531,7 @@ export default function VaultDetailsPage() {
 
           {!isSmartContract ? (
             <div className="rounded-lg bg-muted/50 p-4 text-center">
-              <p className="text-sm text-muted-foreground">Legacy vault — no on-chain contract</p>
+              <p className="text-sm text-muted-foreground">Legacy vault, no on-chain contract</p>
             </div>
           ) : loadingChain ? (
             <div className="flex items-center justify-center py-8">
@@ -686,12 +686,12 @@ export default function VaultDetailsPage() {
             <RiAlarmWarningLine className={`mt-0.5 size-5 shrink-0 ${confirmAction === "kill" ? "text-destructive" : "text-destructive/70"}`} />
             <div>
               <p className={`text-sm font-bold mb-1 ${confirmAction === "kill" ? "text-destructive" : "text-foreground"}`}>
-                {confirmAction === "kill" ? "⚠ Kill Switch — Irreversible Action" : "Delete Smart Contract"}
+                {confirmAction === "kill" ? "⚠ Kill Switch, Irreversible Action" : "Delete Smart Contract"}
               </p>
               <p className="text-sm text-muted-foreground">
                 {confirmAction === "kill"
                   ? "This will immediately return all locked ALGO to your wallet and permanently close the escrow contract. The recipient will receive nothing. This cannot be undone."
-                  : "This will permanently delete the smart contract from the Algorand blockchain and reclaim the minimum balance reserve (MBR). The contract must have status Released or Killed on-chain first — if funds are still locked, use Kill Switch above to reclaim your ALGO before deleting."}
+                  : "This will permanently delete the smart contract from the Algorand blockchain and reclaim the minimum balance reserve (MBR). The contract must have status Released or Killed on-chain first, if funds are still locked, use Kill Switch above to reclaim your ALGO before deleting."}
               </p>
             </div>
           </div>
@@ -764,7 +764,7 @@ export default function VaultDetailsPage() {
 
       {/* ── Recovery banner: DB says "released" but on-chain may still be locked ──
           Show when:
-          (a) on-chain state could not be loaded (null) — can't confirm release happened
+          (a) on-chain state could not be loaded (null), can't confirm release happened
           (b) on-chain explicitly shows status=0 (locked) with balance > 0.1 ALGO
           In both cases we offer Kill + Release so user can recover funds.           */}
       {vault.status === "released" && isSmartContract && !confirmAction &&
@@ -782,7 +782,7 @@ export default function VaultDetailsPage() {
             <RiAlarmWarningLine className="mt-0.5 size-5 shrink-0 text-amber-600 dark:text-amber-400" />
             <div className="flex-1">
               <p className="text-sm font-bold text-amber-800 dark:text-amber-200">
-                ALGO may still be locked on-chain — recover your funds
+                ALGO may still be locked on-chain, recover your funds
               </p>
               <p className="mt-1 text-sm text-amber-700/80 dark:text-amber-300/80">
                 {onChainState === null

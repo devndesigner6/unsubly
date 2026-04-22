@@ -1,5 +1,5 @@
 /**
- * x402 client wrapper — agentic commerce HTTP 402 payment flow.
+ * x402 client wrapper, agentic commerce HTTP 402 payment flow.
  *
  * Wraps `fetch` so any call to a 402-paywalled endpoint will:
  *   1. Receive a 402 with a paymentRequirements descriptor.

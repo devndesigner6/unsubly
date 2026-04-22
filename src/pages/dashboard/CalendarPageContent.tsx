@@ -31,7 +31,7 @@ function getBillingDaysInMonth(sub: any, year: number, month: number): number[] 
 
   switch (sub.billing_cycle) {
     case "monthly": {
-      // Same day every month — cap to last day of month
+      // Same day every month, cap to last day of month
       days.push(Math.min(base.getDate(), daysInMonth))
       break
     }

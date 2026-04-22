@@ -31,7 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null)
       setLoading(false)
 
-      // Handle session expiry — redirect to login
+      // Handle session expiry, redirect to login
       if (event === "TOKEN_REFRESHED" && !session) {
         window.location.href = "/login"
       }

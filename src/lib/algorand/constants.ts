@@ -1,6 +1,6 @@
 export type AlgorandNetwork = "testnet" | "mainnet"
 
-// Allow overriding via env (paid Nodely / self-hosted node) — falls back to public algonode.
+// Allow overriding via env (paid Nodely / self-hosted node), falls back to public algonode.
 const ENV_TESTNET_ALGOD = import.meta.env.VITE_ALGOD_TESTNET_URL as string | undefined
 const ENV_MAINNET_ALGOD = import.meta.env.VITE_ALGOD_MAINNET_URL as string | undefined
 const ENV_TESTNET_INDEXER = import.meta.env.VITE_INDEXER_TESTNET_URL as string | undefined
@@ -28,7 +28,7 @@ export const ALGORAND_MAINNET = {
 export const MIN_BALANCE_MICROALGOS = 100_000
 export const MICROALGOS_PER_ALGO = 1_000_000
 
-// USDCa (USDC on Algorand) asset IDs — the same on testnet faucets / mainnet.
+// USDCa (USDC on Algorand) asset IDs, the same on testnet faucets / mainnet.
 export const USDCA_ASSET_ID: Record<AlgorandNetwork, number> = {
   testnet: 10458941,   // USDC testnet ASA
   mainnet: 31566704,   // USDC mainnet ASA
@@ -58,7 +58,7 @@ export function shortenAddress(address: string, chars = 6): string {
   return `${address.slice(0, chars)}...${address.slice(-chars)}`
 }
 
-// ── Legacy aliases — now all point to Lora ────────────────────────────────
+// ── Legacy aliases, now all point to Lora ────────────────────────────────
 export function getAlgoExplorerUrl(txnId: string, network: AlgorandNetwork = "testnet"): string {
   return `https://lora.algokit.io/${network}/transaction/${txnId}`
 }

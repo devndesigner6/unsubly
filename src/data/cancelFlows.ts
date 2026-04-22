@@ -33,7 +33,7 @@ export const CANCEL_FLOWS: CancelFlow[] = [
     steps: [
       "Sign in if prompted",
       "Click \"Finish Cancellation\"",
-      "Confirm — access continues until your billing date",
+      "Confirm, access continues until your billing date",
     ],
     note: "Membership stays active until the end of the current billing period.",
   },
@@ -44,7 +44,7 @@ export const CANCEL_FLOWS: CancelFlow[] = [
     steps: [
       "Sign in to your Disney+ account",
       "Find your subscription and click \"Cancel Subscription\"",
-      "Confirm — you keep access until the period ends",
+      "Confirm, you keep access until the period ends",
     ],
   },
   {
@@ -76,7 +76,7 @@ export const CANCEL_FLOWS: CancelFlow[] = [
       "Go to \"Manage Membership\" → \"End Membership\"",
       "Click through 3 confirmation screens",
     ],
-    note: "Amazon shows multiple retention offers — keep clicking \"End on [date]\".",
+    note: "Amazon shows multiple retention offers, keep clicking \"End on [date]\".",
   },
   {
     name: "Apple TV+",
@@ -172,7 +172,7 @@ export const CANCEL_FLOWS: CancelFlow[] = [
       "Open \"Manage Subscriptions\" and click \"Cancel\"",
       "Follow the prompts to confirm",
     ],
-    note: "NYT often requires a chat agent for digital cancellations — be patient.",
+    note: "NYT often requires a chat agent for digital cancellations, be patient.",
   },
   {
     name: "Wall Street Journal",
@@ -295,7 +295,7 @@ export const CANCEL_FLOWS: CancelFlow[] = [
     steps: [
       "Sign in to your Adobe account",
       "Click \"Manage plan\" → \"Cancel plan\"",
-      "Confirm — early termination fees may apply on annual plans",
+      "Confirm, early termination fees may apply on annual plans",
     ],
     note: "Annual plans cancelled mid-term incur a 50% remaining-balance fee.",
   },
@@ -414,7 +414,7 @@ export const CANCEL_FLOWS: CancelFlow[] = [
       "Open Billing → Account → Close Account",
       "Read the warning and confirm",
     ],
-    note: "Closing an AWS account is permanent — back up data first.",
+    note: "Closing an AWS account is permanent, back up data first.",
   },
 
   // === Other common ===
@@ -447,7 +447,7 @@ export const CANCEL_FLOWS: CancelFlow[] = [
       "Choose a cancel reason and click \"Continue\"",
       "Click \"Cancel Membership\" to confirm",
     ],
-    note: "Unused credits expire when membership ends — use them first.",
+    note: "Unused credits expire when membership ends, use them first.",
   },
 ]
 

@@ -59,7 +59,7 @@ export default function EditSubscriptionPage() {
         signTransaction,
       })
       if (result.dbUpdated && result.vaultsKilled > 0) {
-        toast.success(`Cancelled. Killed ${result.vaultsKilled} vault(s) on-chain — funds refunded to your wallet.`)
+        toast.success(`Cancelled. Killed ${result.vaultsKilled} vault(s) on-chain, funds refunded to your wallet.`)
         navigate("/subscriptions")
       } else if (result.dbUpdated && result.errors.length === 0) {
         toast.success("Subscription cancelled.")
@@ -68,7 +68,7 @@ export default function EditSubscriptionPage() {
         // Sub status was changed but on-chain kill failed → stay on page so user can retry from the vault details page.
         toast.warning(`Cancelled in app. On-chain kill failed: ${result.errors.join("; ")}. Visit the vault page to kill manually.`)
       } else {
-        // DB update itself failed — keep user here, do not navigate.
+        // DB update itself failed, keep user here, do not navigate.
         toast.error(result.errors.join("; ") || "Cancellation failed")
       }
     } catch (err: any) {

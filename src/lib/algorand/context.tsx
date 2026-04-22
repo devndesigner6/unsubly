@@ -226,7 +226,7 @@ function AlgorandBridge({
       if (net === network) return
       setNetworkSwitching(true)
       try {
-        // Disconnect wallet first — wallets may not support cross-network signing
+        // Disconnect wallet first, wallets may not support cross-network signing
         if (activeWallet) {
           try { await activeWallet.disconnect() } catch {}
           setBalance(0)

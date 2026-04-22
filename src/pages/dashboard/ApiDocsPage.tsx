@@ -26,7 +26,7 @@ function MethodRow({ m }: { m: Arc56Method }) {
           {ro ? (
             <span
               className="rounded border border-gray-300 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-gray-600 dark:border-gray-700 dark:text-gray-400"
-              title="Read-only — does not modify on-chain state"
+              title="Read-only, does not modify on-chain state"
             >
               read
             </span>
@@ -151,7 +151,7 @@ export default function ApiDocsPage() {
         </div>
         <p className="text-sm text-gray-600 dark:text-gray-400">
           Generated from the ARC-56 schema for every Unsubscribely contract. Use these
-          method signatures from your own agent or wallet — they are stable, versioned,
+          method signatures from your own agent or wallet, they are stable, versioned,
           and verifiable on-chain.
         </p>
       </header>

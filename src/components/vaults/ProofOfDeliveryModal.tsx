@@ -44,7 +44,7 @@ export function ProofOfDeliveryModal({ open, defaultProof, onClose, onConfirm }:
 
         <div className="space-y-3 p-5">
           <p className="text-xs text-gray-600 dark:text-gray-400">
-            Attach a short receipt — an invoice URL, content hash, or one-line
+            Attach a short receipt, an invoice URL, content hash, or one-line
             description of what was delivered. This is written into the release
             transaction's note and is permanently visible on-chain.
           </p>

@@ -196,19 +196,19 @@ export default function DisputeCenterPage() {
                       )}
                     </div>
                     <div className="mt-1 grid grid-cols-1 gap-x-4 gap-y-0.5 text-xs text-gray-500 sm:grid-cols-2">
-                      <div>App: <code className="font-mono text-gray-700 dark:text-gray-300">{v.app_id ?? "—"}</code></div>
+                      <div>App: <code className="font-mono text-gray-700 dark:text-gray-300">{v.app_id ?? ","}</code></div>
                       <div>Recipient: {v.escrow_address ? (
                         <a className="font-mono underline-offset-2 hover:underline" target="_blank" rel="noopener noreferrer"
                            href={getAddressExplorerUrl(v.escrow_address)}>
                           {shortenAddress(v.escrow_address)}
                         </a>
-                      ) : "—"}</div>
+                      ) : ","}</div>
                       <div>Arbitrator: {v.arbitrator_address ? (
                         <a className="font-mono underline-offset-2 hover:underline" target="_blank" rel="noopener noreferrer"
                            href={getAddressExplorerUrl(v.arbitrator_address)}>
                           {shortenAddress(v.arbitrator_address)}
                         </a>
-                      ) : "—"}</div>
+                      ) : ","}</div>
                       <div>Created: {new Date(v.created_at).toLocaleDateString()}</div>
                     </div>
                     {d && (

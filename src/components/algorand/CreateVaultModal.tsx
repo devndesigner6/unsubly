@@ -37,7 +37,7 @@ const VAULT_TYPE_ICONS: Record<VaultType, typeof RiLockLine> = {
 }
 
 const VAULT_TYPE_DESCRIPTIONS: Record<VaultType, string> = {
-  standard:    "Basic escrow — you release manually",
+  standard:    "Basic escrow, you release manually",
   agent:       "Agent auto-releases on billing date",
   agent_v2:    "Agent auto-releases with on-chain billing history",
   time_locked: "Auto-releases after a set date",
@@ -259,7 +259,7 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
       if (insertError) {
         console.error("DB insert error:", insertError)
         const errDetail = (insertError as any)?.message || (insertError as any)?.details || JSON.stringify(insertError)
-        toast.error("Vault on-chain — syncing to database…", {
+        toast.error("Vault on-chain, syncing to database…", {
           description: `Auto-recovery will import it now. (${errDetail})`,
           duration: 10000,
         })
@@ -299,7 +299,7 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
       let friendly = raw
 
       if (raw.includes("CONNECT_MODAL_CLOSED") || raw.toLowerCase().includes("cancel")) {
-        friendly = "Transaction cancelled — nothing was sent."
+        friendly = "Transaction cancelled, nothing was sent."
       } else if (raw.toLowerCase().includes("insufficient") || raw.toLowerCase().includes("below min")) {
         friendly = "Your wallet doesn't have enough ALGO. You need at least 0.3 ALGO to cover the vault minimum balance and fees."
       } else if (raw.toLowerCase().includes("network") || raw.toLowerCase().includes("fetch")) {
@@ -520,7 +520,7 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
               <div>
                 <p className="text-xs font-medium text-green-700 dark:text-green-400">Agent Auto-Release Enabled</p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">
-                  The autonomous agent will release this vault on the subscription billing date — no manual action needed.
+                  The autonomous agent will release this vault on the subscription billing date, no manual action needed.
                 </p>
                 <p className="text-[10px] font-mono text-muted-foreground mt-1 truncate">
                   Agent: {agentAddress.slice(0, 8)}…{agentAddress.slice(-8)}

@@ -12,7 +12,7 @@ describe("microalgo conversions", () => {
   })
 
   it("rounds fractional microalgos to integer (no silent truncation bugs)", () => {
-    // 1.2345678 ALGO can't be represented in microalgos exactly — must round
+    // 1.2345678 ALGO can't be represented in microalgos exactly, must round
     const result = algoToMicroalgos(1.2345678)
     expect(Number.isInteger(result)).toBe(true)
     expect(result).toBe(1234568)

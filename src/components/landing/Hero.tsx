@@ -32,7 +32,7 @@ export function Hero() {
           Subscription Management, Reimagined
         </p>
 
-        {/* TRACK. CONTROL. SAVE. — compact with tilted CONTROL */}
+        {/* TRACK. CONTROL. SAVE., compact with tilted CONTROL */}
         <h1
           className={`font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight leading-[0.95] text-foreground transition-all duration-1000 ${
             loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"

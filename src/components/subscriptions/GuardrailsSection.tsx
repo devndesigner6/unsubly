@@ -84,7 +84,7 @@ export function GuardrailsSection({ subscriptionId, currency }: Props) {
             Pause before first paid renewal
           </span>
           <span className="ml-1 text-gray-500">
-            — agent will not release the first paid charge after the trial; require manual approval.
+           , agent will not release the first paid charge after the trial; require manual approval.
           </span>
         </span>
       </label>

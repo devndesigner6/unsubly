@@ -252,7 +252,7 @@ export default function DashboardPageContent() {
               <p className="mt-1.5 text-sm text-blue-100 sm:mt-2 sm:text-base">
                 {metrics.upcoming > 0
                   ? `You have ${metrics.upcoming} payment${metrics.upcoming > 1 ? "s" : ""} due this week`
-                  : "No payments due this week — you're all caught up!"}
+                  : "No payments due this week, you're all caught up!"}
               </p>
             </div>
             <div className="flex flex-wrap gap-2 sm:gap-3">
@@ -343,10 +343,10 @@ export default function DashboardPageContent() {
           </div>
         )}
 
-        {/* Algorand (60%) + Agent (40%) — side-by-side */}
+        {/* Algorand (60%) + Agent (40%), side-by-side */}
         <div className="mt-6 grid gap-5 lg:grid-cols-5">
 
-          {/* === Card 1: Algorand wallet — Premium Banking style (60%) === */}
+          {/* === Card 1: Algorand wallet, Premium Banking style (60%) === */}
           {(() => {
             const activeLogo = walletType ? WALLET_LOGOS[walletType] : null
             const activeLabel = walletType ? WALLET_LABELS[walletType] : null
@@ -355,7 +355,7 @@ export default function DashboardPageContent() {
                 <div
                   className="relative overflow-hidden rounded-[32px] bg-black p-6 sm:p-7 ring-1 ring-emerald-500/30 shadow-[0_20px_60px_-15px_rgba(34,197,94,0.35)] flex flex-col aspect-[1.55/1] min-h-[300px]"
                 >
-                  {/* Green metallic blob — top */}
+                  {/* Green metallic blob, top */}
                   <div
                     aria-hidden
                     className="pointer-events-none absolute -top-2 -right-2 h-[58%] w-[92%]"
@@ -586,13 +586,13 @@ export default function DashboardPageContent() {
                           agentResult.error.toLowerCase().includes("mnemonic") ||
                           agentResult.error.toLowerCase().includes("wallet") ||
                           agentResult.error.toLowerCase().includes("sign")
-                            ? "Agent wallet not configured — add AGENT_WALLET_MNEMONIC on Vercel."
+                            ? "Agent wallet not configured, add AGENT_WALLET_MNEMONIC on Vercel."
                             : agentResult.error
                         }</span></>
                       : agentResult.mode === "db-only" && (agentResult.processed ?? 0) > 0
-                        ? <><RiAlertLine className="size-3.5 mt-0.5 shrink-0" /><span>Simulation only — {agentResult.processed} vault{agentResult.processed !== 1 ? "s" : ""} found, none released on-chain.</span></>
+                        ? <><RiAlertLine className="size-3.5 mt-0.5 shrink-0" /><span>Simulation only, {agentResult.processed} vault{agentResult.processed !== 1 ? "s" : ""} found, none released on-chain.</span></>
                         : agentResult.released === 0
-                          ? <><RiCheckDoubleLine className="size-3.5 mt-0.5 shrink-0" /><span>No locked vaults due — nothing to release.</span></>
+                          ? <><RiCheckDoubleLine className="size-3.5 mt-0.5 shrink-0" /><span>No locked vaults due, nothing to release.</span></>
                           : <><RiCheckDoubleLine className="size-3.5 mt-0.5 shrink-0" /><span>Released {agentResult.released} vault{agentResult.released !== 1 ? "s" : ""} on-chain.</span></>}
                   </div>
                 )}

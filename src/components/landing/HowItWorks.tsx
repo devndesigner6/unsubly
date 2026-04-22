@@ -7,7 +7,7 @@ const steps = [
   {
     number: "01",
     title: "Connect Wallet",
-    description: "Link your Pera Wallet to Unsubscribely. Your keys, your control — we never hold your funds.",
+    description: "Link your Pera Wallet to Unsubscribely. Your keys, your control, we never hold your funds.",
   },
   {
     number: "02",

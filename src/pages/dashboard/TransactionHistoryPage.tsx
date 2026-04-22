@@ -164,8 +164,8 @@ export default function TransactionHistoryPage() {
                       <td className="px-4 py-3 font-mono text-xs text-foreground">{truncate(p.algorand_txn_id)}</td>
                       <td className="px-4 py-3 font-semibold text-foreground">{Number(p.amount).toFixed(4)} ALGO</td>
                       <td className="px-4 py-3 font-mono text-xs text-muted-foreground hidden sm:table-cell">{truncate(p.sender_address)}</td>
-                      <td className="px-4 py-3 font-mono text-xs text-muted-foreground hidden md:table-cell">{p.recipient_address ? truncate(p.recipient_address) : "—"}</td>
-                      <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">{p.block_round ?? "—"}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-muted-foreground hidden md:table-cell">{p.recipient_address ? truncate(p.recipient_address) : ","}</td>
+                      <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">{p.block_round ?? ","}</td>
                       <td className="px-4 py-3 text-muted-foreground">{new Date(p.confirmed_at || p.created_at).toLocaleDateString()}</td>
                       <td className="px-4 py-3">
                         <a href={getAlgoExplorerUrl(p.algorand_txn_id, network)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">

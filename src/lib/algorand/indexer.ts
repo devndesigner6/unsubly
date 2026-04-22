@@ -3,7 +3,7 @@
  *
  * The frontend currently reads payment history from Supabase
  * (onchain_payments). That table only contains txns the app itself made
- * — it misses any direct transfers to/from a vault address. The Indexer
+ *, it misses any direct transfers to/from a vault address. The Indexer
  * is the source-of-truth for ALL on-chain activity.
  *
  * Use these helpers anywhere you want true on-chain history rather than

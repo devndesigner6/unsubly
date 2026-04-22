@@ -120,7 +120,7 @@ export default function EscrowVaultsPage() {
 
       if (recovered > 0) {
         toast.success(`Recovered ${recovered} vault${recovered > 1 ? "s" : ""} from chain`, {
-          description: "Found on-chain contracts not yet in your vault list — added automatically.",
+          description: "Found on-chain contracts not yet in your vault list, added automatically.",
           duration: 6000,
         })
         await fetchVaults()

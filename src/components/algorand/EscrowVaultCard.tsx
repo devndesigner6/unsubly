@@ -227,7 +227,7 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
     ? microalgosToAlgo(onChainBalance).toFixed(4)
     : Number(vault.amount).toFixed(4)
 
-  // Tag pills — keep to 2 like the reference
+  // Tag pills, keep to 2 like the reference
   const pills: string[] = [typeLabel, network === "mainnet" ? "MainNet" : "TestNet"]
 
   return (
@@ -400,7 +400,7 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
         )}
       </div>
 
-      {/* Expanded panel — pushes following grid rows down */}
+      {/* Expanded panel, pushes following grid rows down */}
       {expanded && (
         <div id={`vault-details-${vault.id}`} role="region" aria-label="Vault details"
           className="border-t border-border px-5 py-4 space-y-3 bg-muted/30">

@@ -119,7 +119,7 @@ export const CONTRACTS: ContractInfo[] = [
     slug: "time-locked",
     singletonKey: null,
     description:
-      "Funds are locked until a specific Unix timestamp. Useful for guaranteed delivery windows and trial-period guardrails — the agent literally cannot pay the merchant before the lock expires.",
+      "Funds are locked until a specific Unix timestamp. Useful for guaranteed delivery windows and trial-period guardrails, the agent literally cannot pay the merchant before the lock expires.",
   },
   {
     key: "MultiSigEscrow",
@@ -143,7 +143,7 @@ export const CONTRACTS: ContractInfo[] = [
     slug: "asa-escrow",
     singletonKey: null,
     description:
-      "Escrow vault that holds an Algorand Standard Asset (ASA) instead of ALGO — used for stablecoin or token-denominated subscriptions.",
+      "Escrow vault that holds an Algorand Standard Asset (ASA) instead of ALGO, used for stablecoin or token-denominated subscriptions.",
   },
 ]
 

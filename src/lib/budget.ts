@@ -61,7 +61,7 @@ export interface RenewalRisk {
 
 /**
  * Combine the subscription row with guardrails to produce a renewal risk
- * for the upcoming cycle. Pure — does no I/O.
+ * for the upcoming cycle. Pure, does no I/O.
  */
 export function assessRenewalRisk(args: {
   amount: number
@@ -98,7 +98,7 @@ export function assessRenewalRisk(args: {
     const daysToBill = daysBetween(today, nbd)
     if (daysToBill >= 0 && daysToBill <= 7) {
       if (level !== "danger") level = "warn"
-      reasons.push("First paid renewal pending — manual approval required")
+      reasons.push("First paid renewal pending, manual approval required")
     }
   }
 

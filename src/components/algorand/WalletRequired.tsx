@@ -16,7 +16,7 @@ const PHRASES = [
     sub: "This feature lives on-chain. Connect your wallet to participate in the decentralised economy.",
   },
   {
-    headline: "Smart contracts don't wait — but you do.",
+    headline: "Smart contracts don't wait, but you do.",
     sub: "Your escrow vaults are deployed and ready on Algorand. Connect your wallet to access them.",
   },
 ]
@@ -67,7 +67,7 @@ export function WalletRequired({ children, feature }: WalletRequiredProps) {
           <div className="mt-8 flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-3">
             <RiShieldLine className="size-4 shrink-0 text-primary" />
             <p className="text-xs text-muted-foreground">
-              <span className="font-medium text-foreground">{feature}</span> requires an Algorand wallet — Pera, Defly, or Lute.
+              <span className="font-medium text-foreground">{feature}</span> requires an Algorand wallet, Pera, Defly, or Lute.
             </p>
           </div>
         )}

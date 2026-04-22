@@ -26,7 +26,7 @@ export function VaultHealthBanner() {
       setChecked(data?.checked || 0)
       setHasRun(true)
     } catch {
-      setError("Health check unavailable — vault monitoring service not reachable.")
+      setError("Health check unavailable, vault monitoring service not reachable.")
       setHasRun(true)
     } finally {
       setLoading(false)

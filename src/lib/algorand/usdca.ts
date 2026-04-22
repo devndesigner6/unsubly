@@ -1,11 +1,11 @@
 /**
  * USDCa (USDC on Algorand) client helpers.
  *
- * USDCa is a stablecoin ASA — same wire interface as any Algorand asset.
+ * USDCa is a stablecoin ASA, same wire interface as any Algorand asset.
  * Two operations users typically need:
- *   1. opt-in (a 0-amount transfer to themselves) — required before any
+ *   1. opt-in (a 0-amount transfer to themselves), required before any
  *      address can hold a non-zero balance of the ASA
- *   2. transfer — send N micro-USDC to a recipient
+ *   2. transfer, send N micro-USDC to a recipient
  *
  * These helpers stay UI-agnostic; pass in any algosdk wallet sign function.
  *

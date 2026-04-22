@@ -19,7 +19,7 @@ interface PickerProps {
  * Modal that fetches the on-chain Service Registry (via `/api/agent/registry`)
  * and lets the user pick a published service to pre-fill a subscription form.
  *
- * The registry is the source of truth — picking from it links the user's
+ * The registry is the source of truth, picking from it links the user's
  * subscription to a real on-chain merchant offering, instead of free-text.
  */
 export default function RegistryPickerModal({ onClose, onPick }: PickerProps) {

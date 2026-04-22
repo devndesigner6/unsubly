@@ -44,7 +44,7 @@ import DisputeCenterPage from "@/pages/dashboard/DisputeCenterPage"
 import CoSignerApprovalPage from "@/pages/CoSignerApprovalPage"
 import NotFoundPage from "@/pages/NotFoundPage"
 
-// Fetch live exchange rates once at startup — fire and forget, falls back to static rates
+// Fetch live exchange rates once at startup, fire and forget, falls back to static rates
 initExchangeRates()
 
 const AlgorandProviderLazy = lazy(async () => {

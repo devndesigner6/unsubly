@@ -32,7 +32,7 @@ export default function CancelHelperModal({ subscription, onClose, onCancelled }
 
   function openCancelPage() {
     if (!fallbackUrl) {
-      toast.error("No cancel URL available — search the merchant's website for \"cancel subscription\".")
+      toast.error("No cancel URL available, search the merchant's website for \"cancel subscription\".")
       return
     }
     window.open(fallbackUrl, "_blank", "noopener,noreferrer")
@@ -91,7 +91,7 @@ export default function CancelHelperModal({ subscription, onClose, onCancelled }
               Cancel {subscription.name}
             </h2>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              {flow ? "We know this one — guided steps below." : "Generic cancel — we'll open the merchant site."}
+              {flow ? "We know this one, guided steps below." : "Generic cancel, we'll open the merchant site."}
             </p>
           </div>
           <button
@@ -164,7 +164,7 @@ export default function CancelHelperModal({ subscription, onClose, onCancelled }
                 {running ? (
                   <><RiLoader4Line className="size-4 animate-spin" /> Cancelling…</>
                 ) : (
-                  <><RiCheckLine className="size-4" /> I've cancelled — finalise</>
+                  <><RiCheckLine className="size-4" /> I've cancelled, finalise</>
                 )}
               </button>
               {fallbackUrl && (

@@ -223,7 +223,7 @@ export default function X402DemoPage() {
           <div className="flex items-center justify-between gap-2">
             <h2 className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-gray-100">
               <RiCoinLine className="size-4" />
-              Server replied 402 — Payment required
+              Server replied 402, Payment required
             </h2>
             <button
               onClick={requestChallenge}
@@ -294,7 +294,7 @@ export default function X402DemoPage() {
         <section className="space-y-3 rounded-md border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950">
           <h2 className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-gray-100">
             <RiCheckboxCircleLine className="size-4" />
-            200 OK — content unlocked
+            200 OK, content unlocked
           </h2>
           {result.quote && (
             <blockquote className="border-l-2 border-gray-300 pl-3 text-sm italic text-gray-800 dark:border-gray-700 dark:text-gray-200">
