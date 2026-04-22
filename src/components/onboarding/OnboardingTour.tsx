@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { useLocation } from "react-router-dom"
 import { useAuth } from "@/lib/auth-context"
+import { useSidebar } from "@/components/Sidebar"
 
 type Placement = "top" | "bottom" | "left" | "right" | "auto"
 
@@ -75,6 +76,7 @@ function pickPlacement(rect: DOMRect, requested: Placement): Exclude<Placement, 
 export function OnboardingTour() {
   const { user, loading } = useAuth()
   const { pathname } = useLocation()
+  const { setOpen: setSidebarOpen } = useSidebar()
   const [stepIdx, setStepIdx] = useState(0)
   const [active, setActive] = useState(false)
   const [rect, setRect] = useState<DOMRect | null>(null)
@@ -175,6 +177,10 @@ export function OnboardingTour() {
       try {
         localStorage.setItem(STORAGE_PREFIX + user.id, "1")
       } catch { /* ignore */ }
+      // Once the user has been shown the tour, open the sidebar so it greets
+      // them every time they log in from now on. The Sidebar persists this
+      // preference in a cookie.
+      setSidebarOpen(true)
     }
     setActive(false)
   }

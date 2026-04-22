@@ -64,7 +64,19 @@ const SidebarProvider = React.forwardRef<
     const isMobile = useIsMobile()
     const [openMobile, setOpenMobile] = React.useState(false)
 
-    const [_open, _setOpen] = React.useState(defaultOpen)
+    // Read the persisted preference (set by previous toggles) so a returning
+    // user lands with the sidebar in the same state they left it.
+    const initialOpen = React.useMemo(() => {
+      if (typeof document === "undefined") return defaultOpen
+      const match = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith(`${SIDEBAR_COOKIE_NAME}=`))
+      if (!match) return defaultOpen
+      const value = match.split("=")[1]
+      return value === "true"
+    }, [defaultOpen])
+
+    const [_open, _setOpen] = React.useState(initialOpen)
     const open = openProp ?? _open
     const setOpen = React.useCallback(
       (value: boolean | ((value: boolean) => boolean)) => {
