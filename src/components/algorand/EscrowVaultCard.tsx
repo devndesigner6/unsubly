@@ -5,7 +5,7 @@ import {
   shortenAddress, getLoraTransactionUrl, getLoraApplicationUrl, getLoraAddressUrl,
   microalgosToAlgo, VAULT_TYPE_LABELS, type VaultType,
 } from "@/lib/algorand/constants"
-import { releaseEscrowFunds, killEscrowContract, deleteEscrowContract, fundEscrowContract } from "@/lib/algorand/contract"
+import { releaseEscrowFunds, releaseAgentVaultV2, killEscrowContract, deleteEscrowContract, fundEscrowContract } from "@/lib/algorand/contract"
 import {
   RiLockLine, RiLockUnlockLine, RiShieldLine, RiExternalLinkLine,
   RiAlarmWarningLine, RiDeleteBinLine, RiTimeLine,
@@ -47,6 +47,7 @@ interface EscrowVaultCardProps {
 const VAULT_TYPE_ICON: Record<string, typeof RiLockLine> = {
   standard:    RiLockLine,
   agent:       RiRobot2Line,
+  agent_v2:    RiRobot2Line,
   time_locked: RiTimeLine,
   multi_sig:   RiGroupLine,
   dispute:     RiShieldLine,
@@ -137,10 +138,15 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
     setIsProcessing(true)
     setAction("Releasing funds on-chain… (sign in your wallet)")
     try {
-      const txnId = await releaseEscrowFunds(algodClient, walletAddress, vault.app_id, signTransaction)
-      await supabase.from("escrow_vaults" as any)
+      const isV2 = vType === "agent_v2"
+      const amountMicro = Math.round(Number(vault.amount || 0) * 1_000_000)
+      const txnId = isV2
+        ? await releaseAgentVaultV2(algodClient, walletAddress, vault.app_id, amountMicro, signTransaction)
+        : await releaseEscrowFunds(algodClient, walletAddress, vault.app_id, signTransaction)
+      const { error: upErr } = await supabase.from("escrow_vaults" as any)
         .update({ status: "released", txn_id: txnId, released_at: new Date().toISOString() } as any)
         .eq("id", vault.id)
+      if (upErr) toast.warning("Released on-chain but DB update failed", { description: upErr.message })
       await supabase.from("onchain_payments" as any).insert({
         user_id: user.id, subscription_id: vault.subscription_id, algorand_txn_id: txnId,
         amount: vault.amount, sender_address: vault.app_address || walletAddress,
@@ -167,9 +173,10 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
     setAction("Activating kill switch on-chain…")
     try {
       const txnId = await killEscrowContract(algodClient, walletAddress, vault.app_id, signTransaction)
-      await supabase.from("escrow_vaults" as any)
+      const { error: upErr } = await supabase.from("escrow_vaults" as any)
         .update({ status: "killed", kill_switch_active: true, txn_id: txnId, released_at: new Date().toISOString() } as any)
         .eq("id", vault.id)
+      if (upErr) toast.warning("Killed on-chain but DB update failed", { description: upErr.message })
       await supabase.from("onchain_payments" as any).insert({
         user_id: user.id, subscription_id: vault.subscription_id, algorand_txn_id: txnId,
         amount: 0, sender_address: vault.app_address || walletAddress, recipient_address: walletAddress,

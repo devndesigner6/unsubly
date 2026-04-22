@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/auth-context"
 import { supabase } from "@/integrations/supabase/client"
 import { useAlgorand } from "@/lib/algorand/context"
 import { Button } from "@/components/Button"
-import { microalgosToAlgo, shortenAddress, getAddressExplorerUrl } from "@/lib/algorand/constants"
+import { shortenAddress, getAddressExplorerUrl } from "@/lib/algorand/constants"
 import { releaseEscrowFunds, killEscrowContract } from "@/lib/algorand/contract"
 
 interface VaultRow {
@@ -16,11 +16,11 @@ interface VaultRow {
   app_id: number | null
   app_address: string | null
   vault_type: string
-  amount_microalgos: number | null
-  recipient_address: string | null
+  amount: number | null
+  escrow_address: string | null
   arbitrator_address: string | null
-  is_killed: boolean | null
-  is_released: boolean | null
+  status: string | null
+  kill_switch_active: boolean | null
   created_at: string
 }
 
@@ -122,9 +122,9 @@ export default function DisputeCenterPage() {
         released_at: new Date().toISOString(),
         status: status === "resolved-released" ? "released" : "killed",
       }
-      if (status === "resolved-released") updates.is_released = true
-      else { updates.is_killed = true; updates.kill_switch_active = true }
-      await supabase.from("escrow_vaults" as any).update(updates as any).eq("id", v.id)
+      if (status === "resolved-killed") updates.kill_switch_active = true
+      const { error: upErr } = await supabase.from("escrow_vaults" as any).update(updates as any).eq("id", v.id)
+      if (upErr) toast.warning("Resolved on-chain but DB update failed", { description: upErr.message })
 
       // Update local dispute log with the resolution txid.
       const list = disputes.map((d) => d.vaultId === v.id
@@ -180,10 +180,10 @@ export default function DisputeCenterPage() {
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-gray-900 dark:text-gray-100">
-                        {v.amount_microalgos != null ? microalgosToAlgo(v.amount_microalgos) : "?"} ALGO
+                        {v.amount != null ? v.amount : "?"} ALGO
                       </span>
-                      {v.is_killed && <span className="rounded border border-gray-300 px-1.5 py-0.5 text-[10px] uppercase text-gray-600 dark:border-gray-700 dark:text-gray-400">killed</span>}
-                      {v.is_released && <span className="rounded border border-gray-300 px-1.5 py-0.5 text-[10px] uppercase text-gray-600 dark:border-gray-700 dark:text-gray-400">released</span>}
+                      {v.status === "killed" && <span className="rounded border border-gray-300 px-1.5 py-0.5 text-[10px] uppercase text-gray-600 dark:border-gray-700 dark:text-gray-400">killed</span>}
+                      {v.status === "released" && <span className="rounded border border-gray-300 px-1.5 py-0.5 text-[10px] uppercase text-gray-600 dark:border-gray-700 dark:text-gray-400">released</span>}
                       {d && (
                         <span className={[
                           "rounded border px-1.5 py-0.5 text-[10px] uppercase",
@@ -197,10 +197,10 @@ export default function DisputeCenterPage() {
                     </div>
                     <div className="mt-1 grid grid-cols-1 gap-x-4 gap-y-0.5 text-xs text-gray-500 sm:grid-cols-2">
                       <div>App: <code className="font-mono text-gray-700 dark:text-gray-300">{v.app_id ?? "—"}</code></div>
-                      <div>Recipient: {v.recipient_address ? (
+                      <div>Recipient: {v.escrow_address ? (
                         <a className="font-mono underline-offset-2 hover:underline" target="_blank" rel="noopener noreferrer"
-                           href={getAddressExplorerUrl(v.recipient_address)}>
-                          {shortenAddress(v.recipient_address)}
+                           href={getAddressExplorerUrl(v.escrow_address)}>
+                          {shortenAddress(v.escrow_address)}
                         </a>
                       ) : "—"}</div>
                       <div>Arbitrator: {v.arbitrator_address ? (

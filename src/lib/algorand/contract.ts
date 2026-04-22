@@ -73,6 +73,7 @@ function artifactForType(type: VaultType): ArtifactData {
   const map: Record<VaultType, Arc56Spec> = {
     standard:    EscrowVaultSpec as Arc56Spec,
     agent:       AgentEscrowVaultSpec as Arc56Spec,
+    agent_v2:    AgentEscrowVaultV2Spec as Arc56Spec,
     time_locked: TimeLockSpec as Arc56Spec,
     multi_sig:   MultiSigSpec as Arc56Spec,
     dispute:     DisputeSpec as Arc56Spec,

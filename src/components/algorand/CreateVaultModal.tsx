@@ -29,6 +29,7 @@ interface CreateVaultModalProps {
 const VAULT_TYPE_ICONS: Record<VaultType, typeof RiLockLine> = {
   standard:    RiLockLine,
   agent:       RiRobotLine,
+  agent_v2:    RiRobotLine,
   time_locked: RiTimeLine,
   multi_sig:   RiGroupLine,
   dispute:     RiShieldLine,
@@ -38,6 +39,7 @@ const VAULT_TYPE_ICONS: Record<VaultType, typeof RiLockLine> = {
 const VAULT_TYPE_DESCRIPTIONS: Record<VaultType, string> = {
   standard:    "Basic escrow — you release manually",
   agent:       "Agent auto-releases on billing date",
+  agent_v2:    "Agent auto-releases with on-chain billing history",
   time_locked: "Auto-releases after a set date",
   multi_sig:   "Requires co-signer approval",
   dispute:     "Arbitrator can resolve disputes",

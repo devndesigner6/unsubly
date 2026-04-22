@@ -27,6 +27,9 @@ function decodeGlobalState(raw: any[]): Record<string, string | number> {
 }
 
 function vaultTypeFromState(state: Record<string, string | number>): VaultType {
+  // AgentEscrowVaultV2 has both `agent` and `cycle_index` global state keys;
+  // v1 only has `agent`. Distinguish so we route to the correct release ABI.
+  if ("agent" in state && "cycle_index" in state) return "agent_v2"
   if ("agent" in state) return "agent"
   if ("co_signer" in state) return "multi_sig"
   if ("arbitrator" in state) return "dispute"

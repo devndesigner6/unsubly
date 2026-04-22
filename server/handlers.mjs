@@ -300,6 +300,8 @@ Respond with ONLY the JSON structure specified.`
 // ── /api/agent-run ──────────────────────────────────────────────────────────
 
 const RELEASE_SELECTOR = new Uint8Array([0x07, 0x6b, 0xbd, 0x4d])
+// AgentEscrowVaultV2.release(uint64)uint64
+const RELEASE_V2_SELECTOR = new Uint8Array([0x61, 0x17, 0xcc, 0xb8])
 
 // Service-role client used ONLY for server-managed tables (locks, replay store).
 // Never used to bypass user RLS on user data — that still goes through the
@@ -385,7 +387,7 @@ export async function agentRunHandler(req, res) {
     const subIds = dueSubs.map((s) => s.id)
     const { data: vaults } = await supabase
       .from("escrow_vaults")
-      .select("id, app_id, subscription_id, amount, vault_type")
+      .select("id, app_id, subscription_id, amount, vault_type, app_address")
       .in("subscription_id", subIds)
       .eq("status", "locked")
 
@@ -423,7 +425,8 @@ export async function agentRunHandler(req, res) {
       let mode = "db-only"
 
       try {
-        const isAgentVault = vault.vault_type === "agent"
+        const isAgentVault = vault.vault_type === "agent" || vault.vault_type === "agent_v2"
+        const isAgentV2 = vault.vault_type === "agent_v2"
         // Idempotency for ALL modes (including db-only sim): exactly one
         // agent_actions row per (vault, billing period). Without this the agent
         // appends a duplicate row on every tick.
@@ -435,12 +438,16 @@ export async function agentRunHandler(req, res) {
         if (algodClient && agentAccount && vault.app_id && isAgentVault) {
           try {
             const params = await algodClient.getTransactionParams().do()
+            const amountMicro = Math.round(Number(vault.amount || 0) * 1_000_000)
             const txn = algosdk.makeApplicationCallTxnFromObject({
               sender: agentAccount.addr,
               suggestedParams: { ...params, fee: 2000, flatFee: true },
               appIndex: Number(vault.app_id),
               onComplete: algosdk.OnApplicationComplete.NoOpOC,
-              appArgs: [RELEASE_SELECTOR],
+              appArgs: isAgentV2
+                ? [RELEASE_V2_SELECTOR, algosdk.encodeUint64(amountMicro)]
+                : [RELEASE_SELECTOR],
+              boxes: isAgentV2 ? [{ appIndex: Number(vault.app_id), name: new Uint8Array(0) }] : undefined,
             })
             const signed = txn.signTxn(agentAccount.sk)
             const sendRes = await algodClient.sendRawTransaction(signed).do()

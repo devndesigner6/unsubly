@@ -29,6 +29,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON) {
 
 // ARC-4 method selectors (sha512_256 of signature, first 4 bytes)
 const SEL_RELEASE = new Uint8Array([0x07, 0x6b, 0xbd, 0x4d]) // release()void
+const SEL_RELEASE_V2 = new Uint8Array([0x61, 0x17, 0xcc, 0xb8]) // AgentEscrowVaultV2.release(uint64)uint64
 
 const LOW_BALANCE_THRESHOLD = NETWORK === "mainnet" ? 0.5 : 0.1
 const MAX_RETRIES   = 3
@@ -79,6 +80,24 @@ async function releaseAlgoVault(algodClient, agentAccount, appId) {
     appIndex: Number(appId),
     onComplete: algosdk.OnApplicationComplete.NoOpOC,
     appArgs: [SEL_RELEASE],
+  })
+  const signed = txn.signTxn(agentAccount.sk)
+  const { txId } = await algodClient.sendRawTransaction(signed).do()
+  await algosdk.waitForConfirmation(algodClient, txId, 4)
+  return txId
+}
+
+// ── On-chain: release AgentEscrowVaultV2 (release(uint64)uint64 + box ref) ──
+async function releaseAgentVaultV2(algodClient, agentAccount, appId, amountAlgo) {
+  const params = await algodClient.getTransactionParams().do()
+  const amountMicro = Math.round(Number(amountAlgo || 0) * 1_000_000)
+  const txn = algosdk.makeApplicationCallTxnFromObject({
+    sender: agentAccount.addr,
+    suggestedParams: { ...params, fee: 2000, flatFee: true },
+    appIndex: Number(appId),
+    onComplete: algosdk.OnApplicationComplete.NoOpOC,
+    appArgs: [SEL_RELEASE_V2, algosdk.encodeUint64(amountMicro)],
+    boxes: [{ appIndex: Number(appId), name: new Uint8Array(0) }],
   })
   const signed = txn.signTxn(agentAccount.sk)
   const { txId } = await algodClient.sendRawTransaction(signed).do()
@@ -229,8 +248,9 @@ async function main() {
 
   for (const vault of vaults) {
     const sub     = subsArray.find(s => s.id === vault.subscription_id)
-    const isAsa   = vault.vault_type === "asa"
-    const typeTag = isAsa ? "[ASA]" : "[ALGO]"
+    const isAsa     = vault.vault_type === "asa"
+    const isAgentV2 = vault.vault_type === "agent_v2"
+    const typeTag   = isAsa ? "[ASA]" : isAgentV2 ? "[AGENT v2]" : "[ALGO]"
     console.log(`→ ${typeTag} Vault ${vault.id} | App #${vault.app_id}${vault.asa_id ? ` | ASA #${vault.asa_id}` : ""} | ${sub?.name ?? "manual"}`)
 
     try {
@@ -239,6 +259,11 @@ async function main() {
         txId = await withRetry(
           `ASA release App#${vault.app_id}`,
           () => releaseAsaVault(algodClient, agentAccount, vault.app_id, vault.asa_id)
+        )
+      } else if (isAgentV2) {
+        txId = await withRetry(
+          `AgentV2 release App#${vault.app_id}`,
+          () => releaseAgentVaultV2(algodClient, agentAccount, vault.app_id, vault.amount)
         )
       } else {
         txId = await withRetry(
