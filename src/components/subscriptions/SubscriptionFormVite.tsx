@@ -15,6 +15,25 @@ import {
   RiStoreLine,
 } from "@remixicon/react"
 import RegistryPickerModal, { cycleDaysToBillingCycle, type RegistryService } from "./RegistryPickerModal"
+import { useAlgorand } from "@/lib/algorand/context"
+
+function RegistryPickerButton({ onOpen }: { onOpen: () => void }) {
+  const { network } = useAlgorand()
+  const isMainnet = network === "mainnet"
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      disabled={isMainnet}
+      title={isMainnet
+        ? "Service Registry is testnet-only for now. Switch to TestNet in Settings."
+        : "Pick from on-chain Service Registry"}
+      className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-background"
+    >
+      <RiStoreLine className="size-3.5" /> From Registry
+    </button>
+  )
+}
 
 import { useNavigate } from "react-router-dom"
 import { useState, useEffect } from "react"
@@ -261,14 +280,7 @@ export function SubscriptionForm({ subscription, tagIds: initialTagIds = [] }: S
               <p className="text-sm text-gray-500">Enter subscription details</p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => setShowRegistryPicker(true)}
-            title="Pick from on-chain Service Registry"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
-          >
-            <RiStoreLine className="size-3.5" /> From Registry
-          </button>
+          <RegistryPickerButton onOpen={() => setShowRegistryPicker(true)} />
         </div>
 
         <div className="grid gap-5 sm:grid-cols-2">

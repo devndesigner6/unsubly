@@ -9,9 +9,10 @@ import { useAlgorand } from "@/lib/algorand/context"
 import { microalgosToAlgo } from "@/lib/algorand/constants"
 import { Button } from "@/components/Button"
 
-const NETWORK = (import.meta.env.VITE_ALGORAND_NETWORK as string) || "testnet"
-const explorerTx = (id: string) =>
-  NETWORK === "mainnet"
+import type { AlgorandNetwork } from "@/lib/algorand/constants"
+
+const explorerTx = (id: string, network: AlgorandNetwork) =>
+  network === "mainnet"
     ? `https://allo.info/tx/${id}`
     : `https://testnet.explorer.perawallet.app/tx/${id}/`
 
@@ -65,7 +66,7 @@ function StepDot({ active, done }: { active: boolean; done: boolean }) {
 }
 
 export default function X402DemoPage() {
-  const { walletAddress, algodClient, peraWallet } = useAlgorand()
+  const { walletAddress, algodClient, peraWallet, network } = useAlgorand()
   const [step, setStep] = useState<Step>("idle")
   const [challenge, setChallenge] = useState<Challenge402 | null>(null)
   const [result, setResult] = useState<ServerResponse | null>(null)
@@ -311,7 +312,7 @@ export default function X402DemoPage() {
                 <code className="block truncate font-mono text-gray-900 dark:text-gray-100">{txid}</code>
               </div>
               <a
-                href={explorerTx(txid)}
+                href={explorerTx(txid, network)}
                 target="_blank" rel="noopener noreferrer"
                 title="Open transaction in explorer"
                 className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"

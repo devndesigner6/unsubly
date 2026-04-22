@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { RiCloseLine, RiStoreLine, RiLoader4Line, RiSearchLine, RiArrowRightLine } from "@remixicon/react"
 import { microalgosToAlgo } from "@/lib/algorand/constants"
+import { useAlgorand } from "@/lib/algorand/context"
 
 export interface RegistryService {
   service_id: string
@@ -23,6 +24,7 @@ interface PickerProps {
  * subscription to a real on-chain merchant offering, instead of free-text.
  */
 export default function RegistryPickerModal({ onClose, onPick }: PickerProps) {
+  const { network } = useAlgorand()
   const [services, setServices] = useState<RegistryService[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -32,7 +34,7 @@ export default function RegistryPickerModal({ onClose, onPick }: PickerProps) {
     let alive = true
     ;(async () => {
       try {
-        const res = await fetch("/api/agent/registry")
+        const res = await fetch(`/api/agent/registry?network=${network}`)
         const json = await res.json()
         if (!alive) return
         if (json?.services && Array.isArray(json.services)) {
@@ -47,7 +49,7 @@ export default function RegistryPickerModal({ onClose, onPick }: PickerProps) {
       }
     })()
     return () => { alive = false }
-  }, [])
+  }, [network])
 
   const filtered = q.trim()
     ? services.filter(s =>

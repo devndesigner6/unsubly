@@ -147,13 +147,17 @@ export const CONTRACTS: ContractInfo[] = [
   },
 ]
 
-const NETWORK = (import.meta.env.VITE_ALGORAND_NETWORK as string) || "testnet"
-const _net: "testnet" | "mainnet" = NETWORK === "mainnet" ? "mainnet" : "testnet"
-
-/** Returns the deployed singleton info for the active network, or null. */
-export function getDeployment(c: ContractInfo): DeployedSingleton | null {
+/**
+ * Returns the deployed singleton info for the given network, or null.
+ * Pass the network from `useAlgorand().network` so this stays reactive
+ * when the user toggles testnet ↔ mainnet at runtime.
+ */
+export function getDeployment(
+  c: ContractInfo,
+  network: "testnet" | "mainnet",
+): DeployedSingleton | null {
   if (!c.singletonKey) return null
-  return deployed[_net]?.[c.singletonKey] ?? null
+  return deployed[network]?.[c.singletonKey] ?? null
 }
 
 /** True when the schema describes a method that does not modify state. */

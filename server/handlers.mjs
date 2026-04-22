@@ -582,16 +582,31 @@ export async function agentRegistryHandler(req, res) {
   if (req.method !== "GET") return jsonRes(res, 405, { error: "Method Not Allowed" })
 
   try {
-    const REGISTRY_APP_ID = process.env.SERVICE_REGISTRY_APP_ID
+    // Network selection: ?network=testnet|mainnet (default testnet).
+    const url = new URL(req.url || "/", "http://localhost")
+    const requested = (url.searchParams.get("network") || "testnet").toLowerCase()
+    const network = requested === "mainnet" ? "mainnet" : "testnet"
+
+    // Per-network app id (with single-value back-compat for testnet only).
+    const REGISTRY_APP_ID = network === "mainnet"
+      ? process.env.SERVICE_REGISTRY_APP_ID_MAINNET
+      : (process.env.SERVICE_REGISTRY_APP_ID_TESTNET || process.env.SERVICE_REGISTRY_APP_ID)
+
     if (!REGISTRY_APP_ID) {
       return jsonRes(res, 200, {
         registry_app_id: null,
         services: [],
-        message: "Service registry not yet deployed. Run `npm run deploy:contracts` after compiling smart_contracts/service_registry.",
+        network,
+        message: network === "mainnet"
+          ? "Service registry has not been deployed on Algorand MainNet yet. Set SERVICE_REGISTRY_APP_ID_MAINNET to enable."
+          : "Service registry not yet deployed. Run `npm run deploy:contracts` after compiling smart_contracts/service_registry.",
       })
     }
 
-    const algod = new algosdk.Algodv2("", "https://testnet-api.algonode.cloud", "")
+    const algodUrl = network === "mainnet"
+      ? (process.env.ALGOD_MAINNET_URL || "https://mainnet-api.algonode.cloud")
+      : (process.env.ALGOD_TESTNET_URL || "https://testnet-api.algonode.cloud")
+    const algod = new algosdk.Algodv2(process.env.ALGOD_TOKEN || "", algodUrl, "")
     const boxes = await algod.getApplicationBoxes(Number(REGISTRY_APP_ID)).do()
     const services = []
 
@@ -613,7 +628,7 @@ export async function agentRegistryHandler(req, res) {
       } catch { /* skip malformed boxes */ }
     }
 
-    jsonRes(res, 200, { registry_app_id: Number(REGISTRY_APP_ID), services, count: services.length })
+    jsonRes(res, 200, { registry_app_id: Number(REGISTRY_APP_ID), network, services, count: services.length })
   } catch (err) {
     console.error("[agent-registry] error:", err)
     jsonRes(res, 500, { error: err.message || "Registry lookup failed" })

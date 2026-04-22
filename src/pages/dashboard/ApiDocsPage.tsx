@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react"
-import { RiBookOpenLine, RiExternalLinkLine, RiFileCopyLine, RiCheckLine, RiSearchLine } from "@remixicon/react"
+import { RiBookOpenLine, RiExternalLinkLine, RiFileCopyLine, RiCheckLine, RiSearchLine, RiAlertLine } from "@remixicon/react"
 import {
   CONTRACTS,
   getDeployment,
@@ -8,10 +8,11 @@ import {
   type ContractInfo,
   type Arc56Method,
 } from "@/lib/algorand/abi"
+import { useAlgorand } from "@/lib/algorand/context"
+import type { AlgorandNetwork } from "@/lib/algorand/constants"
 
-const NETWORK = (import.meta.env.VITE_ALGORAND_NETWORK as string) || "testnet"
-const explorerApp = (id: number) =>
-  NETWORK === "mainnet"
+const explorerApp = (id: number, network: AlgorandNetwork) =>
+  network === "mainnet"
     ? `https://allo.info/application/${id}`
     : `https://lora.algokit.io/testnet/application/${id}`
 
@@ -56,8 +57,8 @@ function MethodRow({ m }: { m: Arc56Method }) {
   )
 }
 
-function ContractCard({ c }: { c: ContractInfo }) {
-  const dep = getDeployment(c)
+function ContractCard({ c, network }: { c: ContractInfo; network: AlgorandNetwork }) {
+  const dep = getDeployment(c, network)
   const [copied, setCopied] = useState(false)
   const copy = async (text: string) => {
     try {
@@ -90,7 +91,7 @@ function ContractCard({ c }: { c: ContractInfo }) {
                   {copied ? <RiCheckLine className="size-4" /> : <RiFileCopyLine className="size-4" />}
                 </button>
                 <a
-                  href={dep.lora_url || explorerApp(dep.appId)}
+                  href={dep.lora_url || explorerApp(dep.appId, network)}
                   target="_blank" rel="noopener noreferrer"
                   title="Open in explorer"
                   className="text-gray-500 hover:text-gray-900 dark:hover:text-gray-100"
@@ -120,6 +121,7 @@ function ContractCard({ c }: { c: ContractInfo }) {
 }
 
 export default function ApiDocsPage() {
+  const { network } = useAlgorand()
   const [q, setQ] = useState("")
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase()
@@ -156,6 +158,19 @@ export default function ApiDocsPage() {
         </p>
       </header>
 
+      {network === "mainnet" && (
+        <div
+          className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200"
+          title="Singleton contracts have not been deployed on Algorand MainNet yet"
+        >
+          <RiAlertLine className="mt-0.5 size-4 shrink-0" />
+          <p>
+            Singleton app ids are testnet-only until the MainNet rollout. Per-user vault
+            contracts (deployed from the UI) work on both networks today.
+          </p>
+        </div>
+      )}
+
       <div className="relative">
         <RiSearchLine className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400" />
         <input
@@ -183,7 +198,7 @@ export default function ApiDocsPage() {
         {filtered.length === 0 ? (
           <p className="text-sm text-gray-500">No matches.</p>
         ) : (
-          filtered.map((c) => <ContractCard key={c.slug} c={c} />)
+          filtered.map((c) => <ContractCard key={c.slug} c={c} network={network} />)
         )}
       </div>
     </main>

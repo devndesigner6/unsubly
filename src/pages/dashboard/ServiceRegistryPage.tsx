@@ -23,13 +23,14 @@ interface RegistryResponse {
   error?: string
 }
 
-const NETWORK = (import.meta.env.VITE_ALGORAND_NETWORK as string) || "testnet"
-const explorerApp = (id: number) =>
-  NETWORK === "mainnet"
+import type { AlgorandNetwork } from "@/lib/algorand/constants"
+
+const explorerApp = (id: number, network: AlgorandNetwork) =>
+  network === "mainnet"
     ? `https://allo.info/application/${id}`
     : `https://testnet.explorer.perawallet.app/application/${id}/`
-const explorerAddr = (a: string) =>
-  NETWORK === "mainnet"
+const explorerAddr = (a: string, network: AlgorandNetwork) =>
+  network === "mainnet"
     ? `https://allo.info/address/${a}`
     : `https://testnet.explorer.perawallet.app/address/${a}/`
 
@@ -40,7 +41,7 @@ export default function ServiceRegistryPage() {
   const [showForm, setShowForm] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [form, setForm] = useState({ service_id: "", name: "", price_algo: "", cycle_days: "30" })
-  const { walletAddress, algodClient, peraWallet } = useAlgorand()
+  const { walletAddress, algodClient, peraWallet, network } = useAlgorand()
   const signTransaction = async (txn: algosdk.Transaction): Promise<Uint8Array[]> =>
     peraWallet.signTransaction([[{ txn }]])
 
@@ -84,7 +85,7 @@ export default function ServiceRegistryPage() {
   const fetchRegistry = async () => {
     setIsLoading(true)
     try {
-      const res = await fetch("/api/agent/registry")
+      const res = await fetch(`/api/agent/registry?network=${network}`)
       const json: RegistryResponse = await res.json()
       setData(json)
     } catch (err: any) {
@@ -95,7 +96,8 @@ export default function ServiceRegistryPage() {
     }
   }
 
-  useEffect(() => { fetchRegistry() }, [])
+  // Refetch whenever the user toggles networks so the page reflects the live chain.
+  useEffect(() => { fetchRegistry() }, [network]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const copy = (text: string, label: string) => {
     navigator.clipboard.writeText(text)
@@ -200,7 +202,7 @@ export default function ServiceRegistryPage() {
         <div className="rounded-xl border border-border bg-card p-4 flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
             <span className="size-2 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-xs font-medium text-foreground">Live on Algorand {NETWORK}</span>
+            <span className="text-xs font-medium text-foreground">Live on Algorand {network}</span>
           </div>
           <span className="text-xs text-muted-foreground">·</span>
           <span className="text-xs text-muted-foreground">Registry App ID:</span>
@@ -213,13 +215,21 @@ export default function ServiceRegistryPage() {
             {copied === "App ID" ? <RiCheckLine className="size-3.5 text-green-500" /> : <RiFileCopyLine className="size-3.5" />}
           </button>
           <a
-            href={explorerApp(data.registry_app_id)}
+            href={explorerApp(data.registry_app_id, network)}
             target="_blank"
             rel="noopener noreferrer"
             className="ml-auto flex items-center gap-1 text-xs text-primary hover:underline"
           >
             View on Explorer <RiExternalLinkLine className="size-3" />
           </a>
+        </div>
+      ) : network === "mainnet" ? (
+        <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-sm text-foreground">
+          <p className="font-medium text-amber-700 dark:text-amber-400">Service Registry is testnet-only for now</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            The registry contract has not yet been deployed on Algorand MainNet. Switch to TestNet
+            in Settings to browse and publish services.
+          </p>
         </div>
       ) : (
         <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-sm text-foreground">
@@ -261,7 +271,7 @@ export default function ServiceRegistryPage() {
                     {s.provider.slice(0, 10)}…{s.provider.slice(-8)}
                   </code>
                   <a
-                    href={explorerAddr(s.provider)}
+                    href={explorerAddr(s.provider, network)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-muted-foreground hover:text-primary"
