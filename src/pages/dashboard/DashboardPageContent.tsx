@@ -268,7 +268,7 @@ export default function DashboardPageContent() {
                   On-Chain Resume
                 </Link>
               </Button>
-              <Button asChild className="bg-white text-blue-700 hover:bg-blue-50 shadow-lg text-sm sm:text-base">
+              <Button asChild className="bg-white text-blue-700 hover:bg-blue-50 shadow-lg text-sm sm:text-base" data-tour="add-subscription">
                 <Link to="/subscriptions/new">
                   <RiAddLine className="mr-1.5 size-4 sm:mr-2" />
                   Add Subscription
@@ -351,7 +351,7 @@ export default function DashboardPageContent() {
             const activeLogo = walletType ? WALLET_LOGOS[walletType] : null
             const activeLabel = walletType ? WALLET_LABELS[walletType] : null
             return (
-              <div className="lg:col-span-3 relative">
+              <div className="lg:col-span-3 relative" data-tour="algorand-total">
                 <div
                   className="relative overflow-hidden rounded-[32px] bg-black p-6 sm:p-7 ring-1 ring-emerald-500/30 shadow-[0_20px_60px_-15px_rgba(34,197,94,0.35)] flex flex-col aspect-[1.55/1] min-h-[300px]"
                 >
@@ -458,6 +458,7 @@ export default function DashboardPageContent() {
                       <button
                         onClick={() => setShowWalletSelector(true)}
                         disabled={isConnecting}
+                        data-tour="connect-wallet"
                         className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-black hover:bg-white/90 transition-colors disabled:opacity-60"
                       >
                         {isConnecting ? "Connecting…" : "Connect wallet"}

@@ -67,7 +67,7 @@ export function DashboardSidebar({
     <Sidebar {...props} className="bg-muted">
       <SidebarHeader className="px-3 py-4">
         <Link
-          to="/"
+          to="/dashboard"
           className="flex items-center gap-3 rounded-lg transition-colors hover:bg-accent -m-2 p-2"
         >
           <div className="flex size-9 items-center justify-center rounded-xl bg-foreground shrink-0">
