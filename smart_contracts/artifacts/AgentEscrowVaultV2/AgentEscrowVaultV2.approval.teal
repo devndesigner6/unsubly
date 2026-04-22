@@ -1,0 +1,458 @@
+#pragma version 11
+#pragma typetrack false
+
+// algopy.arc4.ARC4Contract.approval_program() -> uint64:
+main:
+    intcblock 0 1 32 8
+    bytecblock "killed" "creator" "cycle_index" 0x151f7c75 "recipient" "agent" "h:"
+    // contract.py:21
+    // class AgentEscrowVaultV2(ARC4Contract):
+    pushbytes 0x24378d3c // method "delete()void"
+    txna ApplicationArgs 0
+    match main_delete_route@4
+
+main_switch_case_next@5:
+    // contract.py:21
+    // class AgentEscrowVaultV2(ARC4Contract):
+    txn OnCompletion
+    !
+    assert
+    txn ApplicationID
+    bz main_create_NoOp@12
+    pushbytess 0x6117ccb8 0xb9c21155 0xdeca12c1 0x7979eece // method "release(uint64)uint64", method "kill()void", method "get_history(uint64)(uint64,uint64,uint64)", method "get_cycle_count()uint64"
+    txna ApplicationArgs 0
+    match release kill get_history get_cycle_count
+    err
+
+main_create_NoOp@12:
+    // contract.py:21
+    // class AgentEscrowVaultV2(ARC4Contract):
+    pushbytes 0x8a96980e // method "create(address,address)void"
+    txna ApplicationArgs 0
+    match create
+    err
+
+main_delete_route@4:
+    // contract.py:123
+    // @arc4.abimethod(allow_actions=["DeleteApplication"])
+    txn OnCompletion
+    pushint 5 // DeleteApplication
+    ==
+    txn ApplicationID
+    &&
+    assert
+    b delete
+
+
+// smart_contracts.agent_escrow_v2.contract.AgentEscrowVaultV2.create[routing]() -> void:
+create:
+    // contract.py:47
+    // @arc4.abimethod(allow_actions=["NoOp"], create="require")
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_2 // 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    txna ApplicationArgs 2
+    dup
+    len
+    intc_2 // 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    // contract.py:50
+    // self.creator.value = arc4.Address(Txn.sender)
+    bytec_1 // "creator"
+    txn Sender
+    app_global_put
+    // contract.py:51
+    // self.recipient.value = recipient
+    bytec 4 // "recipient"
+    uncover 2
+    app_global_put
+    // contract.py:52
+    // self.agent.value = agent
+    bytec 5 // "agent"
+    swap
+    app_global_put
+    // contract.py:53
+    // self.cycle_index.value = UInt64(0)
+    bytec_2 // "cycle_index"
+    intc_0 // 0
+    app_global_put
+    // contract.py:54
+    // self.killed.value = UInt64(0)
+    bytec_0 // "killed"
+    intc_0 // 0
+    app_global_put
+    // contract.py:47
+    // @arc4.abimethod(allow_actions=["NoOp"], create="require")
+    intc_1 // 1
+    return
+
+
+// smart_contracts.agent_escrow_v2.contract.AgentEscrowVaultV2.release[routing]() -> void:
+release:
+    pushbytes ""
+    dup
+    // contract.py:56
+    // @arc4.abimethod()
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_3 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // contract.py:62
+    // assert self.killed.value == UInt64(0), "Vault is killed"
+    intc_0 // 0
+    bytec_0 // "killed"
+    app_global_get_ex
+    assert // check self.killed exists
+    !
+    assert // Vault is killed
+    // contract.py:64
+    // arc4.Address(Txn.sender) == self.creator.value
+    txn Sender
+    intc_0 // 0
+    bytec_1 // "creator"
+    app_global_get_ex
+    assert // check self.creator exists
+    ==
+    // contract.py:64-65
+    // arc4.Address(Txn.sender) == self.creator.value
+    // or arc4.Address(Txn.sender) == self.agent.value
+    bnz release_bool_true@3
+    // contract.py:65
+    // or arc4.Address(Txn.sender) == self.agent.value
+    txn Sender
+    intc_0 // 0
+    bytec 5 // "agent"
+    app_global_get_ex
+    assert // check self.agent exists
+    ==
+    // contract.py:64-65
+    // arc4.Address(Txn.sender) == self.creator.value
+    // or arc4.Address(Txn.sender) == self.agent.value
+    bz release_bool_false@4
+
+release_bool_true@3:
+    intc_1 // 1
+
+release_bool_merge@5:
+    // contract.py:63-66
+    // assert (
+    //     arc4.Address(Txn.sender) == self.creator.value
+    //     or arc4.Address(Txn.sender) == self.agent.value
+    // ), "Only creator or agent can release"
+    assert // Only creator or agent can release
+    // contract.py:68
+    // app_addr = Global.current_application_address
+    global CurrentApplicationAddress
+    // contract.py:69
+    // balance = op.balance(app_addr)
+    dup
+    balance
+    // contract.py:70
+    // min_balance = op.min_balance(app_addr)
+    swap
+    min_balance
+    // contract.py:71
+    // spendable = balance - min_balance
+    -
+    bury 2
+    // contract.py:72
+    // payout = amount.native
+    dup
+    btoi
+    dup
+    bury 4
+    // contract.py:73
+    // assert payout > UInt64(0) and payout <= spendable, "Invalid payout amount"
+    bz release_bool_false@8
+    dig 2
+    dig 2
+    <=
+    bz release_bool_false@8
+    intc_1 // 1
+
+release_bool_merge@9:
+    // contract.py:73
+    // assert payout > UInt64(0) and payout <= spendable, "Invalid payout amount"
+    assert // Invalid payout amount
+    // contract.py:75-79
+    // itxn.Payment(
+    //     receiver=self.recipient.value.native,
+    //     amount=payout,
+    //     fee=0,
+    // ).submit()
+    itxn_begin
+    // contract.py:76
+    // receiver=self.recipient.value.native,
+    intc_0 // 0
+    bytec 4 // "recipient"
+    app_global_get_ex
+    assert // check self.recipient exists
+    dig 3
+    itxn_field Amount
+    itxn_field Receiver
+    // contract.py:75
+    // itxn.Payment(
+    intc_1 // pay
+    itxn_field TypeEnum
+    // contract.py:78
+    // fee=0,
+    intc_0 // 0
+    itxn_field Fee
+    // contract.py:75-79
+    // itxn.Payment(
+    //     receiver=self.recipient.value.native,
+    //     amount=payout,
+    //     fee=0,
+    // ).submit()
+    itxn_submit
+    // contract.py:81
+    // new_index = self.cycle_index.value + UInt64(1)
+    intc_0 // 0
+    bytec_2 // "cycle_index"
+    app_global_get_ex
+    assert // check self.cycle_index exists
+    intc_1 // 1
+    +
+    // contract.py:82
+    // self.cycle_index.value = new_index
+    bytec_2 // "cycle_index"
+    dig 1
+    app_global_put
+    // contract.py:86
+    // timestamp=arc4.UInt64(Global.latest_timestamp),
+    global LatestTimestamp
+    itob
+    // contract.py:88
+    // cycle_index=arc4.UInt64(new_index),
+    swap
+    itob
+    // contract.py:84-89
+    // # Append to box-stored history
+    // self.history[arc4.UInt64(new_index)] = BillingRecord(
+    //     timestamp=arc4.UInt64(Global.latest_timestamp),
+    //     amount=arc4.UInt64(payout),
+    //     cycle_index=arc4.UInt64(new_index),
+    // )
+    swap
+    dig 2
+    concat
+    dig 1
+    concat
+    // contract.py:84-85
+    // # Append to box-stored history
+    // self.history[arc4.UInt64(new_index)] = BillingRecord(
+    bytec 6 // "h:"
+    dig 2
+    concat
+    // contract.py:84-89
+    // # Append to box-stored history
+    // self.history[arc4.UInt64(new_index)] = BillingRecord(
+    //     timestamp=arc4.UInt64(Global.latest_timestamp),
+    //     amount=arc4.UInt64(payout),
+    //     cycle_index=arc4.UInt64(new_index),
+    // )
+    swap
+    box_put
+    // contract.py:56
+    // @arc4.abimethod()
+    bytec_3 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_1 // 1
+    return
+
+release_bool_false@8:
+    intc_0 // 0
+    b release_bool_merge@9
+
+release_bool_false@4:
+    intc_0 // 0
+    b release_bool_merge@5
+
+
+// smart_contracts.agent_escrow_v2.contract.AgentEscrowVaultV2.kill[routing]() -> void:
+kill:
+    // contract.py:96
+    // assert arc4.Address(Txn.sender) == self.creator.value, "Only creator can kill"
+    txn Sender
+    intc_0 // 0
+    bytec_1 // "creator"
+    app_global_get_ex
+    assert // check self.creator exists
+    swap
+    dig 1
+    ==
+    assert // Only creator can kill
+    // contract.py:97
+    // assert self.killed.value == UInt64(0), "Already killed"
+    intc_0 // 0
+    bytec_0 // "killed"
+    app_global_get_ex
+    assert // check self.killed exists
+    !
+    assert // Already killed
+    // contract.py:99
+    // app_addr = Global.current_application_address
+    global CurrentApplicationAddress
+    // contract.py:100
+    // balance = op.balance(app_addr)
+    dup
+    balance
+    // contract.py:101
+    // min_balance = op.min_balance(app_addr)
+    swap
+    min_balance
+    // contract.py:102
+    // payout = balance - min_balance
+    -
+    // contract.py:104-108
+    // itxn.Payment(
+    //     receiver=self.creator.value.native,
+    //     amount=payout,
+    //     fee=0,
+    // ).submit()
+    itxn_begin
+    itxn_field Amount
+    itxn_field Receiver
+    // contract.py:104
+    // itxn.Payment(
+    intc_1 // pay
+    itxn_field TypeEnum
+    // contract.py:107
+    // fee=0,
+    intc_0 // 0
+    itxn_field Fee
+    // contract.py:104-108
+    // itxn.Payment(
+    //     receiver=self.creator.value.native,
+    //     amount=payout,
+    //     fee=0,
+    // ).submit()
+    itxn_submit
+    // contract.py:110
+    // self.killed.value = UInt64(1)
+    bytec_0 // "killed"
+    intc_1 // 1
+    app_global_put
+    // contract.py:93
+    // @arc4.abimethod()
+    intc_1 // 1
+    return
+
+
+// smart_contracts.agent_escrow_v2.contract.AgentEscrowVaultV2.get_history[routing]() -> void:
+get_history:
+    // contract.py:112
+    // @arc4.abimethod(readonly=True)
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_3 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // contract.py:115
+    // assert cycle in self.history, "Cycle not found"
+    bytec 6 // "h:"
+    swap
+    concat
+    dup
+    box_len
+    bury 1
+    assert // Cycle not found
+    // contract.py:116
+    // return self.history[cycle].copy()
+    box_get
+    pop
+    // contract.py:112
+    // @arc4.abimethod(readonly=True)
+    bytec_3 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_1 // 1
+    return
+
+
+// smart_contracts.agent_escrow_v2.contract.AgentEscrowVaultV2.get_cycle_count[routing]() -> void:
+get_cycle_count:
+    // contract.py:121
+    // return arc4.UInt64(self.cycle_index.value)
+    intc_0 // 0
+    bytec_2 // "cycle_index"
+    app_global_get_ex
+    assert // check self.cycle_index exists
+    itob
+    // contract.py:118
+    // @arc4.abimethod(readonly=True)
+    bytec_3 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_1 // 1
+    return
+
+
+// smart_contracts.agent_escrow_v2.contract.AgentEscrowVaultV2.delete[routing]() -> void:
+delete:
+    // contract.py:126
+    // assert arc4.Address(Txn.sender) == self.creator.value, "Only creator can delete"
+    txn Sender
+    intc_0 // 0
+    bytec_1 // "creator"
+    app_global_get_ex
+    assert // check self.creator exists
+    swap
+    dig 1
+    ==
+    assert // Only creator can delete
+    // contract.py:127
+    // assert self.killed.value == UInt64(1), "Kill before delete"
+    intc_0 // 0
+    bytec_0 // "killed"
+    app_global_get_ex
+    assert // check self.killed exists
+    intc_1 // 1
+    ==
+    assert // Kill before delete
+    // contract.py:129-134
+    // itxn.Payment(
+    //     receiver=self.creator.value.native,
+    //     amount=0,
+    //     close_remainder_to=self.creator.value.native,
+    //     fee=0,
+    // ).submit()
+    itxn_begin
+    dup
+    itxn_field CloseRemainderTo
+    // contract.py:131
+    // amount=0,
+    intc_0 // 0
+    itxn_field Amount
+    itxn_field Receiver
+    // contract.py:129
+    // itxn.Payment(
+    intc_1 // pay
+    itxn_field TypeEnum
+    // contract.py:133
+    // fee=0,
+    intc_0 // 0
+    itxn_field Fee
+    // contract.py:129-134
+    // itxn.Payment(
+    //     receiver=self.creator.value.native,
+    //     amount=0,
+    //     close_remainder_to=self.creator.value.native,
+    //     fee=0,
+    // ).submit()
+    itxn_submit
+    // contract.py:123
+    // @arc4.abimethod(allow_actions=["DeleteApplication"])
+    intc_1 // 1
+    return

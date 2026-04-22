@@ -1,0 +1,306 @@
+#pragma version 11
+#pragma typetrack false
+
+// algopy.arc4.ARC4Contract.approval_program() -> uint64:
+main:
+    intcblock 0 1 2 8
+    bytecblock "count" "svc:" "admin" 0x151f7c75
+    // contract.py:23
+    // class ServiceRegistry(ARC4Contract):
+    txn OnCompletion
+    !
+    assert
+    txn ApplicationID
+    bz main_create_NoOp@10
+    pushbytess 0xb658054b 0x8e4db8b8 0xca7c9d60 0x755f9589 // method "register(string,uint64,uint64,string)void", method "deregister(string)void", method "get_listing(string)(address,uint64,uint64,string)", method "get_count()uint64"
+    txna ApplicationArgs 0
+    match register deregister get_listing get_count
+    err
+
+main_create_NoOp@10:
+    // contract.py:23
+    // class ServiceRegistry(ARC4Contract):
+    pushbytes 0x240d2f67 // method "create(uint64)void"
+    txna ApplicationArgs 0
+    match create
+    err
+
+
+// smart_contracts.service_registry.contract.ServiceRegistry.create[routing]() -> void:
+create:
+    // contract.py:49
+    // @arc4.abimethod(allow_actions=["NoOp"], create="require")
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_3 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // contract.py:52
+    // self.admin.value = arc4.Address(Txn.sender)
+    bytec_2 // "admin"
+    txn Sender
+    app_global_put
+    // contract.py:53
+    // self.fee_micro.value = fee_micro.native
+    btoi
+    pushbytes "fee_micro"
+    swap
+    app_global_put
+    // contract.py:54
+    // self.count.value = UInt64(0)
+    bytec_0 // "count"
+    intc_0 // 0
+    app_global_put
+    // contract.py:49
+    // @arc4.abimethod(allow_actions=["NoOp"], create="require")
+    intc_1 // 1
+    return
+
+
+// smart_contracts.service_registry.contract.ServiceRegistry.register[routing]() -> void:
+register:
+    // contract.py:56
+    // @arc4.abimethod()
+    txna ApplicationArgs 1
+    dup
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    intc_2 // 2
+    +
+    dig 1
+    len
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    txna ApplicationArgs 2
+    dup
+    cover 2
+    len
+    intc_3 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    txna ApplicationArgs 3
+    dup
+    cover 2
+    len
+    intc_3 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    txna ApplicationArgs 4
+    dup
+    cover 2
+    dup
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    intc_2 // 2
+    +
+    swap
+    len
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    // contract.py:69
+    // if service_id in self.listings:
+    bytec_1 // "svc:"
+    swap
+    concat
+    dup
+    box_len
+    bury 1
+    bz register_else_body@3
+    // contract.py:72
+    // arc4.Address(Txn.sender) == existing.provider
+    txn Sender
+    dig 1
+    intc_0 // 0
+    pushint 32
+    box_extract // on error: index out of bounds
+    ==
+    // contract.py:71-73
+    // assert (
+    //     arc4.Address(Txn.sender) == existing.provider
+    // ), "Only original provider can update this service"
+    assert // Only original provider can update this service
+
+register_after_if_else@4:
+    // contract.py:78
+    // provider=arc4.Address(Txn.sender),
+    txn Sender
+    // contract.py:77-82
+    // self.listings[service_id] = ServiceListing(
+    //     provider=arc4.Address(Txn.sender),
+    //     price_microalgos=price_microalgos,
+    //     cycle_days=cycle_days,
+    //     name=name,
+    // )
+    dig 4
+    concat
+    dig 3
+    concat
+    pushbytes 0x0032
+    concat
+    dig 2
+    concat
+    dig 1
+    dup
+    box_del
+    pop
+    swap
+    box_put
+    // contract.py:56
+    // @arc4.abimethod()
+    intc_1 // 1
+    return
+
+register_else_body@3:
+    // contract.py:75
+    // self.count.value = self.count.value + UInt64(1)
+    intc_0 // 0
+    bytec_0 // "count"
+    app_global_get_ex
+    assert // check self.count exists
+    intc_1 // 1
+    +
+    bytec_0 // "count"
+    swap
+    app_global_put
+    b register_after_if_else@4
+
+
+// smart_contracts.service_registry.contract.ServiceRegistry.deregister[routing]() -> void:
+deregister:
+    // contract.py:84
+    // @arc4.abimethod()
+    txna ApplicationArgs 1
+    dup
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    intc_2 // 2
+    +
+    dig 1
+    len
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    // contract.py:87
+    // assert service_id in self.listings, "Service not found"
+    bytec_1 // "svc:"
+    swap
+    concat
+    dupn 2
+    box_len
+    bury 1
+    assert // Service not found
+    // contract.py:90
+    // arc4.Address(Txn.sender) == existing.provider
+    txn Sender
+    swap
+    intc_0 // 0
+    pushint 32
+    box_extract // on error: index out of bounds
+    ==
+    // contract.py:90-91
+    // arc4.Address(Txn.sender) == existing.provider
+    // or arc4.Address(Txn.sender) == self.admin.value
+    bnz deregister_bool_true@3
+    // contract.py:91
+    // or arc4.Address(Txn.sender) == self.admin.value
+    txn Sender
+    intc_0 // 0
+    bytec_2 // "admin"
+    app_global_get_ex
+    assert // check self.admin exists
+    ==
+    // contract.py:90-91
+    // arc4.Address(Txn.sender) == existing.provider
+    // or arc4.Address(Txn.sender) == self.admin.value
+    bz deregister_bool_false@4
+
+deregister_bool_true@3:
+    intc_1 // 1
+
+deregister_bool_merge@5:
+    // contract.py:89-92
+    // assert (
+    //     arc4.Address(Txn.sender) == existing.provider
+    //     or arc4.Address(Txn.sender) == self.admin.value
+    // ), "Only provider or admin can deregister"
+    assert // Only provider or admin can deregister
+    // contract.py:93
+    // del self.listings[service_id]
+    dup
+    box_del
+    pop
+    // contract.py:94
+    // self.count.value = self.count.value - UInt64(1)
+    intc_0 // 0
+    bytec_0 // "count"
+    app_global_get_ex
+    assert // check self.count exists
+    intc_1 // 1
+    -
+    bytec_0 // "count"
+    swap
+    app_global_put
+    // contract.py:84
+    // @arc4.abimethod()
+    intc_1 // 1
+    return
+
+deregister_bool_false@4:
+    intc_0 // 0
+    b deregister_bool_merge@5
+
+
+// smart_contracts.service_registry.contract.ServiceRegistry.get_listing[routing]() -> void:
+get_listing:
+    // contract.py:96
+    // @arc4.abimethod(readonly=True)
+    txna ApplicationArgs 1
+    dup
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    intc_2 // 2
+    +
+    dig 1
+    len
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    // contract.py:99
+    // assert service_id in self.listings, "Service not found"
+    bytec_1 // "svc:"
+    swap
+    concat
+    dup
+    box_len
+    bury 1
+    assert // Service not found
+    // contract.py:100
+    // return self.listings[service_id].copy()
+    box_get
+    pop
+    // contract.py:96
+    // @arc4.abimethod(readonly=True)
+    bytec_3 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_1 // 1
+    return
+
+
+// smart_contracts.service_registry.contract.ServiceRegistry.get_count[routing]() -> void:
+get_count:
+    // contract.py:105
+    // return arc4.UInt64(self.count.value)
+    intc_0 // 0
+    bytec_0 // "count"
+    app_global_get_ex
+    assert // check self.count exists
+    itob
+    // contract.py:102
+    // @arc4.abimethod(readonly=True)
+    bytec_3 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_1 // 1
+    return
