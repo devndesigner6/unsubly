@@ -56,6 +56,7 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
   const [coSignerAddress, setCoSignerAddress] = useState("")
   const [arbitratorAddress, setArbitratorAddress] = useState("")
   const [assetId, setAssetId] = useState("")
+  const [agentAddress, setAgentAddress] = useState(AGENT_ADDRESS ?? "")
   const [isCreating, setIsCreating] = useState(false)
   const [step, setStep] = useState("")
   const [errorMsg, setErrorMsg] = useState("")
@@ -132,6 +133,11 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
       return
     }
 
+    if (vaultType === "agent" && (!agentAddress || !isValidAlgorandAddress(agentAddress))) {
+      setErrorMsg("Please enter a valid agent wallet address. The agent will sign release txns autonomously when bills are due.")
+      return
+    }
+
     const algoAmount = parseFloat(amount)
     if (isNaN(algoAmount) || algoAmount <= 0) {
       setErrorMsg("Amount must be greater than 0.")
@@ -158,6 +164,11 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
       let deployResult: { appId: number; appAddress: string; txnId: string }
 
       switch (vaultType) {
+        case "agent":
+          deployResult = await deployAgentEscrowContract(
+            algodClient, walletAddress, recipient, agentAddress, signTransaction
+          )
+          break
         case "time_locked":
           deployResult = await deployTimeLockContract(
             algodClient, walletAddress, recipient,
@@ -180,13 +191,7 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
           )
           break
         default:
-          if (AGENT_ADDRESS && isValidAlgorandAddress(AGENT_ADDRESS)) {
-            deployResult = await deployAgentEscrowContract(
-              algodClient, walletAddress, recipient, AGENT_ADDRESS, signTransaction
-            )
-          } else {
-            deployResult = await deployEscrowContract(algodClient, walletAddress, recipient, signTransaction)
-          }
+          deployResult = await deployEscrowContract(algodClient, walletAddress, recipient, signTransaction)
       }
 
       const { appId, appAddress, txnId: deployTxnId } = deployResult
@@ -207,9 +212,7 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
         escrow_address: recipient,
         app_id: appId,
         app_address: appAddress,
-        vault_type: vaultType === "standard" && AGENT_ADDRESS && isValidAlgorandAddress(AGENT_ADDRESS)
-          ? "agent"
-          : vaultType,
+        vault_type: vaultType,
         unlock_time: vaultType === "time_locked" ? new Date(unlockDate).toISOString() : null,
         co_signer_address: vaultType === "multi_sig" ? coSignerAddress : null,
         arbitrator_address: vaultType === "dispute" ? arbitratorAddress : null,
@@ -225,10 +228,7 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
         })
       }
 
-      const effectiveVaultType: VaultType =
-        vaultType === "standard" && AGENT_ADDRESS && isValidAlgorandAddress(AGENT_ADDRESS)
-          ? "agent"
-          : vaultType
+      const effectiveVaultType: VaultType = vaultType
 
       await supabase.from("onchain_payments" as any).insert({
         user_id: user.id,
@@ -300,7 +300,7 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">Vault Type</label>
             <div className="grid grid-cols-2 gap-2">
-              {(Object.keys(VAULT_TYPE_LABELS) as VaultType[]).filter((t) => t !== "agent").map((type) => {
+              {(Object.keys(VAULT_TYPE_LABELS) as VaultType[]).map((type) => {
                 const Icon = VAULT_TYPE_ICONS[type]
                 return (
                   <button
@@ -439,6 +439,25 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
             </div>
           )}
 
+          {vaultType === "agent" && (
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1.5">
+                Agent Wallet Address
+              </label>
+              <input
+                type="text"
+                value={agentAddress}
+                onChange={(e) => setAgentAddress(e.target.value)}
+                placeholder="Agent's Algorand address (auto-fills from env if set)"
+                disabled={isCreating}
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground font-mono text-xs"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                The autonomous agent will sign release txns on the billing date. Use the deployer/agent wallet your backend controls.
+              </p>
+            </div>
+          )}
+
           {vaultType === "asa" && (
             <div>
               <label className="block text-sm font-medium text-foreground mb-1.5">
@@ -458,7 +477,7 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
             </div>
           )}
 
-          {vaultType === "standard" && AGENT_ADDRESS ? (
+          {vaultType === "agent" && agentAddress ? (
             <div className="rounded-lg bg-green-500/5 border border-green-500/20 p-3 flex items-start gap-2">
               <RiRobotLine className="size-4 mt-0.5 shrink-0 text-green-600 dark:text-green-400" />
               <div>
@@ -467,7 +486,7 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
                   The autonomous agent will release this vault on the subscription billing date — no manual action needed.
                 </p>
                 <p className="text-[10px] font-mono text-muted-foreground mt-1 truncate">
-                  Agent: {AGENT_ADDRESS.slice(0, 8)}…{AGENT_ADDRESS.slice(-8)}
+                  Agent: {agentAddress.slice(0, 8)}…{agentAddress.slice(-8)}
                 </p>
               </div>
             </div>
@@ -497,7 +516,7 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
             className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
           >
             <RiLockLine className="size-4" />
-            {isCreating ? "Deploying Contract..." : `Deploy ${VAULT_TYPE_LABELS[vaultType === "standard" && AGENT_ADDRESS && isValidAlgorandAddress(AGENT_ADDRESS) ? "agent" : vaultType]} Vault`}
+            {isCreating ? "Deploying Contract..." : `Deploy ${VAULT_TYPE_LABELS[vaultType]} Vault`}
           </button>
         </div>
       </div>
