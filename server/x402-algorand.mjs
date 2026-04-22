@@ -118,7 +118,17 @@ export function withX402(opts, handler) {
     }
 
     const xPayment = req.headers["x-payment"]
+    const authHeader = req.headers.authorization
     const resource = `${req.headers["x-forwarded-proto"] || "https"}://${req.headers.host || ""}${req.url}`
+
+    // ── Bypass paywall for authenticated human users ──────────────────────
+    // x402 is for anonymous AI agents. The dashboard owner already authenticates
+    // via Supabase JWT — they shouldn't pay to use their own product. Anonymous
+    // agents (no Bearer token) still hit 402 and must pay on-chain.
+    if (authHeader?.startsWith("Bearer ") && !xPayment) {
+      res.setHeader("X-PAYMENT-BYPASS", "authenticated-user")
+      return handler(req, res)
+    }
 
     if (!xPayment) {
       return send402(res, {

@@ -51,6 +51,7 @@ export function WalletSelectorModal() {
   const { wallets } = useWallet()
   const [connectingId, setConnectingId] = useState<string | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [iconErrors, setIconErrors] = useState<Record<string, boolean>>({})
 
   const networkLabel = network === "mainnet" ? "Mainnet" : "Testnet"
   const networkBadgeClass = network === "mainnet"
@@ -121,19 +122,14 @@ export function WalletSelectorModal() {
                       <RiLoaderLine className="size-5 text-muted-foreground animate-spin" />
                     ) : wallet.isConnected ? (
                       <RiCheckLine className="size-5 text-green-600" />
+                    ) : iconErrors[wallet.id] ? (
+                      <span className="text-lg font-bold text-primary">{info.label.charAt(0)}</span>
                     ) : (
                       <img
                         src={info.icon}
                         alt={info.label}
                         className="size-7 object-contain"
-                        onError={(e) => {
-                          const el = e.currentTarget as HTMLImageElement
-                          el.style.display = "none"
-                          const parent = el.parentElement
-                          if (parent) {
-                            parent.innerHTML = `<span style="font-size:18px;font-weight:700;color:#6366f1">${info.label.charAt(0)}</span>`
-                          }
-                        }}
+                        onError={() => setIconErrors((prev) => ({ ...prev, [wallet.id]: true }))}
                       />
                     )}
                   </div>
