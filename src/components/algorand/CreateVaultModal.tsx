@@ -87,35 +87,58 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
     return await peraWallet.signTransaction([[{ txn }]])
   }
 
-  const isValidAlgorandAddress = (addr: string): boolean => {
-    if (addr.length !== 58) return false
+  // Returns a clean address if valid, otherwise an error string explaining why.
+  // Trims whitespace because pasting from explorers/notes often includes it.
+  const validateAddress = (raw: string, label: string): { ok: true; value: string } | { ok: false; error: string } => {
+    const addr = raw.trim()
+    if (!addr) return { ok: false, error: `${label} address is required.` }
+    if (addr.length !== 58) {
+      return { ok: false, error: `${label} address must be exactly 58 characters (you entered ${addr.length}).` }
+    }
     try {
       algosdk.decodeAddress(addr)
-      return true
-    } catch {
-      return false
+      return { ok: true, value: addr }
+    } catch (e: any) {
+      return { ok: false, error: `${label} address is not a valid Algorand address (${e?.message || "checksum mismatch"}).` }
     }
   }
+  const isValidAlgorandAddress = (addr: string): boolean => validateAddress(addr, "x").ok
 
   const handleCreate = async () => {
     if (!walletAddress || !user || !amount) return
-
-    const recipient = recipientAddress || walletAddress
     setErrorMsg("")
 
-    if (recipientAddress && !isValidAlgorandAddress(recipientAddress)) {
-      setErrorMsg("Invalid recipient address.")
-      return
+    // Validate + clean each address up-front so on-chain calls always receive
+    // canonical 58-char Algorand addresses (no leading/trailing whitespace).
+    let recipient = walletAddress
+    if (recipientAddress.trim()) {
+      const v = validateAddress(recipientAddress, "Recipient")
+      if (!v.ok) { setErrorMsg(v.error); return }
+      recipient = v.value
     }
 
-    if (vaultType === "multi_sig" && (!coSignerAddress || !isValidAlgorandAddress(coSignerAddress))) {
-      setErrorMsg("Invalid co-signer address.")
-      return
+    let cleanCoSigner = ""
+    if (vaultType === "multi_sig") {
+      const v = validateAddress(coSignerAddress, "Co-signer")
+      if (!v.ok) { setErrorMsg(v.error); return }
+      cleanCoSigner = v.value
     }
 
-    if (vaultType === "dispute" && (!arbitratorAddress || !isValidAlgorandAddress(arbitratorAddress))) {
-      setErrorMsg("Invalid arbitrator address.")
-      return
+    let cleanArbitrator = ""
+    if (vaultType === "dispute") {
+      const v = validateAddress(arbitratorAddress, "Arbitrator")
+      if (!v.ok) { setErrorMsg(v.error); return }
+      cleanArbitrator = v.value
+    }
+
+    let cleanAgent = ""
+    if (vaultType === "agent") {
+      const v = validateAddress(agentAddress, "Agent")
+      if (!v.ok) {
+        setErrorMsg(`${v.error} Tip: paste the agent's full Algorand address (it will sign release txns autonomously when bills are due).`)
+        return
+      }
+      cleanAgent = v.value
     }
 
     if (vaultType === "time_locked" && !unlockDate) {
@@ -130,11 +153,6 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
 
     if (vaultType === "asa" && (!assetId || isNaN(Number(assetId)))) {
       setErrorMsg("Please enter a valid ASA ID.")
-      return
-    }
-
-    if (vaultType === "agent" && (!agentAddress || !isValidAlgorandAddress(agentAddress))) {
-      setErrorMsg("Please enter a valid agent wallet address. The agent will sign release txns autonomously when bills are due.")
       return
     }
 
@@ -166,7 +184,7 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
       switch (vaultType) {
         case "agent":
           deployResult = await deployAgentEscrowContract(
-            algodClient, walletAddress, recipient, agentAddress, signTransaction
+            algodClient, walletAddress, recipient, cleanAgent, signTransaction
           )
           break
         case "time_locked":
@@ -177,12 +195,12 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
           break
         case "multi_sig":
           deployResult = await deployMultiSigContract(
-            algodClient, walletAddress, recipient, coSignerAddress, signTransaction
+            algodClient, walletAddress, recipient, cleanCoSigner, signTransaction
           )
           break
         case "dispute":
           deployResult = await deployDisputeContract(
-            algodClient, walletAddress, recipient, arbitratorAddress, signTransaction
+            algodClient, walletAddress, recipient, cleanArbitrator, signTransaction
           )
           break
         case "asa":
@@ -214,9 +232,9 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
         app_address: appAddress,
         vault_type: vaultType,
         unlock_time: vaultType === "time_locked" ? new Date(unlockDate).toISOString() : null,
-        co_signer_address: vaultType === "multi_sig" ? coSignerAddress : null,
-        arbitrator_address: vaultType === "dispute" ? arbitratorAddress : null,
-        agent_address: vaultType === "agent" ? agentAddress : null,
+        co_signer_address: vaultType === "multi_sig" ? cleanCoSigner : null,
+        arbitrator_address: vaultType === "dispute" ? cleanArbitrator : null,
+        agent_address: vaultType === "agent" ? cleanAgent : null,
         asset_id: vaultType === "asa" ? Number(assetId) : null,
       }
 
@@ -464,7 +482,7 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
               <input
                 type="text"
                 value={agentAddress}
-                onChange={(e) => setAgentAddress(e.target.value)}
+                onChange={(e) => setAgentAddress(e.target.value.trim())}
                 placeholder="Agent's Algorand address (auto-fills from env if set)"
                 disabled={isCreating}
                 className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground font-mono text-xs"
