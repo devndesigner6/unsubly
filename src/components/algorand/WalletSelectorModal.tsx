@@ -3,6 +3,7 @@ import { useWallet } from "@txnlab/use-wallet-react"
 import { useAlgorand } from "@/lib/algorand/context"
 import { RiCloseLine, RiExternalLinkLine, RiCheckLine, RiLoaderLine } from "@remixicon/react"
 import { useState } from "react"
+import { WALLET_LOGOS } from "@/lib/algorand/walletLogos"
 
 interface WalletMeta {
   label: string
@@ -17,7 +18,7 @@ const WALLET_INFO: Record<string, WalletMeta> = {
   [WalletId.PERA]: {
     label: "Pera Wallet",
     description: "Official Algorand mobile & web wallet",
-    icon: "https://assets.perawallet.app/images/pera-logo.svg",
+    icon: WALLET_LOGOS.pera,
     color: "from-yellow-400 to-yellow-500",
     installUrl: "https://perawallet.app",
     type: "both",
@@ -25,7 +26,7 @@ const WALLET_INFO: Record<string, WalletMeta> = {
   [WalletId.DEFLY]: {
     label: "Defly Wallet",
     description: "DeFi-focused Algorand mobile wallet",
-    icon: "https://defly.app/favicon.png",
+    icon: WALLET_LOGOS.defly,
     color: "from-green-400 to-green-500",
     installUrl: "https://defly.app",
     type: "mobile",
@@ -33,7 +34,7 @@ const WALLET_INFO: Record<string, WalletMeta> = {
   [WalletId.LUTE]: {
     label: "Lute Wallet",
     description: "Browser-based Algorand wallet extension",
-    icon: "https://lute.app/favicon.png",
+    icon: WALLET_LOGOS.lute,
     color: "from-purple-400 to-purple-500",
     installUrl: "https://lute.app",
     type: "extension",

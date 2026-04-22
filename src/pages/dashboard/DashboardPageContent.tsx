@@ -19,10 +19,11 @@ import {
 import { WalletSelectorModal } from "@/components/algorand/WalletSelectorModal"
 import { useState, useEffect, useMemo } from "react"
 import agentLogoUrl from "@assets/32716952a37bb6ea6d8b0143ec5735c2_1776859681399.png"
+import { WALLET_LOGOS, WALLET_LABELS } from "@/lib/algorand/walletLogos"
 
 export default function DashboardPageContent() {
   const { user } = useAuth()
-  const { walletAddress, balance, isConnecting, isLoadingBalance, network, setShowWalletSelector } = useAlgorand()
+  const { walletAddress, balance, isConnecting, isLoadingBalance, network, setShowWalletSelector, walletType } = useAlgorand()
   const [subscriptions, setSubscriptions] = useState<any[]>([])
   const [profile, setProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -342,97 +343,130 @@ export default function DashboardPageContent() {
           </div>
         )}
 
-        {/* Algorand + Agent — side-by-side classy cards (Apple-job-card aesthetic) */}
-        <div className="mt-6 grid gap-5 lg:grid-cols-2">
+        {/* Algorand (60%) + Agent (40%) — side-by-side */}
+        <div className="mt-6 grid gap-5 lg:grid-cols-5">
 
-          {/* === Card 1: Algorand Blockchain === */}
+          {/* === Card 1: Algorand wallet — Premium Banking style (60%) === */}
           {(() => {
-            const today = new Date()
-            const monthLabel = today.toLocaleString(undefined, { month: "short" }).toUpperCase()
-            const dayLabel = today.getDate()
-            const dowLabel = today.toLocaleString(undefined, { weekday: "short" })
+            const activeLogo = walletType ? WALLET_LOGOS[walletType] : null
+            const activeLabel = walletType ? WALLET_LABELS[walletType] : null
             return (
-              <div className="relative rounded-3xl bg-card p-6 shadow-[0_10px_40px_-12px_rgba(0,0,0,0.15)] ring-1 ring-black/5 sm:p-7 flex flex-col">
-                {/* Top: icon + calendar widget */}
-                <div className="flex items-start justify-between">
-                  <div className="flex size-12 items-center justify-center rounded-2xl bg-foreground text-background shadow-md">
-                    <RiShieldLine className="size-6" />
-                  </div>
-                  <div className="overflow-hidden rounded-xl border border-border bg-card text-center shadow-sm">
-                    <div className="bg-foreground px-3 py-0.5 text-[9px] font-bold tracking-wider text-background">
-                      {monthLabel}
-                    </div>
-                    <div className="px-3 py-0.5">
-                      <div className="text-base font-bold leading-tight text-foreground">{dayLabel}</div>
-                      <div className="text-[9px] leading-tight text-muted-foreground">{dowLabel}</div>
-                    </div>
-                  </div>
-                </div>
+              <div className="lg:col-span-3 relative">
+                <div
+                  className="relative overflow-hidden rounded-[32px] bg-black p-6 sm:p-7 ring-1 ring-emerald-500/30 shadow-[0_20px_60px_-15px_rgba(34,197,94,0.35)] flex flex-col min-h-[340px]"
+                >
+                  {/* Green metallic blob — top */}
+                  <div
+                    aria-hidden
+                    className="pointer-events-none absolute -top-2 -right-2 h-[58%] w-[92%]"
+                    style={{
+                      background:
+                        "radial-gradient(ellipse 75% 95% at 70% 25%, #ecfccb 0%, #bef264 12%, #84cc16 32%, #22c55e 55%, #166534 80%, #052e16 100%)",
+                      borderBottomLeftRadius: "65% 90%",
+                      borderBottomRightRadius: "20% 35%",
+                      filter: "saturate(1.1)",
+                    }}
+                  />
+                  {/* Top-left specular highlight */}
+                  <div
+                    aria-hidden
+                    className="pointer-events-none absolute left-10 top-6 h-12 w-12 rounded-full opacity-70"
+                    style={{
+                      background:
+                        "radial-gradient(circle, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0) 60%)",
+                    }}
+                  />
+                  {/* Bottom green accent strip */}
+                  <div className="pointer-events-none absolute inset-x-4 bottom-2 h-[3px] rounded-full bg-gradient-to-r from-lime-300 via-emerald-400 to-lime-300 opacity-90 blur-[0.5px]" />
 
-                {/* Label + title */}
-                <div className="mt-6">
-                  <p className="text-sm text-muted-foreground">
-                    <span className="font-semibold text-foreground">Algorand</span>
-                    <span className="mx-1.5 text-muted-foreground/60">·</span>
-                    <span className="capitalize">{network}</span>
-                  </p>
-                  <h2 className="mt-1 text-2xl font-bold text-foreground sm:text-[26px]">
-                    {walletAddress ? "Wallet connected" : "Wallet not connected"}
-                  </h2>
-                  {/* Pills */}
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-foreground/70">
-                      {vaultStats.total} vault{vaultStats.total !== 1 ? "s" : ""}
-                    </span>
-                    <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-foreground/70">
-                      {vaultStats.killed} kill switch{vaultStats.killed !== 1 ? "es" : ""}
-                    </span>
-                    {walletAddress && (
-                      <span className="rounded-full bg-muted px-3 py-1 text-xs font-mono text-foreground/70">
-                        {shortenAddress(walletAddress)}
+                  {/* Top row: wallet icon + balance */}
+                  <div className="relative flex items-start justify-between gap-4">
+                    <div className="flex size-14 items-center justify-center rounded-2xl bg-black/85 ring-1 ring-white/15 shadow-lg backdrop-blur-sm">
+                      {activeLogo ? (
+                        <img
+                          src={activeLogo}
+                          alt={activeLabel ?? "Wallet"}
+                          className="size-9 rounded-lg object-contain"
+                        />
+                      ) : (
+                        <RiShieldLine className="size-7 text-white/95" />
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <div className="flex items-baseline justify-end gap-1.5 text-white drop-shadow-sm">
+                        <span className="text-3xl sm:text-4xl font-light tracking-tight tabular-nums">
+                          {isLoadingBalance ? "…" : balance.toFixed(3)}
+                        </span>
+                        <span className="text-sm font-medium opacity-90">ALGO</span>
+                      </div>
+                      <div className="mt-1 text-[10px] font-semibold tracking-[0.18em] uppercase text-white/85">
+                        Total Balance
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Spacer to push content to dark zone */}
+                  <div className="flex-1 min-h-[36px]" />
+
+                  {/* Mid section in dark zone */}
+                  <div className="relative">
+                    <div className="text-xl sm:text-[22px] font-bold text-white leading-tight">
+                      {walletAddress ? (activeLabel ?? "Algorand Wallet") : "No wallet connected"}
+                    </div>
+                    <div className="mt-0.5 text-sm text-white/55">
+                      {walletAddress
+                        ? `${network === "mainnet" ? "MainNet" : "TestNet"} · ${shortenAddress(walletAddress)}`
+                        : "Connect Pera, Defly or Lute"}
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-white/85 ring-1 ring-white/10 backdrop-blur">
+                        {vaultStats.total} vault{vaultStats.total !== 1 ? "s" : ""}
                       </span>
+                      <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-white/85 ring-1 ring-white/10 backdrop-blur">
+                        {vaultStats.totalLocked.toFixed(2)} ALGO locked
+                      </span>
+                      <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-white/85 ring-1 ring-white/10 backdrop-blur">
+                        {vaultStats.killed} kill switch{vaultStats.killed !== 1 ? "es" : ""}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Bottom row: action + toggle */}
+                  <div className="relative mt-5 flex items-end justify-between">
+                    {walletAddress ? (
+                      <a
+                        href={getAddressExplorerUrl(walletAddress, network)}
+                        target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white ring-1 ring-white/20 backdrop-blur hover:bg-white/15 transition-colors"
+                      >
+                        View on Explorer <RiExternalLinkLine className="size-3.5" />
+                      </a>
+                    ) : (
+                      <button
+                        onClick={() => setShowWalletSelector(true)}
+                        disabled={isConnecting}
+                        className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-black hover:bg-white/90 transition-colors disabled:opacity-60"
+                      >
+                        {isConnecting ? "Connecting…" : "Connect wallet"}
+                      </button>
                     )}
-                  </div>
-                </div>
-
-                {/* Spacer */}
-                <div className="flex-1 min-h-[12px]" />
-
-                {/* Bottom info row */}
-                <div className="mt-6 flex items-end justify-between gap-3">
-                  <div>
-                    <span className="text-2xl font-bold text-foreground">
-                      {isLoadingBalance ? "…" : balance.toFixed(2)}
-                    </span>
-                    <span className="ml-1 text-sm text-muted-foreground">ALGO</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {vaultStats.totalLocked.toFixed(2)} ALGO locked
-                  </p>
-                </div>
-
-                {/* Divider */}
-                <div className="mt-4 border-t border-border" />
-
-                {/* Big CTA */}
-                <div className="mt-5">
-                  {walletAddress ? (
-                    <a
-                      href={getAddressExplorerUrl(walletAddress, network)}
-                      target="_blank" rel="noopener noreferrer"
-                      className="block w-full rounded-full bg-foreground px-6 py-3.5 text-center text-sm font-semibold text-background shadow-[0_8px_20px_-6px_rgba(0,0,0,0.4)] transition-transform hover:scale-[1.02] active:scale-[0.99]"
+                    {/* iOS-style toggle */}
+                    <div
+                      aria-hidden
+                      className={`relative h-6 w-11 rounded-full p-0.5 transition-colors ring-1 ${
+                        walletAddress
+                          ? "bg-emerald-400 ring-emerald-300/60 shadow-[0_0_12px_rgba(74,222,128,0.6)]"
+                          : "bg-white/15 ring-white/20"
+                      }`}
                     >
-                      View on Explorer ↗
-                    </a>
-                  ) : (
-                    <button
-                      onClick={() => setShowWalletSelector(true)}
-                      disabled={isConnecting}
-                      className="block w-full rounded-full bg-foreground px-6 py-3.5 text-center text-sm font-semibold text-background shadow-[0_8px_20px_-6px_rgba(0,0,0,0.4)] transition-transform hover:scale-[1.02] active:scale-[0.99] disabled:opacity-60"
-                    >
-                      {isConnecting ? "Connecting…" : "Connect wallet"}
-                    </button>
-                  )}
+                      <div
+                        className={`size-5 rounded-full bg-white shadow transition-transform ${
+                          walletAddress ? "translate-x-5" : "translate-x-0"
+                        }`}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             )
@@ -447,7 +481,7 @@ export default function DashboardPageContent() {
             const tickHr12 = ((tickHour + 11) % 12) + 1
             const lastAction = agentActions[0]
             return (
-              <div className="relative rounded-3xl bg-card p-6 shadow-[0_10px_40px_-12px_rgba(0,0,0,0.15)] ring-1 ring-black/5 sm:p-7 flex flex-col">
+              <div className="lg:col-span-2 relative rounded-3xl bg-card p-6 shadow-[0_10px_40px_-12px_rgba(0,0,0,0.15)] ring-1 ring-black/5 sm:p-7 flex flex-col min-h-[340px]">
                 {/* Top: icon + tick widget */}
                 <div className="flex items-start justify-between">
                   <img
