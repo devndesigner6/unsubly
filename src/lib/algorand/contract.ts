@@ -249,7 +249,9 @@ export async function fundEscrowContract(
 
 /**
  * Call a NoOp method on an application using the correct ARC-4 selector.
- * extraFee=true sets fee=2000 to cover one inner transaction (1000 outer + 1000 inner).
+ * extraFee=true sets fee = 2x the network minimum to cover one inner transaction
+ * (1x outer + 1x inner). The minimum is read from suggestedParams so we
+ * automatically track any future on-chain fee changes instead of hard-coding 1000.
  */
 async function callMethod(
   algodClient: algosdk.Algodv2, sender: string, appId: number,
@@ -257,10 +259,11 @@ async function callMethod(
   extraFee = false,
 ): Promise<string> {
   const params = await algodClient.getTransactionParams().do()
+  const minFee = Number(params.minFee ?? params.fee ?? 1000) || 1000
   const txn = algosdk.makeApplicationCallTxnFromObject({
     sender, appIndex: appId,
     onComplete: algosdk.OnApplicationComplete.NoOpOC,
-    suggestedParams: extraFee ? { ...params, fee: 2000, flatFee: true } : params,
+    suggestedParams: extraFee ? { ...params, fee: minFee * 2, flatFee: true } : params,
     appArgs: [selector],
   })
   const signedTxns = await signTransaction(txn)
@@ -303,10 +306,11 @@ export async function deleteEscrowContract(
   signTransaction: SignFn,
 ): Promise<string> {
   const params = await algodClient.getTransactionParams().do()
+  const minFee = Number(params.minFee ?? params.fee ?? 1000) || 1000
   const txn = algosdk.makeApplicationCallTxnFromObject({
     sender: senderAddress, appIndex: appId,
     onComplete: algosdk.OnApplicationComplete.DeleteApplicationOC,
-    suggestedParams: { ...params, fee: 2000, flatFee: true },
+    suggestedParams: { ...params, fee: minFee * 2, flatFee: true },
     appArgs: [SEL.delete],
   })
   const signedTxns = await signTransaction(txn)
@@ -406,6 +410,78 @@ export async function mintNFTReceipt(
 }
 
 // ── ASA transfer to app ────────────────────────────────────────────────────
+
+// ── Service Registry write ─────────────────────────────────────────────────
+//
+// ARC-4 ABI-method call into the on-chain ServiceRegistry contract. We use
+// algosdk's ABIMethod here (instead of a hand-rolled selector + manual encode)
+// because the method takes string args of variable length — ABIMethod handles
+// the length-prefixing for us, matching exactly what puyapy compiled.
+//
+// The contract enforces "only original provider can update" — no anti-spam
+// fee is checked on-chain in the live App ID, so we keep the call minimal.
+const REGISTER_METHOD = new algosdk.ABIMethod({
+  name: "register",
+  args: [
+    { type: "string", name: "service_id" },
+    { type: "uint64", name: "price_microalgos" },
+    { type: "uint64", name: "cycle_days" },
+    { type: "string", name: "name" },
+  ],
+  returns: { type: "void" },
+})
+
+// Build the box name the contract uses to store this listing.
+// puyapy BoxMap with key_prefix="svc:" stores as `b"svc:" + ABI(arc4.String)(key)`.
+// ABI string encoding = uint16 BE length prefix + UTF-8 bytes.
+function buildServiceBoxName(serviceId: string): Uint8Array {
+  const idBytes = new TextEncoder().encode(serviceId)
+  const out = new Uint8Array(4 + 2 + idBytes.length)
+  out.set([0x73, 0x76, 0x63, 0x3a], 0) // "svc:"
+  out[4] = (idBytes.length >> 8) & 0xff
+  out[5] = idBytes.length & 0xff
+  out.set(idBytes, 6)
+  return out
+}
+
+export async function registerService(
+  algodClient: algosdk.Algodv2,
+  senderAddress: string,
+  registryAppId: number,
+  service: { service_id: string; price_microalgos: number; cycle_days: number; name: string },
+  signTransaction: SignFn,
+): Promise<string> {
+  const params = await algodClient.getTransactionParams().do()
+  // Box-storage requires explicit box references on the app call. Otherwise
+  // the AVM rejects the access with "invalid Box reference".
+  const boxName = buildServiceBoxName(service.service_id)
+  const atc = new algosdk.AtomicTransactionComposer()
+  atc.addMethodCall({
+    appID: registryAppId,
+    method: REGISTER_METHOD,
+    methodArgs: [
+      service.service_id,
+      BigInt(Math.max(0, Math.floor(service.price_microalgos))),
+      BigInt(Math.max(1, Math.floor(service.cycle_days))),
+      service.name,
+    ],
+    sender: senderAddress,
+    suggestedParams: params,
+    boxes: [{ appIndex: registryAppId, name: boxName }],
+    signer: async (txnGroup, indexesToSign) => {
+      // Bridge our SignFn (single-txn signer) into AtomicTransactionComposer's
+      // signer interface, which expects an array of signed bytes.
+      const out: Uint8Array[] = []
+      for (const i of indexesToSign) {
+        const signed = await signTransaction(txnGroup[i])
+        out.push(signed[0])
+      }
+      return out
+    },
+  })
+  const result = await atc.execute(algodClient, 4)
+  return result.txIDs[0]
+}
 
 export async function sendASAToApp(
   algodClient: algosdk.Algodv2, senderAddress: string, appAddress: string,

@@ -15,18 +15,22 @@ import { rateLimitAllow } from "./rate-limit.mjs"
 
 function readBody(req, maxBytes = 64 * 1024) {
   return new Promise((resolve, reject) => {
-    let body = ""
+    const chunks = []
     let size = 0
     req.on("data", (chunk) => {
-      size += chunk.length
-      if (size > maxBytes) {
-        reject(new Error("Request body too large"))
+      // Check BEFORE concatenating so a single huge chunk can't OOM us.
+      const chunkLen = Buffer.isBuffer(chunk) ? chunk.length : Buffer.byteLength(chunk)
+      if (size + chunkLen > maxBytes) {
+        const err = new Error("Request body too large")
+        err.status = 413
+        reject(err)
         req.destroy()
         return
       }
-      body += chunk.toString()
+      size += chunkLen
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
     })
-    req.on("end", () => resolve(body))
+    req.on("end", () => resolve(Buffer.concat(chunks).toString("utf-8")))
     req.on("error", reject)
   })
 }
@@ -126,15 +130,40 @@ async function _aiOptimizerCore(req, res) {
 
     const GROQ_API_KEY = getEnv("GROQ_API_KEY")
     const body = await readBody(req)
+    let parsedBody
+    try { parsedBody = JSON.parse(body || "{}") } catch {
+      return jsonRes(res, 400, { error: "Invalid JSON body" })
+    }
+    // Lightweight inline schema validation (avoids pulling zod into the server bundle).
+    const isObj = (v) => v && typeof v === "object" && !Array.isArray(v)
+    if (!isObj(parsedBody)) return jsonRes(res, 400, { error: "Body must be a JSON object" })
+    if (parsedBody.subscriptions !== undefined && !Array.isArray(parsedBody.subscriptions)) {
+      return jsonRes(res, 400, { error: "subscriptions must be an array" })
+    }
+    if (parsedBody.vaults !== undefined && !Array.isArray(parsedBody.vaults)) {
+      return jsonRes(res, 400, { error: "vaults must be an array" })
+    }
+    if (parsedBody.userCurrency !== undefined && typeof parsedBody.userCurrency !== "string") {
+      return jsonRes(res, 400, { error: "userCurrency must be a string" })
+    }
+    for (const k of ["totalMonthly", "totalVaultLocked"]) {
+      if (parsedBody[k] !== undefined && (typeof parsedBody[k] !== "number" || !Number.isFinite(parsedBody[k]))) {
+        return jsonRes(res, 400, { error: `${k} must be a finite number` })
+      }
+    }
     const {
       subscriptions = [],
       vaults = [],
       userCurrency = "USD",
       totalMonthly = 0,
       totalVaultLocked = 0,
-    } = JSON.parse(body || "{}")
+    } = parsedBody
+    // Cap arrays so a malicious caller can't blow up the prompt.
+    if (subscriptions.length > 500 || vaults.length > 500) {
+      return jsonRes(res, 413, { error: "Too many subscriptions/vaults (max 500 each)" })
+    }
 
-    const activeSubs = subscriptions.filter((s) => s.status === "active")
+    const activeSubs = subscriptions.filter((s) => s && s.status === "active")
 
     const systemPrompt = `You are an AI financial advisor specializing in subscription management and Algorand blockchain escrow vaults.
 
@@ -190,9 +219,12 @@ Respond with ONLY the JSON structure specified.`
       body: JSON.stringify(payload),
     })
 
+    // Exponential backoff: up to 3 retries on 429 with jitter (1s, 3s, 9s ± 30%)
     let aiRes = await callGroq()
-    if (aiRes.status === 429) {
-      await new Promise((r) => setTimeout(r, 8000))
+    for (let attempt = 0; attempt < 3 && aiRes.status === 429; attempt++) {
+      const baseMs = 1000 * Math.pow(3, attempt)
+      const jitter = baseMs * 0.3 * (Math.random() - 0.5) * 2
+      await new Promise((r) => setTimeout(r, Math.max(500, baseMs + jitter)))
       aiRes = await callGroq()
     }
     if (!aiRes.ok) {
@@ -221,16 +253,65 @@ Respond with ONLY the JSON structure specified.`
 
 const RELEASE_SELECTOR = new Uint8Array([0x07, 0x6b, 0xbd, 0x4d])
 
+// Service-role client used ONLY for server-managed tables (locks, replay store).
+// Never used to bypass user RLS on user data — that still goes through the
+// authed user client.
+let _serviceClient = null
+function _getServiceClient() {
+  if (_serviceClient) return _serviceClient
+  const url = process.env.VITE_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY
+  if (!url || !key) return null
+  _serviceClient = createClient(url, key, { auth: { persistSession: false } })
+  return _serviceClient
+}
+
+// Acquire an idempotency lock keyed on (vault_id, billing_period). Returns
+// true on first acquisition; false ONLY if another caller already holds the
+// same lock (Postgres unique-violation 23505). Other DB errors don't block —
+// we'd rather risk a rare duplicate release than silently skip every release.
+async function _acquireRunLock(vaultId, billingDate) {
+  const sb = _getServiceClient()
+  if (!sb) return true // No DB configured → best-effort, don't block legit releases.
+  const lockKey = `${vaultId}:${billingDate ?? "no-date"}`
+  const { error } = await sb.from("agent_run_locks").insert({ lock_key: lockKey, vault_id: vaultId })
+  if (!error) return true
+  if (error.code === "23505") return false // legitimate duplicate
+  // Unknown error (RLS, schema cache, network). Warn loudly and proceed.
+  console.warn("[agent-run lock] insert failed but not unique-violation; allowing release:", error.message || error)
+  return true
+}
+
 export async function agentRunHandler(req, res) {
   if (req.method !== "POST") return jsonRes(res, 405, { error: "Method Not Allowed" })
 
   try {
-    const { supabase, user } = await getAuthedUserAndClient(req)
+    // Two valid auth modes:
+    //   (a) Cron / admin: shared secret in X-Agent-Secret header
+    //   (b) Authenticated user, restricted to their OWN vaults only
+    const adminSecret = process.env.AGENT_RUN_SECRET
+    const presentedSecret = req.headers["x-agent-secret"]
+    const isAdmin = adminSecret && presentedSecret === adminSecret
 
-    const { data: activeSubs } = await supabase
+    let supabase, user, restrictToUserId
+    if (isAdmin) {
+      supabase = _getServiceClient()
+      if (!supabase) return jsonRes(res, 500, { error: "Service client not configured for admin run" })
+      user = { id: "agent-cron" }
+      restrictToUserId = null // admin sweeps all users
+    } else {
+      const ctx = await getAuthedUserAndClient(req)
+      supabase = ctx.supabase
+      user = ctx.user
+      restrictToUserId = user.id // user can only release their own vaults
+    }
+
+    let subQuery = supabase
       .from("subscriptions")
-      .select("id, name, next_billing_date")
+      .select("id, name, next_billing_date, user_id")
       .eq("status", "active")
+    if (restrictToUserId) subQuery = subQuery.eq("user_id", restrictToUserId)
+    const { data: activeSubs } = await subQuery
 
     if (!activeSubs?.length) {
       return jsonRes(res, 200, { success: true, message: "No active subscriptions", released: 0, checked: 0 })
@@ -255,7 +336,11 @@ export async function agentRunHandler(req, res) {
     if (mnemonic && mnemonic.trim() !== "" && mnemonic !== "skip") {
       try {
         agentAccount = algosdk.mnemonicToSecretKey(mnemonic.trim())
-        algodClient = new algosdk.Algodv2("", "https://testnet-api.algonode.cloud", "")
+        // Centralized algod URL: prefer self-hosted/paid, fall back to algonode.
+        const algodUrl = process.env.ALGOD_URL
+          || process.env.VITE_ALGOD_TESTNET_URL
+          || "https://testnet-api.algonode.cloud"
+        algodClient = new algosdk.Algodv2(process.env.ALGOD_TOKEN || "", algodUrl, "")
         agentMode = "on-chain"
       } catch { agentMode = "db-only" }
     }
@@ -271,6 +356,13 @@ export async function agentRunHandler(req, res) {
       try {
         const isAgentVault = vault.vault_type === "agent"
         if (algodClient && agentAccount && vault.app_id && isAgentVault) {
+          // Idempotency: don't double-release the same vault for the same period.
+          const gotLock = await _acquireRunLock(vault.id, sub?.next_billing_date)
+          if (!gotLock) {
+            results.errors.push(`Vault ${vault.id} skipped: already released for billing period ${sub?.next_billing_date}`)
+            results.skipped++
+            continue
+          }
           try {
             const params = await algodClient.getTransactionParams().do()
             const txn = algosdk.makeApplicationCallTxnFromObject({
@@ -283,10 +375,22 @@ export async function agentRunHandler(req, res) {
             const signed = txn.signTxn(agentAccount.sk)
             const sendRes = await algodClient.sendRawTransaction(signed).do()
             txid = sendRes.txId ?? sendRes.txid ?? ""
-            await algosdk.waitForConfirmation(algodClient, txid, 4)
+            const confirmed = await algosdk.waitForConfirmation(algodClient, txid, 4)
+            // Hard-check the txn actually succeeded; algod returns pool-error
+            // for txns that confirmed-but-failed (e.g. logic eval rejected).
+            if (confirmed?.["pool-error"]) {
+              throw new Error(`pool-error: ${confirmed["pool-error"]}`)
+            }
+            // Success requires confirmed-round to be set.
+            if (!(confirmed?.["confirmed-round"] || confirmed?.confirmedRound)) {
+              throw new Error("Txn never confirmed in a round")
+            }
             mode = "on-chain"
           } catch (onChainErr) {
             results.errors.push(`Vault ${vault.id} on-chain failed: ${onChainErr.message}`)
+            // We failed — release the lock so a future retry can succeed.
+            const sb = _getServiceClient()
+            if (sb) await sb.from("agent_run_locks").delete().eq("lock_key", `${vault.id}:${sub?.next_billing_date ?? "no-date"}`)
           }
         } else if (algodClient && agentAccount && vault.app_id && !isAgentVault) {
           results.errors.push(`Vault ${vault.id} skipped: type "${vault.vault_type}" requires creator signature`)

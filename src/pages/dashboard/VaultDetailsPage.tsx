@@ -435,6 +435,54 @@ export default function VaultDetailsPage() {
           </dl>
         </div>
 
+        {/* Parties — co-signer / arbitrator / agent */}
+        {(vault.co_signer_address || vault.arbitrator_address || vault.agent_address) && (
+          <div className="rounded-xl border border-border bg-card p-5">
+            <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
+              <RiUserLine className="size-4 text-primary" /> Parties
+            </h2>
+            <dl className="space-y-3">
+              {vault.co_signer_address && (
+                <div className="flex justify-between text-sm">
+                  <dt className="text-muted-foreground">
+                    Co-signer
+                    {vault.co_signer_approved && (
+                      <span className="ml-2 rounded-full bg-green-500/15 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-green-700 dark:text-green-300">
+                        approved
+                      </span>
+                    )}
+                  </dt>
+                  <dd className="font-mono text-xs text-foreground">
+                    <a href={getAddressExplorerUrl(vault.co_signer_address, network)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
+                      {shortenAddress(vault.co_signer_address)} <RiExternalLinkLine className="size-3" />
+                    </a>
+                  </dd>
+                </div>
+              )}
+              {vault.arbitrator_address && (
+                <div className="flex justify-between text-sm">
+                  <dt className="text-muted-foreground">Arbitrator</dt>
+                  <dd className="font-mono text-xs text-foreground">
+                    <a href={getAddressExplorerUrl(vault.arbitrator_address, network)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
+                      {shortenAddress(vault.arbitrator_address)} <RiExternalLinkLine className="size-3" />
+                    </a>
+                  </dd>
+                </div>
+              )}
+              {vault.agent_address && (
+                <div className="flex justify-between text-sm">
+                  <dt className="text-muted-foreground">Autonomous agent</dt>
+                  <dd className="font-mono text-xs text-foreground">
+                    <a href={getAddressExplorerUrl(vault.agent_address, network)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
+                      {shortenAddress(vault.agent_address)} <RiExternalLinkLine className="size-3" />
+                    </a>
+                  </dd>
+                </div>
+              )}
+            </dl>
+          </div>
+        )}
+
         {/* On-Chain State */}
         <div className="rounded-xl border border-border bg-card p-5">
           <div className="flex items-center justify-between mb-4">

@@ -43,8 +43,61 @@
  */
 
 import algosdk from "algosdk"
+import { createClient } from "@supabase/supabase-js"
 
 const X402_VERSION = 1
+
+// ── Replay-protection store ────────────────────────────────────────────────
+// Persists claimed payment txids in Supabase so a single signed payment
+// can NEVER be reused — even across server restarts or replicas. Falls
+// back to in-memory if DB is unavailable (best-effort, single-instance).
+const _memUsedTxids = new Map() // txid -> claimed_at_ms
+let _replaySupabase = null
+function _getReplayClient() {
+  if (_replaySupabase) return _replaySupabase
+  const url = process.env.VITE_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY
+  if (!url || !key) return null
+  _replaySupabase = createClient(url, key, { auth: { persistSession: false } })
+  return _replaySupabase
+}
+async function claimTxidOnce(txid, meta) {
+  // Returns true if this is the FIRST claim for this txid; false if replay.
+  // Strategy:
+  //   - Always check in-memory first (cheap fast-path).
+  //   - Then attempt the DB INSERT. If it succeeds = first claim. If 23505 =
+  //     replay. If DB is configured but errors otherwise, FAIL CLOSED (treat
+  //     as replay) — we'd rather reject a valid payment than accept a replay.
+  //   - If DB is not configured at all, we fall back to in-memory only.
+  if (_memUsedTxids.has(txid)) return false
+
+  const sb = _getReplayClient()
+  if (sb) {
+    const { error } = await sb.from("x402_used_txids").insert({
+      txid,
+      resource: meta.resource?.slice(0, 500) ?? null,
+      amount_microalgos: meta.amount ?? null,
+      pay_to: meta.payTo ?? null,
+    })
+    if (!error) {
+      _memUsedTxids.set(txid, Date.now()) // mirror to memory for instant rejection on retry
+      return true
+    }
+    if (error.code === "23505") return false // unique violation = replay
+    // Unknown DB error with DB configured: fail closed.
+    console.error("[x402 replay] DB insert failed, rejecting payment as a precaution:", error.message || error)
+    return false
+  }
+
+  // No DB configured anywhere — best-effort in-memory only.
+  _memUsedTxids.set(txid, Date.now())
+  // Periodic GC: drop entries older than 24h to bound memory
+  if (_memUsedTxids.size > 10000) {
+    const cutoff = Date.now() - 86_400_000
+    for (const [k, t] of _memUsedTxids) if (t < cutoff) _memUsedTxids.delete(k)
+  }
+  return true
+}
 
 function tryDecodeXPayment(headerValue) {
   // Accept either `<base64 signed txn>` or `<base64url JSON>`
@@ -102,12 +155,18 @@ function send402(res, opts) {
  * @param {function} handler             - Underlying (req, res) handler
  */
 export function withX402(opts, handler) {
+  // Resolution order: explicit opts → env override → public algonode fallback.
+  // This keeps the URL in ONE place (constants on the client; here on the
+  // server) so swapping providers is a one-secret change.
+  const isMainnet = opts.network === "algorand-mainnet"
+  const envOverride = isMainnet
+    ? (process.env.ALGOD_MAINNET_URL || process.env.VITE_ALGOD_MAINNET_URL)
+    : (process.env.ALGOD_URL || process.env.VITE_ALGOD_TESTNET_URL)
   const algodUrl =
     opts.algodUrl ||
-    (opts.network === "algorand-mainnet"
-      ? "https://mainnet-api.algonode.cloud"
-      : "https://testnet-api.algonode.cloud")
-  const algod = new algosdk.Algodv2(opts.algodToken || "", algodUrl, "")
+    envOverride ||
+    (isMainnet ? "https://mainnet-api.algonode.cloud" : "https://testnet-api.algonode.cloud")
+  const algod = new algosdk.Algodv2(opts.algodToken || process.env.ALGOD_TOKEN || "", algodUrl, "")
 
   return async function wrapped(req, res) {
     if (!opts.payTo) {
@@ -150,15 +209,33 @@ export function withX402(opts, handler) {
     }
 
     let txid
+    let confirmed
     try {
       const sendRes = await algod.sendRawTransaction(signedBytes).do()
       txid = sendRes.txId ?? sendRes.txid
-      await algosdk.waitForConfirmation(algod, txid, 4)
+      confirmed = await algosdk.waitForConfirmation(algod, txid, 4)
+      // Algod returns pool-error for failed txns even after wait; check it.
+      if (confirmed?.["pool-error"]) {
+        throw new Error(`pool-error: ${confirmed["pool-error"]}`)
+      }
     } catch (err) {
       return send402(res, {
         network: opts.network, priceMicroalgos: opts.priceMicroalgos,
         payTo: opts.payTo, resource, description: opts.description,
         error: `Payment txn rejected: ${err.message}`,
+      })
+    }
+
+    // Replay protection: claim the txid atomically. If anyone else (or this
+    // same caller in a retry) already claimed it, reject.
+    const isFirstClaim = await claimTxidOnce(txid, {
+      resource, amount: opts.priceMicroalgos, payTo: opts.payTo,
+    })
+    if (!isFirstClaim) {
+      return send402(res, {
+        network: opts.network, priceMicroalgos: opts.priceMicroalgos,
+        payTo: opts.payTo, resource, description: opts.description,
+        error: "Payment replay detected — this txid was already used. Submit a fresh payment.",
       })
     }
 

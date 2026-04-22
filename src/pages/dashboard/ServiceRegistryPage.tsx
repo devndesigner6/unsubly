@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react"
-import { RiStoreLine, RiExternalLinkLine, RiRefreshLine, RiRobotLine, RiFileCopyLine, RiCheckLine } from "@remixicon/react"
+import { RiStoreLine, RiExternalLinkLine, RiRefreshLine, RiRobotLine, RiFileCopyLine, RiCheckLine, RiAddLine, RiCloseLine } from "@remixicon/react"
 import { toast } from "sonner"
 import { microalgosToAlgo } from "@/lib/algorand/constants"
+import { useAlgorand } from "@/lib/algorand/context"
+import { registerService } from "@/lib/algorand/contract"
+import { Button } from "@/components/Button"
+import algosdk from "algosdk"
 
 interface ServiceEntry {
   service_id: string
@@ -33,6 +37,49 @@ export default function ServiceRegistryPage() {
   const [data, setData] = useState<RegistryResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [copied, setCopied] = useState<string | null>(null)
+  const [showForm, setShowForm] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [form, setForm] = useState({ service_id: "", name: "", price_algo: "", cycle_days: "30" })
+  const { walletAddress, algodClient, peraWallet } = useAlgorand()
+  const signTransaction = async (txn: algosdk.Transaction): Promise<Uint8Array[]> =>
+    peraWallet.signTransaction([[{ txn }]])
+
+  const submitRegistration = async () => {
+    if (!walletAddress) return toast.error("Connect your wallet first")
+    if (!data?.registry_app_id) return toast.error("Registry not deployed")
+    const id = form.service_id.trim()
+    const name = form.name.trim()
+    const priceAlgo = Number(form.price_algo)
+    const cycle = Number(form.cycle_days)
+    if (!id || !name) return toast.error("service_id and name are required")
+    if (id.length > 64) return toast.error("service_id must be ≤ 64 chars")
+    if (name.length > 64) return toast.error("name must be ≤ 64 chars")
+    if (!Number.isFinite(priceAlgo) || priceAlgo <= 0) return toast.error("Price must be > 0 ALGO")
+    if (!Number.isInteger(cycle) || cycle < 1 || cycle > 3650) return toast.error("Cycle must be 1–3650 days")
+
+    setSubmitting(true)
+    try {
+      const txid = await registerService(
+        algodClient,
+        walletAddress,
+        data.registry_app_id,
+        {
+          service_id: id, name,
+          price_microalgos: Math.round(priceAlgo * 1_000_000),
+          cycle_days: cycle,
+        },
+        signTransaction,
+      )
+      toast.success("Service published on-chain", { description: `Txn ${txid.slice(0, 8)}…` })
+      setForm({ service_id: "", name: "", price_algo: "", cycle_days: "30" })
+      setShowForm(false)
+      await fetchRegistry()
+    } catch (err: any) {
+      toast.error("Registration failed", { description: err?.message || String(err) })
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   const fetchRegistry = async () => {
     setIsLoading(true)
@@ -70,15 +117,83 @@ export default function ServiceRegistryPage() {
             discover offerings here without ever calling a centralized API.
           </p>
         </div>
-        <button
-          onClick={fetchRegistry}
-          disabled={isLoading}
-          className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground hover:bg-muted disabled:opacity-50"
-        >
-          <RiRefreshLine className={`size-4 ${isLoading ? "animate-spin" : ""}`} />
-          Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant={showForm ? "secondary" : "primary"}
+            onClick={() => setShowForm((v) => !v)}
+            disabled={!data?.registry_app_id}
+          >
+            {showForm
+              ? <><RiCloseLine className="mr-1.5 size-4" />Cancel</>
+              : <><RiAddLine className="mr-1.5 size-4" />Publish service</>}
+          </Button>
+          <button
+            onClick={fetchRegistry}
+            disabled={isLoading}
+            className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground hover:bg-muted disabled:opacity-50"
+          >
+            <RiRefreshLine className={`size-4 ${isLoading ? "animate-spin" : ""}`} />
+            Refresh
+          </button>
+        </div>
       </div>
+
+      {showForm && (
+        <div className="rounded-xl border border-primary/30 bg-card p-5 space-y-4">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">Publish a service to the registry</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Your wallet ({walletAddress ? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}` : "not connected"})
+              becomes the on-chain provider. Only you can update this listing later.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <label className="text-xs font-medium text-muted-foreground">
+              Service ID (unique slug, ≤ 64 chars)
+              <input
+                value={form.service_id}
+                onChange={(e) => setForm({ ...form, service_id: e.target.value })}
+                placeholder="e.g. acme-pro-monthly"
+                className="mt-1 block w-full rounded-lg border border-border bg-background px-3 py-2 font-mono text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+              />
+            </label>
+            <label className="text-xs font-medium text-muted-foreground">
+              Display name (≤ 64 chars)
+              <input
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder="Acme Pro"
+                className="mt-1 block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+              />
+            </label>
+            <label className="text-xs font-medium text-muted-foreground">
+              Price (ALGO per cycle)
+              <input
+                type="number" step="0.001" min="0.001"
+                value={form.price_algo}
+                onChange={(e) => setForm({ ...form, price_algo: e.target.value })}
+                placeholder="9.99"
+                className="mt-1 block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+              />
+            </label>
+            <label className="text-xs font-medium text-muted-foreground">
+              Billing cycle (days, 1–3650)
+              <input
+                type="number" min="1" max="3650" step="1"
+                value={form.cycle_days}
+                onChange={(e) => setForm({ ...form, cycle_days: e.target.value })}
+                className="mt-1 block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+              />
+            </label>
+          </div>
+          <div className="flex items-center justify-end gap-2 pt-1">
+            <Button variant="ghost" onClick={() => setShowForm(false)} disabled={submitting}>Cancel</Button>
+            <Button onClick={submitRegistration} disabled={submitting || !walletAddress}>
+              {submitting ? "Submitting…" : "Sign & publish on-chain"}
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Registry contract banner */}
       {data?.registry_app_id ? (

@@ -7,6 +7,7 @@ import { shortenAddress, getAddressExplorerUrl, getLoraTransactionUrl } from "@/
 import { Button } from "@/components/Button"
 import { Link } from "react-router-dom"
 import { supabase } from "@/integrations/supabase/client"
+import { toast } from "sonner"
 import {
   RiAddLine, RiWalletLine, RiEditLine,
   RiCalendarCheckLine, RiAlertLine, RiLoader4Line,
@@ -119,15 +120,21 @@ export default function DashboardPageContent() {
                 Authorization: `Bearer ${session.access_token}`,
               },
             })
-            const advData = await advRes.json()
+            const advData = await advRes.json().catch(() => ({}))
             if (advRes.ok && advData.advanced > 0) {
-              // Re-fetch subscriptions with updated dates
               const refreshed = await fetchSubscriptions(user!.id)
               setSubscriptions(refreshed)
+            } else if (!advRes.ok) {
+              // Surface the failure so users know dates may be stale.
+              toast.error(advData.error || `Couldn't refresh billing dates (HTTP ${advRes.status})`, {
+                description: "Calendar dates may be out of date. Try refreshing.",
+              })
             }
           }
-        } catch {
-          // Non-critical: billing date advance failed, continue with stale dates
+        } catch (e: any) {
+          toast.error("Couldn't reach the billing service", {
+            description: e?.message || "Calendar may show stale dates.",
+          })
         }
 
         // Fetch autonomous agent actions
