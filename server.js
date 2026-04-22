@@ -8,6 +8,7 @@ import {
   agentRunHandler,
   advanceBillingHandler,
   agentRegistryHandler,
+  x402DemoHandler,
 } from "./server/handlers.mjs"
 
 const __filename = fileURLToPath(import.meta.url)
@@ -112,6 +113,7 @@ const apiRoutes = {
   "/api/agent-run":      wrap(agentRunHandler),
   "/api/advance-billing":wrap(advanceBillingHandler),
   "/api/agent/registry": wrap(agentRegistryHandler),
+  "/api/x402-demo":      wrap(x402DemoHandler),
 }
 
 const server = http.createServer(async function (req, res) {

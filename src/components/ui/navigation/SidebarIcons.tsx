@@ -85,6 +85,16 @@ export const RegistryMark = (p: IconProps) => (
   </svg>
 )
 
+export const X402Mark = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <path
+      fillRule="evenodd"
+      d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-5l-3 3v-3H6a2 2 0 0 1-2-2V5Zm4.6 4.2 1.4-1.6 1.4 1.6 1.2-1-1.6-1.4 1.6-1.4-1.2-1L10 6l-1.4-1.6-1.2 1L9 6.8 7.4 8.2l1.2 1Zm6 0 1.4-1.6 1.4 1.6 1.2-1-1.6-1.4 1.6-1.4-1.2-1L16 6l-1.4-1.6-1.2 1 1.6 1.4-1.6 1.4 1.2 1ZM7 13h10v-1.5H7V13Z"
+      clipRule="evenodd"
+    />
+  </svg>
+)
+
 export const ResumeMark = (p: IconProps) => (
   <svg {...base} {...p}>
     <path

@@ -112,6 +112,54 @@ export async function aiOptimizerHandler(req, res) {
   return _getAiOptimizerHandler()(req, res)
 }
 
+// ── /api/x402-demo — public x402 walkthrough endpoint ──────────────────────
+// A dedicated, *unauthenticated* paywalled endpoint used by the dashboard
+// "x402 Demo" page. Returns a fake "premium quote" to keep the demo cheap
+// and deterministic. The whole point is to let the user experience the
+// 402 → pay → 200+receipt round-trip on their own wallet.
+let _x402DemoWrapped = null
+function _getX402DemoHandler() {
+  if (_x402DemoWrapped) return _x402DemoWrapped
+  const payTo = process.env.X402_PAY_TO_ADDRESS
+  if (!payTo) {
+    _x402DemoWrapped = (_req, res) => jsonRes(res, 503, {
+      error: "x402 demo unavailable — server is missing X402_PAY_TO_ADDRESS",
+    })
+    return _x402DemoWrapped
+  }
+  const price = Number(process.env.X402_PRICE_MICROALGOS || "1000")
+  const network = process.env.X402_NETWORK || "algorand-testnet"
+  _x402DemoWrapped = withX402(
+    {
+      payTo, priceMicroalgos: price, network,
+      description: "Unsubscribely x402 demo — premium quote",
+      // Demo endpoint has no inner JWT check, so we cannot let any caller
+      // fake an Authorization header to skip payment.
+      allowAuthBypass: false,
+    },
+    async (_req, res) => {
+      const quotes = [
+        "Money is better than poverty, if only for financial reasons. — Woody Allen",
+        "It is better to look ahead and prepare than to look back and regret. — Jackie Joyner-Kersee",
+        "An investment in knowledge pays the best interest. — Benjamin Franklin",
+        "The best time to plant a tree was 20 years ago. The second best time is now. — Chinese proverb",
+        "On-chain receipts cannot be lost. Paper ones can. — anon",
+      ]
+      const pick = quotes[Math.floor(Math.random() * quotes.length)]
+      jsonRes(res, 200, {
+        ok: true,
+        quote: pick,
+        served_at: new Date().toISOString(),
+        note: "You just paid for this with x402 over Algorand. The X-PAYMENT-RESPONSE header contains the on-chain txid.",
+      })
+    },
+  )
+  return _x402DemoWrapped
+}
+export async function x402DemoHandler(req, res) {
+  return _getX402DemoHandler()(req, res)
+}
+
 // The actual handler, wrapped by x402 if configured.
 async function _aiOptimizerCore(req, res) {
   if (req.method !== "POST") return jsonRes(res, 405, { error: "Method Not Allowed" })

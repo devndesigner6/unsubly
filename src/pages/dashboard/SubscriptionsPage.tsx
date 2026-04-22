@@ -11,9 +11,10 @@ import {
   RiAddLine, RiDeleteBinLine, RiEditLine, RiLoader4Line,
   RiSearchLine, RiAlertLine, RiFileListLine,
   RiPlayCircleLine, RiPauseCircleLine, RiCloseCircleLine, RiTimerFlashLine,
-  RiDownloadLine, RiUploadLine,
+  RiDownloadLine, RiUploadLine, RiForbidLine,
 } from "@remixicon/react"
 import { useState, useEffect, useMemo, useRef } from "react"
+import CancelHelperModal from "@/components/subscriptions/CancelHelperModal"
 
 const statusConfig: Record<string, { label: string; icon: any }> = {
   active: { label: "Active", icon: RiPlayCircleLine },
@@ -34,6 +35,7 @@ export default function SubscriptionsPage() {
   const [deleting, setDeleting] = useState<string | null>(null)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [importing, setImporting] = useState(false)
+  const [cancelTarget, setCancelTarget] = useState<any | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -315,10 +317,20 @@ export default function SubscriptionsPage() {
                     </div>
                     <div className="flex gap-1">
                       <Button asChild variant="ghost" size="sm">
-                        <Link to={`/subscriptions/${sub.id}`}>
+                        <Link to={`/subscriptions/${sub.id}`} title="Edit subscription">
                           <RiEditLine className="size-4" />
                         </Link>
                       </Button>
+                      {sub.status !== "cancelled" && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          title="Cancel this subscription (guided)"
+                          onClick={() => setCancelTarget(sub)}
+                        >
+                          <RiForbidLine className="size-4 text-foreground/70" />
+                        </Button>
+                      )}
                       {deleteConfirmId === sub.id ? (
                         <div className="flex items-center gap-1">
                           <Button
@@ -351,6 +363,14 @@ export default function SubscriptionsPage() {
           </div>
         )}
       </div>
+
+      {cancelTarget && (
+        <CancelHelperModal
+          subscription={cancelTarget}
+          onClose={() => setCancelTarget(null)}
+          onCancelled={loadData}
+        />
+      )}
     </div>
   )
 }

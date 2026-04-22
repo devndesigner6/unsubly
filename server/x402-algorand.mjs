@@ -184,7 +184,13 @@ export function withX402(opts, handler) {
     // x402 is for anonymous AI agents. The dashboard owner already authenticates
     // via Supabase JWT — they shouldn't pay to use their own product. Anonymous
     // agents (no Bearer token) still hit 402 and must pay on-chain.
-    if (authHeader?.startsWith("Bearer ") && !xPayment) {
+    //
+    // SECURITY: only opt-in. Endpoints that don't perform their own JWT
+    // verification inside the wrapped handler (e.g. the public x402 demo) MUST
+    // set { allowAuthBypass: false } so a forged "Authorization: Bearer xxx"
+    // header cannot skip payment. Endpoints that do verify (e.g. AI optimizer
+    // calls getAuthedUserAndClient inside) can keep the default bypass.
+    if (opts.allowAuthBypass !== false && authHeader?.startsWith("Bearer ") && !xPayment) {
       res.setHeader("X-PAYMENT-BYPASS", "authenticated-user")
       return handler(req, res)
     }

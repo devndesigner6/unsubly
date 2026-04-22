@@ -15,7 +15,7 @@ import { siteConfig } from "@/lib/siteConfig"
 import {
   DashboardMark, SubscriptionsMark, CalendarMark, AnalyticsMark,
   FoldersMark, TagsMark, PaymentMark,
-  VaultsMark, OptimizerMark, RegistryMark, ResumeMark, TransactionsMark,
+  VaultsMark, OptimizerMark, RegistryMark, X402Mark, ResumeMark, TransactionsMark,
   SettingsMark,
 } from "./SidebarIcons"
 import { Link, useLocation } from "react-router-dom"
@@ -40,6 +40,7 @@ const algorandNavigation = [
   { name: "Escrow Vaults", href: "/escrow-vaults", icon: VaultsMark },
   { name: "AI Optimizer", href: "/ai-optimizer", icon: OptimizerMark },
   { name: "Service Registry", href: "/service-registry", icon: RegistryMark },
+  { name: "x402 Demo", href: "/x402-demo", icon: X402Mark },
   { name: "On-Chain Resume", href: "/onchain-resume", icon: ResumeMark },
   { name: "Transactions", href: "/transactions", icon: TransactionsMark },
 ] as const

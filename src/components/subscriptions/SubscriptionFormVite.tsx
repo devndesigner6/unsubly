@@ -12,7 +12,9 @@ import {
   RiFileTextLine,
   RiFolderLine,
   RiNotification3Line,
+  RiStoreLine,
 } from "@remixicon/react"
+import RegistryPickerModal, { cycleDaysToBillingCycle, type RegistryService } from "./RegistryPickerModal"
 
 import { useNavigate } from "react-router-dom"
 import { useState, useEffect } from "react"
@@ -80,7 +82,19 @@ const currencies = [
   { value: "JPY", label: "JPY (¥)", symbol: "¥" },
 ]
 
+function pickRegistryServiceMapper(s: RegistryService) {
+  const algo = s.price_microalgos / 1_000_000
+  return {
+    name: s.name || s.service_id,
+    amount: algo.toFixed(4),
+    currency: "USD" as const, // local display currency; on-chain price stays in ALGO
+    billingCycle: cycleDaysToBillingCycle(s.cycle_days),
+    notes: `On-chain registry service: ${s.service_id} (${algo.toFixed(4)} ALGO / ${s.cycle_days}d, provider ${s.provider.slice(0, 8)}…)`,
+  }
+}
+
 export function SubscriptionForm({ subscription, tagIds: initialTagIds = [] }: SubscriptionFormProps) {
+  const [showRegistryPicker, setShowRegistryPicker] = useState(false)
   const navigate = useNavigate()
   const { user } = useAuth()
   const isEditing = !!subscription
@@ -218,6 +232,17 @@ export function SubscriptionForm({ subscription, tagIds: initialTagIds = [] }: S
   }
 
   return (
+    <>
+    {showRegistryPicker && (
+      <RegistryPickerModal
+        onClose={() => setShowRegistryPicker(false)}
+        onPick={(s) => {
+          const m = pickRegistryServiceMapper(s)
+          setFormData(prev => ({ ...prev, ...m }))
+          setShowRegistryPicker(false)
+        }}
+      />
+    )}
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-600 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
@@ -226,14 +251,24 @@ export function SubscriptionForm({ subscription, tagIds: initialTagIds = [] }: S
       )}
 
       <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <div className="mb-5 flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-900/50">
-            <RiFileTextLine className="size-5 text-blue-600 dark:text-blue-400" />
+        <div className="mb-5 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-900/50">
+              <RiFileTextLine className="size-5 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Basic Information</h2>
+              <p className="text-sm text-gray-500">Enter subscription details</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Basic Information</h2>
-            <p className="text-sm text-gray-500">Enter subscription details</p>
-          </div>
+          <button
+            type="button"
+            onClick={() => setShowRegistryPicker(true)}
+            title="Pick from on-chain Service Registry"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+          >
+            <RiStoreLine className="size-3.5" /> From Registry
+          </button>
         </div>
 
         <div className="grid gap-5 sm:grid-cols-2">
@@ -394,5 +429,6 @@ export function SubscriptionForm({ subscription, tagIds: initialTagIds = [] }: S
         </Button>
       </div>
     </form>
+    </>
   )
 }

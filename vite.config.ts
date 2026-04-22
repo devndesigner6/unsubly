@@ -32,6 +32,7 @@ export default defineConfig(({ mode }) => {
             agentRunHandler,
             advanceBillingHandler,
             agentRegistryHandler,
+            x402DemoHandler,
           } = await import("./server/handlers.mjs");
 
           const wrap = (h: (req: any, res: any) => Promise<void>) =>
@@ -52,6 +53,7 @@ export default defineConfig(({ mode }) => {
           server.middlewares.use("/api/agent-run",      wrap(agentRunHandler));
           server.middlewares.use("/api/advance-billing",wrap(advanceBillingHandler));
           server.middlewares.use("/api/agent/registry", wrap(agentRegistryHandler));
+          server.middlewares.use("/api/x402-demo",      wrap(x402DemoHandler));
         },
       },
     ],

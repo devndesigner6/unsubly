@@ -37,6 +37,7 @@ import OnChainResumePage from "@/pages/dashboard/OnChainResumePage"
 import TransactionHistoryPage from "@/pages/dashboard/TransactionHistoryPage"
 import AIOptimizerPage from "@/pages/dashboard/AIOptimizerPage"
 import ServiceRegistryPage from "@/pages/dashboard/ServiceRegistryPage"
+import X402DemoPage from "@/pages/dashboard/X402DemoPage"
 import CoSignerApprovalPage from "@/pages/CoSignerApprovalPage"
 import NotFoundPage from "@/pages/NotFoundPage"
 
@@ -123,6 +124,7 @@ export default function App() {
               <Route path="/escrow-vaults/:id" element={<VaultDetailsPage />} />
               <Route path="/ai-optimizer" element={<AIOptimizerPage />} />
               <Route path="/service-registry" element={<ServiceRegistryPage />} />
+              <Route path="/x402-demo" element={<X402DemoPage />} />
               <Route path="/onchain-resume" element={<OnChainResumePage />} />
               <Route path="/transactions" element={<TransactionHistoryPage />} />
               <Route path="/settings" element={<SettingsPage />} />
