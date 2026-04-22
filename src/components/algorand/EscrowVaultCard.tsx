@@ -226,7 +226,7 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
   if (isSmartContract) pills.push(`App #${vault.app_id}`)
 
   return (
-    <div className="flex flex-col rounded-2xl bg-card text-card-foreground border border-border shadow-[0_4px_24px_-12px_rgba(0,0,0,0.18)] dark:shadow-none transition-shadow hover:shadow-[0_8px_28px_-10px_rgba(0,0,0,0.22)]">
+    <div className="flex min-h-[360px] flex-col rounded-2xl bg-card text-card-foreground border border-border shadow-[0_4px_24px_-12px_rgba(0,0,0,0.18)] dark:shadow-none transition-shadow hover:shadow-[0_8px_28px_-10px_rgba(0,0,0,0.22)]">
       {/* Top: logo + status pill */}
       <div className="flex items-start justify-between gap-3 p-5 pb-3">
         <div className="flex size-11 items-center justify-center rounded-full bg-muted ring-1 ring-border overflow-hidden shrink-0">
@@ -276,7 +276,7 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
       </div>
 
       {/* Spacer to keep footer at bottom even when content is short */}
-      <div className="min-h-[28px] flex-1" />
+      <div className="min-h-[80px] flex-1" />
 
       {/* Status / action banners */}
       {action && (
