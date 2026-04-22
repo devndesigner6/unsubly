@@ -147,7 +147,7 @@ export default function VaultDetailsPage() {
     setIsProcessing(true)
     setActionMsg("Releasing funds on-chain… (sign in your wallet)")
     try {
-      // Agent vaults deployed via deployAgentEscrowContract use the v2 ABI:
+      // Agent vaults deployed via deployAgentEscrowContractV2 use the v2 ABI:
       // release(uint64)uint64, needs an explicit microAlgo amount and writes
       // a Box-stored BillingRecord. v1-style vaults take release()void.
       const isAgentV2 = vault.vault_type === "agent_v2"

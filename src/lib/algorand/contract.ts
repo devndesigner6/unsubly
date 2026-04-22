@@ -150,29 +150,6 @@ export async function deployEscrowContract(
 }
 
 /**
- * Deploy an Agent-Managed Escrow Vault (AgentEscrowVault.arc56).
- *
- * Creator = senderAddress (user's wallet), can kill and get refund.
- * Agent  = agentAddress, autonomous AI agent that releases on billing date.
- * Recipient = recipientAddress, subscription service that receives payment.
- *
- * This is the core contract for A2A Autonomous Payments (Agentic Commerce #3).
- */
-export async function deployAgentEscrowContract(
-  algodClient: algosdk.Algodv2, senderAddress: string,
-  recipientAddress: string, agentAddress: string,
-  signTransaction: SignFn,
-): Promise<DeployResult> {
-  const spec = AgentEscrowVaultSpec as Arc56Spec
-  return deployApp(
-    algodClient, senderAddress,
-    loadArtifact(spec),
-    [SEL.createAddrAddr, addrBytes(recipientAddress), addrBytes(agentAddress)],
-    signTransaction,
-  )
-}
-
-/**
  * Deploy an Agent Escrow Vault **v2** (AgentEscrowVaultV2.arc56). v2 adds an
  * explicit-amount `release(uint64)` method and writes BillingRecord entries
  * into Box Storage (`h:<cycle>`) for an immutable on-chain audit trail.
@@ -444,13 +421,6 @@ export async function approveMultiSig(
   return callMethod(algodClient, senderAddress, appId, SEL.approve, signTransaction, true)
 }
 
-export async function optinASA(
-  algodClient: algosdk.Algodv2, senderAddress: string, appId: number,
-  signTransaction: SignFn,
-): Promise<string> {
-  return callMethod(algodClient, senderAddress, appId, SEL.optin, signTransaction, true)
-}
-
 export async function deleteEscrowContract(
   algodClient: algosdk.Algodv2, senderAddress: string, appId: number,
   signTransaction: SignFn,
@@ -559,8 +529,6 @@ export async function mintNFTReceipt(
   return { assetId, txnId }
 }
 
-// ── ASA transfer to app ────────────────────────────────────────────────────
-
 // ── Service Registry write ─────────────────────────────────────────────────
 //
 // ARC-4 ABI-method call into the on-chain ServiceRegistry contract. We use
@@ -633,19 +601,3 @@ export async function registerService(
   return result.txIDs[0]
 }
 
-export async function sendASAToApp(
-  algodClient: algosdk.Algodv2, senderAddress: string, appAddress: string,
-  assetId: number, amount: number,
-  signTransaction: SignFn,
-): Promise<string> {
-  const params = await algodClient.getTransactionParams().do()
-  const txn = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
-    sender: senderAddress, receiver: appAddress,
-    assetIndex: assetId, amount, suggestedParams: params,
-  })
-  const signedTxns = await signTransaction(txn)
-  const sendResponse = await algodClient.sendRawTransaction(signedTxns[0]).do()
-  const txnId = extractTxId(sendResponse)
-  await algosdk.waitForConfirmation(algodClient, txnId, 4)
-  return txnId
-}

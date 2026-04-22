@@ -167,6 +167,3 @@ export function methodSignature(m: Arc56Method): string {
   return `${m.name}(${args})${m.returns.type}`
 }
 
-export function findContract(slug: string): ContractInfo | null {
-  return CONTRACTS.find((c) => c.slug === slug) ?? null
-}

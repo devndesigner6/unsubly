@@ -7,21 +7,3 @@ export const Logo = (props: SVGProps<SVGSVGElement>) => (
   </svg>
 )
 
-// Image Logo component for use with PNG/SVG files
-export const LogoImage = ({ 
-  className, 
-  size = 32,
-  variant = "svg" 
-}: { 
-  className?: string
-  size?: number
-  variant?: "svg" | "png"
-}) => (
-  <img
-    src={variant === "svg" ? "/logo.svg" : "/logo.png"}
-    alt="Unsubscribely Logo"
-    width={size}
-    height={size}
-    className={className}
-  />
-)

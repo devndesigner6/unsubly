@@ -117,38 +117,3 @@ export function generateCSV(
   return [headers.join(","), ...rows].join("\n")
 }
 
-export function getCSVTemplate(): string {
-  const headers = [
-    "name",
-    "description",
-    "amount",
-    "currency",
-    "billingCycle",
-    "nextBillingDate",
-    "startDate",
-    "status",
-    "category",
-    "url",
-    "notes",
-    "alertDays",
-    "alertEnabled",
-  ]
-
-  const exampleRow = [
-    "Netflix",
-    "Streaming subscription",
-    "14.99",
-    "USD",
-    "monthly",
-    "2024-02-15",
-    "2023-01-01",
-    "active",
-    "Entertainment",
-    "https://netflix.com",
-    "Family plan",
-    "3",
-    "true",
-  ]
-
-  return [headers.join(","), exampleRow.join(",")].join("\n")
-}

@@ -1,5 +1,5 @@
 // Currency codes and symbols
-export const currencies: Record<
+const currencies: Record<
   string,
   { name: string; symbol: string; locale: string }
 > = {
@@ -69,21 +69,6 @@ let exchangeRates: Record<string, number> = {
   SAR: 3.75,
 }
 
-export function convertCurrency(
-  amount: number,
-  fromCurrency: string,
-  toCurrency: string,
-): number {
-  if (fromCurrency === toCurrency) return amount
-
-  const fromRate = exchangeRates[fromCurrency] || 1
-  const toRate = exchangeRates[toCurrency] || 1
-
-  // Convert to USD first, then to target currency
-  const usdAmount = amount / fromRate
-  return usdAmount * toRate
-}
-
 export function formatCurrency(
   amount: number,
   currency: string,
@@ -107,56 +92,12 @@ export function formatCurrency(
   }
 }
 
-export function getCurrencySymbol(currency: string): string {
-  return currencies[currency]?.symbol || currency
-}
-
-export function getCurrencyList(): { code: string; name: string; symbol: string }[] {
-  return Object.entries(currencies).map(([code, info]) => ({
-    code,
-    name: info.name,
-    symbol: info.symbol,
-  }))
-}
-
 /** Free v4 API (no key required). Default base: USD. */
 const EXCHANGE_RATE_V4_URL = "https://api.exchangerate-api.com/v4/latest"
 
 /**
- * Fetch live exchange rates from the free API (base USD by default).
- * Falls back to static rates if the API fails.
- */
-export async function fetchExchangeRates(
-  baseCurrency: string = "USD",
-): Promise<Record<string, number>> {
-  const url = `${EXCHANGE_RATE_V4_URL}/${baseCurrency}`
-
-  try {
-    const response = await fetch(url)
-
-    if (!response.ok) {
-      throw new Error(`Exchange rate API responded with ${response.status}`)
-    }
-
-    const data = (await response.json()) as {
-      base?: string
-      rates?: Record<string, number>
-      conversion_rates?: Record<string, number>
-    }
-    const rates = data.rates ?? data.conversion_rates
-    if (rates && typeof rates === "object") {
-      return rates
-    }
-    throw new Error("Invalid response: missing rates")
-  } catch (error) {
-    console.warn("Exchange rates fetch failed, using fallback rates:", error)
-    return exchangeRates
-  }
-}
-
-/**
  * Fetch live rates once on startup and update the module-level store so that
- * convertCurrency() automatically uses current data everywhere in the app.
+ * formatCurrency() automatically uses current data everywhere in the app.
  * Safe to call multiple times, subsequent calls are no-ops if rates are fresh.
  */
 let _ratesInitialized = false
@@ -164,29 +105,17 @@ export async function initExchangeRates(): Promise<void> {
   if (_ratesInitialized) return
   _ratesInitialized = true
   try {
-    const live = await fetchExchangeRates("USD")
+    const response = await fetch(`${EXCHANGE_RATE_V4_URL}/USD`)
+    if (!response.ok) return
+    const data = (await response.json()) as {
+      rates?: Record<string, number>
+      conversion_rates?: Record<string, number>
+    }
+    const live = data.rates ?? data.conversion_rates
     if (live && live.USD === 1) {
       exchangeRates = live
     }
   } catch {
     // keep fallback rates
   }
-}
-
-/**
- * Convert amount using a rates object (e.g. from fetchExchangeRates("USD")).
- * Rates must be relative to the same base (USD).
- */
-export function convertWithRates(
-  amount: number,
-  fromCurrency: string,
-  toCurrency: string,
-  rates: Record<string, number>,
-): number {
-  if (fromCurrency === toCurrency) return amount
-  const fromRate = rates[fromCurrency] ?? 1
-  const toRate = rates[toCurrency] ?? 1
-  if (fromRate === 0) return amount
-  const baseAmount = amount / fromRate
-  return baseAmount * toRate
 }

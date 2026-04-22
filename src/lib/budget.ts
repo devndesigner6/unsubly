@@ -47,13 +47,6 @@ export function setGuardrails(subscriptionId: string, g: SubscriptionGuardrails)
   } catch { /* storage full / unavailable */ }
 }
 
-export function clearGuardrails(subscriptionId: string) {
-  if (typeof window === "undefined") return
-  try {
-    window.localStorage.removeItem(KEY_PREFIX + subscriptionId)
-  } catch { /* noop */ }
-}
-
 export interface RenewalRisk {
   level: "ok" | "warn" | "danger"
   reasons: string[]

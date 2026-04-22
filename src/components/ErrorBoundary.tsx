@@ -79,16 +79,3 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 }
 
-// Functional wrapper for easier use with suspense fallbacks
-export function withErrorBoundary<P extends object>(
-  Component: React.ComponentType<P>,
-  fallback?: ReactNode
-) {
-  return function WrappedComponent(props: P) {
-    return (
-      <ErrorBoundary fallback={fallback}>
-        <Component {...props} />
-      </ErrorBoundary>
-    )
-  }
-}
