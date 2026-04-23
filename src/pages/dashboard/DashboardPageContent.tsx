@@ -644,13 +644,13 @@ export default function DashboardPageContent() {
               subscriptions.slice(0, 5).map((sub) => (
                 <div
                   key={sub.id}
-                  className="flex items-center justify-between p-4 transition-colors hover:bg-muted/50"
+                  className="flex items-center justify-between gap-3 p-4 transition-colors hover:bg-muted/50"
                 >
-                  <div>
-                    <p className="font-medium text-foreground">{sub.name}</p>
-                    <p className="text-xs text-muted-foreground">{sub.category || "Uncategorized"} · {sub.billing_cycle}</p>
+                  <div className="min-w-0 flex-1 sm:flex-initial">
+                    <p className="truncate font-medium text-foreground sm:overflow-visible sm:whitespace-normal sm:text-clip">{sub.name}</p>
+                    <p className="truncate text-xs text-muted-foreground sm:overflow-visible sm:whitespace-normal sm:text-clip">{sub.category || "Uncategorized"} · {sub.billing_cycle}</p>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex shrink-0 items-center gap-3">
                     <div className="text-right">
                       <p className="font-semibold text-foreground">
                         {formatCurrency(sub.amount, sub.currency || currency)}

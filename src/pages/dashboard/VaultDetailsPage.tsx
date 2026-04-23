@@ -296,16 +296,16 @@ export default function VaultDetailsPage() {
   return (
     <div className="mx-auto max-w-4xl p-4 sm:p-6 lg:p-8">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <Link to="/escrow-vaults" className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+      <div className="flex items-start gap-3 mb-6 sm:items-center">
+        <Link to="/escrow-vaults" aria-label="Back to vaults" className="shrink-0 rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
           <RiArrowLeftLine className="size-5" />
         </Link>
-        <div className="flex-1">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-foreground">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+            <h1 className="min-w-0 truncate text-xl font-bold text-foreground sm:text-2xl">
               {vault.subscription?.name || "Escrow Vault"}
             </h1>
-            <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${statusColor[vault.status] || "bg-muted text-muted-foreground"}`}>
+            <span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${statusColor[vault.status] || "bg-muted text-muted-foreground"}`}>
               {vault.status === "locked" && <RiLockLine className="size-3" />}
               {vault.status === "released" && <RiLockUnlockLine className="size-3" />}
               {vault.status === "killed" && <RiAlarmWarningLine className="size-3" />}
@@ -313,10 +313,10 @@ export default function VaultDetailsPage() {
             </span>
           </div>
           {isSmartContract && (
-            <div className="flex items-center gap-1.5 mt-1 text-xs text-primary">
-              <RiCodeLine className="size-3" />
+            <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 mt-1 text-xs text-primary">
+              <RiCodeLine className="size-3 shrink-0" />
               <span className="font-medium">ARC-4 Smart Contract (TEAL v11)</span>
-              <span className="text-muted-foreground">•</span>
+              <span className="hidden text-muted-foreground sm:inline">•</span>
               <a
                 href={getLoraApplicationUrl(vault.app_id, network)}
                 target="_blank"

@@ -270,12 +270,12 @@ export function SubscriptionForm({ subscription, tagIds: initialTagIds = [] }: S
       )}
 
       <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <div className="mb-5 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-900/50">
+        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-900/50">
               <RiFileTextLine className="size-5 text-blue-600 dark:text-blue-400" />
             </div>
-            <div>
+            <div className="min-w-0">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Basic Information</h2>
               <p className="text-sm text-gray-500">Enter subscription details</p>
             </div>
