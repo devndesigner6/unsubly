@@ -317,7 +317,7 @@ export default function PaymentMethodsPage() {
                 </div>
 
                 {/* Last 4 + Expiry */}
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-foreground">Last 4 Digits <span className="text-destructive">*</span></label>
                     <input

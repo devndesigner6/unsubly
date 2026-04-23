@@ -17,8 +17,8 @@ export function Breadcrumbs() {
   const segments = pathname.split("/").filter(Boolean)
 
   return (
-    <nav aria-label="Breadcrumb" className="ml-2">
-      <ol role="list" className="flex items-center space-x-3 text-sm">
+    <nav aria-label="Breadcrumb" className="ml-2 min-w-0 flex-1 overflow-hidden">
+      <ol role="list" className="flex items-center space-x-3 text-sm whitespace-nowrap">
         <li className="flex">
           <Link to="/dashboard" className="text-gray-500 transition hover:text-gray-700 dark:text-gray-400 hover:dark:text-gray-300">
             Home
@@ -29,13 +29,19 @@ export function Breadcrumbs() {
           const isLast = index === segments.length - 1
           const label = routeLabels[segment] || segment.charAt(0).toUpperCase() + segment.slice(1)
 
+          // On small screens hide intermediate segments to prevent header
+          // overflow; the first crumb (Home) plus the current page is enough.
+          const hideOnMobile = !isLast && segments.length > 1
           return (
-            <li key={segment} className="flex items-center">
+            <li
+              key={segment}
+              className={`flex items-center ${hideOnMobile ? "hidden sm:flex" : ""}`}
+            >
               <ChevronRight className="mr-3 size-4 shrink-0 text-gray-600 dark:text-gray-400" aria-hidden="true" />
               <Link
                 to={href}
                 aria-current={isLast ? "page" : undefined}
-                className={isLast ? "text-gray-900 dark:text-gray-50" : "text-gray-500 transition hover:text-gray-700 dark:text-gray-400 hover:dark:text-gray-300"}
+                className={`max-w-[40vw] truncate sm:max-w-none ${isLast ? "text-gray-900 dark:text-gray-50" : "text-gray-500 transition hover:text-gray-700 dark:text-gray-400 hover:dark:text-gray-300"}`}
               >
                 {label}
               </Link>

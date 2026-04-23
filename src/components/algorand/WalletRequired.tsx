@@ -1,6 +1,7 @@
 import { useAlgorand } from "@/lib/algorand/context"
 import { WalletSelectorModal } from "./WalletSelectorModal"
-import { RiWalletLine, RiPlugLine, RiShieldLine, RiArrowRightLine } from "@remixicon/react"
+import { shortenAddress } from "@/lib/algorand/constants"
+import { RiWalletLine, RiPlugLine, RiShieldLine, RiArrowRightLine, RiSmartphoneLine } from "@remixicon/react"
 
 const PHRASES = [
   {
@@ -27,11 +28,12 @@ interface WalletRequiredProps {
 }
 
 export function WalletRequired({ children, feature }: WalletRequiredProps) {
-  const { walletAddress, setShowWalletSelector, isConnecting } = useAlgorand()
+  const { walletAddress, savedWalletAddress, setShowWalletSelector, isConnecting } = useAlgorand()
 
   if (walletAddress) return <>{children}</>
 
   const phrase = PHRASES[Math.floor(Math.random() * PHRASES.length)]
+  const hasSaved = !!savedWalletAddress
 
   return (
     <>
@@ -47,11 +49,20 @@ export function WalletRequired({ children, feature }: WalletRequiredProps) {
         </div>
 
         <h2 className="mb-2 text-2xl font-bold tracking-tight text-foreground">
-          {phrase.headline}
+          {hasSaved ? "Welcome back" : phrase.headline}
         </h2>
         <p className="mb-8 max-w-sm text-sm leading-relaxed text-muted-foreground">
-          {phrase.sub}
+          {hasSaved
+            ? "We remember your wallet. For security, each device has to authorize it once. Tap below to reopen your wallet app and reconnect."
+            : phrase.sub}
         </p>
+
+        {hasSaved && (
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-muted/50 px-3 py-1.5">
+            <RiSmartphoneLine className="size-3.5 text-muted-foreground" />
+            <span className="font-mono text-xs text-foreground">{shortenAddress(savedWalletAddress)}</span>
+          </div>
+        )}
 
         <button
           onClick={() => setShowWalletSelector(true)}
@@ -59,7 +70,7 @@ export function WalletRequired({ children, feature }: WalletRequiredProps) {
           className="group flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:bg-primary/90 hover:shadow-md disabled:opacity-60"
         >
           <RiWalletLine className="size-4" />
-          {isConnecting ? "Connecting…" : "Connect Wallet"}
+          {isConnecting ? "Connecting…" : hasSaved ? "Reconnect Wallet" : "Connect Wallet"}
           <RiArrowRightLine className="size-4 transition-transform group-hover:translate-x-0.5" />
         </button>
 

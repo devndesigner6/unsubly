@@ -17,6 +17,10 @@ export type WalletType = "pera" | "defly" | "lute" | null
 
 interface AlgorandContextType {
   walletAddress: string | null
+  /** Address last connected on ANY device, persisted to the user's profile.
+   * Useful for showing "Reconnect [addr]" on a fresh device (e.g., mobile)
+   * since self-custody wallets cannot share connection state across devices. */
+  savedWalletAddress: string | null
   walletType: WalletType
   isConnecting: boolean
   balance: number
@@ -80,6 +84,7 @@ function AlgorandBridge({
   const [balance, setBalance] = useState(0)
   const [isLoadingBalance, setIsLoadingBalance] = useState(false)
   const [showWalletSelector, setShowWalletSelector] = useState(false)
+  const [savedWalletAddress, setSavedWalletAddress] = useState<string | null>(null)
 
   // Keep both a ref (for sync access inside callbacks) and state (for reactive context consumers)
   const algodClientRef = useRef(createAlgodClient(network))
@@ -116,6 +121,7 @@ function AlgorandBridge({
         .from("profiles")
         .update({ algorand_address: address } as any)
         .eq("id", user.id)
+      setSavedWalletAddress(address)
     },
     [user]
   )
@@ -131,6 +137,7 @@ function AlgorandBridge({
         .maybeSingle()
       if (data && (data as any).algorand_address) {
         const addr = (data as any).algorand_address as string
+        setSavedWalletAddress(addr)
         fetchBalance(addr)
       }
     }
@@ -267,6 +274,7 @@ function AlgorandBridge({
     <AlgorandContext.Provider
       value={{
         walletAddress: activeAddress,
+        savedWalletAddress,
         walletType,
         isConnecting,
         networkSwitching,
