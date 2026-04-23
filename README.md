@@ -94,6 +94,23 @@ Autonomous agent wallet: [`FPUU5F3QQSE77CXE2VD3WQQSVOYWWDXVV265W7XQTBNNZN6VMNRMP
 
 Per-user vaults (Standard, AgentV2, Time-Lock, Multi-Sig, Dispute, ASA) are deployed on demand from the dashboard. MainNet singletons are not yet deployed; the app shows clear guards on mainnet for ServiceRegistry-dependent UIs.
 
+### Architecture
+
+```mermaid
+flowchart LR
+    User([User + Pera Wallet]) --> App[React + Vite app]
+    App --> Supabase[(Supabase Postgres + RLS)]
+    App -->|sign txns| Vaults[Per-user escrow vaults]
+    App -->|read| Registry[ServiceRegistry app]
+    App -->|HTTP 402| X402[/api/ai-optimizer x402 middleware/]
+    X402 -->|verify payment| Algorand[(Algorand TestNet)]
+    Vaults --> Algorand
+    Registry --> Algorand
+    Cron[GitHub Actions daily cron] -->|AGENT_RUN_SECRET| AgentRun[/api/agent-run/]
+    AgentRun -->|release/kill| Vaults
+    AgentRun -->|mint ARC-3 receipt| Algorand
+```
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ### Built With
