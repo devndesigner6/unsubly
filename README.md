@@ -154,6 +154,12 @@ To get a local copy up and running, follow these steps.
 
    # Agent runner: "testnet", "mainnet", "testnet,mainnet", or "all".
    ALGO_NETWORK=testnet
+
+   # Shared secret required to call /api/agent-run from the GitHub Actions cron.
+   AGENT_RUN_SECRET=
+
+   # Optional: Sentry error monitoring (no-op when unset).
+   SENTRY_DSN=
    ```
 4. Start the dev server
    ```sh
@@ -161,20 +167,24 @@ To get a local copy up and running, follow these steps.
    ```
 5. (Optional) recompile smart contracts. Includes the new v2 + registry contracts:
    ```sh
-   algokit compile py smart_contracts/escrow
-   algokit compile py smart_contracts/agent_escrow
-   algokit compile py smart_contracts/agent_escrow_v2
-   algokit compile py smart_contracts/service_registry
-   algokit compile py smart_contracts/time_locked
-   algokit compile py smart_contracts/multi_sig
-   algokit compile py smart_contracts/dispute
-   algokit compile py smart_contracts/asa_escrow
+   algokit compile py smart_contracts/escrow/contract.py
+   algokit compile py smart_contracts/agent_escrow/contract.py
+   algokit compile py smart_contracts/agent_escrow_v2/contract.py
+   algokit compile py smart_contracts/service_registry/contract.py
+   algokit compile py smart_contracts/time_locked/contract.py
+   algokit compile py smart_contracts/multi_sig/contract.py
+   algokit compile py smart_contracts/dispute/contract.py
+   algokit compile py smart_contracts/asa_escrow/contract.py
    ```
 6. Deploy contracts (requires a funded testnet account):
    ```sh
    TESTNET_MNEMONIC="..." node scripts/deploy.js
    ```
-7. Production build + serve:
+7. Run the test suite:
+   ```sh
+   npm test
+   ```
+8. Production build + serve:
    ```sh
    npm run build
    npm run start
@@ -220,6 +230,10 @@ For a full walkthrough with transaction screenshots, see the [live demo](https:/
 - [x] Multi-network agent runner (`ALGO_NETWORK=testnet,mainnet` or `all`)
 - [x] Public agent registry endpoint with per-IP rate limit and pagination
 - [x] Persistent Postgres rate limiter for the AI optimizer
+- [x] On-chain auto-cancel that calls `kill()` and refunds remaining funds
+- [x] Guardrails: budget cap, trial end date, pause-before-paid-renewal toggle
+- [x] Sentry-ready server error monitoring (env-gated)
+- [x] Vitest test suite (9 tests across constants and x402 modules)
 - [ ] Mainnet deployment of ServiceRegistry and AgentEscrowVaultV2 singletons
 - [ ] Mobile app using Expo
 - [ ] Multi-wallet support for Defly and Lute (currently included via `@txnlab/use-wallet`)
