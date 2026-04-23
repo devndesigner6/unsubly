@@ -35,8 +35,21 @@ interface Challenge402 {
 
 interface ServerResponse {
   ok?: boolean
-  quote?: string
   served_at?: string
+  network?: string
+  algorand?: {
+    round?: number | null
+    genesis_id?: string | null
+    algod_url?: string | null
+  }
+  agent?: {
+    pay_to_address?: string
+    x402_price_microalgos?: number
+  }
+  service_registry?: {
+    app_id?: number | null
+    registered_services?: number | null
+  }
   note?: string
   error?: string
   txid?: string
@@ -190,7 +203,8 @@ export default function X402DemoPage() {
         <p className="text-sm text-gray-600 dark:text-gray-400">
           A live walkthrough of the HTTP 402 → on-chain payment → retry handshake.
           The endpoint <code className="rounded bg-gray-100 px-1 py-0.5 text-xs dark:bg-gray-900">/api/x402-demo</code>{" "}
-          serves a "premium quote" and is gated by an Algorand payment of{" "}
+          returns a fresh on-chain Algorand network snapshot (current round, agent
+          address, registry size) and is gated by a payment of{" "}
           {requirement ? `${priceAlgo} ALGO` : "a small fee"}.
         </p>
       </header>
@@ -297,13 +311,48 @@ export default function X402DemoPage() {
             <RiCheckboxCircleLine className="size-4" />
             200 OK, content unlocked
           </h2>
-          {result.quote && (
-            <blockquote className="border-l-2 border-gray-300 pl-3 text-sm italic text-gray-800 dark:border-gray-700 dark:text-gray-200">
-              {result.quote}
-            </blockquote>
-          )}
+          <dl className="grid grid-cols-1 gap-2 text-xs sm:grid-cols-2">
+            {result.algorand?.round != null && (
+              <div>
+                <dt className="uppercase tracking-wide text-gray-500">Algorand round</dt>
+                <dd className="mt-0.5 font-mono text-sm text-gray-900 dark:text-gray-100">
+                  {result.algorand.round.toLocaleString()}
+                </dd>
+              </div>
+            )}
+            {result.algorand?.genesis_id && (
+              <div>
+                <dt className="uppercase tracking-wide text-gray-500">Genesis</dt>
+                <dd className="mt-0.5 font-mono text-sm text-gray-900 dark:text-gray-100">
+                  {result.algorand.genesis_id}
+                </dd>
+              </div>
+            )}
+            {result.service_registry?.registered_services != null && (
+              <div>
+                <dt className="uppercase tracking-wide text-gray-500">Registry services</dt>
+                <dd className="mt-0.5 font-mono text-sm text-gray-900 dark:text-gray-100">
+                  {result.service_registry.registered_services}
+                </dd>
+              </div>
+            )}
+            {result.agent?.pay_to_address && (
+              <div className="sm:col-span-2">
+                <dt className="uppercase tracking-wide text-gray-500">Agent address</dt>
+                <dd
+                  className="mt-0.5 truncate font-mono text-sm text-gray-900 dark:text-gray-100"
+                  title={result.agent.pay_to_address}
+                >
+                  {result.agent.pay_to_address}
+                </dd>
+              </div>
+            )}
+          </dl>
           {result.served_at && (
             <p className="text-xs text-gray-500">Served at {result.served_at}</p>
+          )}
+          {result.note && (
+            <p className="text-xs text-gray-500">{result.note}</p>
           )}
           {txid && (
             <div className="flex items-center justify-between gap-2 rounded border border-gray-200 bg-gray-50 px-3 py-2 text-xs dark:border-gray-800 dark:bg-gray-900">

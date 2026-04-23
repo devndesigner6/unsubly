@@ -118,15 +118,10 @@ Deno.serve(async (req: Request) => {
         .filter((s: any) => s.daysUntil <= 30 && s.daysUntil >= 0)
         .slice(0, 5)
 
-      // If no subs due in 30 days, use a placeholder for demo purposes
-      const displaySubs = testSubs.length > 0 ? testSubs : [{
-        name: 'Example Subscription',
-        amount: 9.99,
-        currency,
-        daysUntil: 3,
-        billingDate: new Date(Date.now() + 3 * 86400000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        billingCycle: 'monthly',
-      }]
+      // No fake placeholder data, if the user has nothing due in the next 30 days
+      // we tell them so honestly, then send an empty-state email so they can still
+      // confirm delivery is working.
+      const displaySubs = testSubs
 
       const html = await renderAsync(
         React.createElement(SubscriptionAlertEmail, {

@@ -7,7 +7,7 @@ const partners = [
 
 const stats = [
   { value: "3.3s", label: "Transaction finality" },
-  { value: "99%", label: "Uptime guarantee" },
+  { value: "<$0.01", label: "Per transaction fee" },
 ]
 
 export function Stats() {

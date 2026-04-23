@@ -114,9 +114,11 @@ export async function aiOptimizerHandler(req, res) {
 
 // ── /api/x402-demo — public x402 walkthrough endpoint ──────────────────────
 // A dedicated, *unauthenticated* paywalled endpoint used by the dashboard
-// "x402 Demo" page. Returns a fake "premium quote" to keep the demo cheap
-// and deterministic. The whole point is to let the user experience the
-// 402 → pay → 200+receipt round-trip on their own wallet.
+// "x402 Demo" page. After the caller pays, it returns a *real* on-chain
+// network status snapshot: the live Algorand round at the moment the
+// request was served, the live ServiceRegistry box count, the agent
+// wallet address, and the txid the caller just paid with. This is the
+// real "premium content" being sold and it changes on every block.
 let _x402DemoWrapped = null
 function _getX402DemoHandler() {
   if (_x402DemoWrapped) return _x402DemoWrapped
@@ -129,28 +131,55 @@ function _getX402DemoHandler() {
   }
   const price = Number(process.env.X402_PRICE_MICROALGOS || "1000")
   const network = process.env.X402_NETWORK || "algorand-testnet"
+  const isMainnet = network.includes("mainnet")
+  const algodUrl = isMainnet
+    ? (process.env.ALGOD_MAINNET_URL || "https://mainnet-api.algonode.cloud")
+    : (process.env.ALGOD_TESTNET_URL || "https://testnet-api.algonode.cloud")
   _x402DemoWrapped = withX402(
     {
       payTo, priceMicroalgos: price, network,
-      description: "Unsubscribely x402 demo — premium quote",
+      description: "Unsubscribely x402 — live Algorand network snapshot",
       // Demo endpoint has no inner JWT check, so we cannot let any caller
       // fake an Authorization header to skip payment.
       allowAuthBypass: false,
     },
     async (_req, res) => {
-      const quotes = [
-        "Money is better than poverty, if only for financial reasons. — Woody Allen",
-        "It is better to look ahead and prepare than to look back and regret. — Jackie Joyner-Kersee",
-        "An investment in knowledge pays the best interest. — Benjamin Franklin",
-        "The best time to plant a tree was 20 years ago. The second best time is now. — Chinese proverb",
-        "On-chain receipts cannot be lost. Paper ones can. — anon",
-      ]
-      const pick = quotes[Math.floor(Math.random() * quotes.length)]
+      const algod = new algosdk.Algodv2(process.env.ALGOD_TOKEN || "", algodUrl, "")
+      // Read live network state. These calls are cheap (sub-100ms against algonode)
+      // and the values change every block, so each paid request returns fresh data.
+      let round = null
+      let genesisId = null
+      let registryServices = null
+      const registryAppId = process.env.SERVICE_REGISTRY_APP_ID
+      try {
+        const status = await algod.status().do()
+        round = Number(status["last-round"] ?? status.lastRound ?? 0) || null
+        genesisId = status["genesis-id"] || status.genesisId || null
+      } catch (e) { console.warn("[x402-demo] status fetch failed:", e?.message || e) }
+      if (registryAppId) {
+        try {
+          const boxes = await algod.getApplicationBoxes(Number(registryAppId)).do()
+          registryServices = (boxes.boxes || []).length
+        } catch (e) { console.warn("[x402-demo] registry box list failed:", e?.message || e) }
+      }
       jsonRes(res, 200, {
         ok: true,
-        quote: pick,
         served_at: new Date().toISOString(),
-        note: "You just paid for this with x402 over Algorand. The X-PAYMENT-RESPONSE header contains the on-chain txid.",
+        network,
+        algorand: {
+          round,
+          genesis_id: genesisId,
+          algod_url: algodUrl,
+        },
+        agent: {
+          pay_to_address: payTo,
+          x402_price_microalgos: price,
+        },
+        service_registry: {
+          app_id: registryAppId ? Number(registryAppId) : null,
+          registered_services: registryServices,
+        },
+        note: "Premium content delivered. Payment txid is in the X-PAYMENT-RESPONSE header. All values above are live from the Algorand network at the moment your payment confirmed.",
       })
     },
   )

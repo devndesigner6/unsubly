@@ -41,7 +41,7 @@ export default function SettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [passwordError, setPasswordError] = useState("")
   const [passwordSuccess, setPasswordSuccess] = useState(false)
-  // sendingTestAlert removed, email reminders are coming soon
+  const [sendingTestAlert, setSendingTestAlert] = useState(false)
 
   // Delete account
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -314,20 +314,57 @@ export default function SettingsPage() {
               </button>
             </label>
             <div className="border-t border-border pt-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="text-sm font-medium text-foreground mb-0.5">Email Reminder Delivery</p>
                   <p className="text-xs text-muted-foreground">
                     Automated renewal alerts sent to <span className="font-mono">{user?.email}</span>
                   </p>
                 </div>
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-400">
-                  <RiLoader4Line className="size-3" />
-                  Coming Soon
-                </span>
+                <button
+                  type="button"
+                  disabled={sendingTestAlert}
+                  onClick={async () => {
+                    setSendingTestAlert(true)
+                    try {
+                      const { data, error: invokeErr } = await supabase.functions.invoke(
+                        "send-subscription-alerts",
+                        { body: { type: "test" } },
+                      )
+                      if (invokeErr) throw invokeErr
+                      if (data?.error) throw new Error(data.error)
+                      // The edge function returns { sent: true } on Resend success,
+                      // or { sent: false, reason } when a guard short-circuits. Treat
+                      // anything other than an explicit success as an error so users
+                      // never see a false-positive toast.
+                      if (data?.sent !== true) {
+                        throw new Error(data?.reason || "Email service did not confirm delivery")
+                      }
+                      const shown = data?.subscriptionsShown ?? 0
+                      toast.success(
+                        shown > 0
+                          ? `Test email sent. ${shown} upcoming subscription${shown === 1 ? "" : "s"} included.`
+                          : "Test email sent. You have no subscriptions due in the next 30 days.",
+                      )
+                    } catch (err: any) {
+                      toast.error(err?.message || "Failed to send test email")
+                    } finally {
+                      setSendingTestAlert(false)
+                    }
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-60"
+                  title="Send a real test email to your inbox right now using the live alert system"
+                >
+                  {sendingTestAlert ? (
+                    <RiLoader4Line className="size-3 animate-spin" />
+                  ) : (
+                    <RiMailSendLine className="size-3" />
+                  )}
+                  {sendingTestAlert ? "Sending..." : "Send Test Email"}
+                </button>
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
-                Email delivery is being set up. Your preferences below are saved and will activate automatically when it launches.
+                The Send Test Email button delivers an actual email using your current alert settings, so you can confirm Resend delivery works for your inbox.
               </p>
             </div>
           </div>
