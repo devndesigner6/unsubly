@@ -327,7 +327,7 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
       <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-border bg-card p-6 shadow-xl">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-semibold text-foreground">Create Escrow Vault</h2>
-          <button onClick={onClose} disabled={isCreating} className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted transition-colors disabled:opacity-50">
+          <button onClick={onClose} disabled={isCreating} aria-label="Close" title="Close" className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted transition-colors disabled:opacity-50">
             <RiCloseLine className="size-5" />
           </button>
         </div>

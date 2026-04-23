@@ -489,8 +489,11 @@ export async function mintNFTReceipt(
 
   // ARC-3 marker URL, must be ≤96 bytes (algosdk hard limit). The metadata
   // hash above cryptographically anchors the JSON; the URL just needs the
-  // `#arc3` fragment + a stable identifier.
-  const assetUrl = `https://unsubscribely.app/r/${vaultAppId}#arc3`
+  // `#arc3` fragment + a stable identifier. Domain is env-driven so we never
+  // bake an unowned URL into immutable on-chain receipts.
+  const receiptDomain =
+    (import.meta.env.VITE_RECEIPT_DOMAIN as string | undefined) || "unsubly2.vercel.app"
+  const assetUrl = `https://${receiptDomain}/r/${vaultAppId}#arc3`
 
   const txn = algosdk.makeAssetCreateTxnWithSuggestedParamsFromObject({
     sender: senderAddress,

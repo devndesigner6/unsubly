@@ -101,6 +101,7 @@ export function WalletConnect() {
             </span>
             <button
               onClick={refreshBalance}
+              aria-label="Refresh wallet balance"
               className="text-muted-foreground hover:text-primary transition-colors"
               title="Refresh balance"
             >

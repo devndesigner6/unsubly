@@ -3,6 +3,9 @@ import fs from "fs"
 import path from "path"
 import { fileURLToPath, pathToFileURL } from "url"
 
+// No-op when SENTRY_DSN is unset, so dev environments stay quiet.
+import "./server/sentry.mjs"
+
 import {
   aiOptimizerHandler,
   agentRunHandler,
@@ -40,6 +43,21 @@ const MIME = {
 }
 
 // ── Security headers ────────────────────────────────────────────────────────
+// CSP is intentionally permissive for the wallet/Algorand SDKs which load
+// scripts from algonode.cloud and need inline styles for shadcn. Tighten
+// further once a custom domain is in place.
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' data: https://fonts.gstatic.com",
+  "img-src 'self' data: blob: https:",
+  "connect-src 'self' https://*.algonode.cloud https://*.supabase.co https://*.algorand.foundation https://api.groq.com wss://*.supabase.co",
+  "frame-ancestors 'self'",
+  "base-uri 'self'",
+  "object-src 'none'",
+].join("; ")
+
 const SECURITY_HEADERS = {
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "SAMEORIGIN",
@@ -47,6 +65,7 @@ const SECURITY_HEADERS = {
   "Referrer-Policy": "strict-origin-when-cross-origin",
   "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
   "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+  "Content-Security-Policy": CSP,
 }
 
 // ── Per-IP rate limiter ─────────────────────────────────────────────────────

@@ -54,7 +54,7 @@ export function VaultHealthBanner() {
             <RiAlertLine className="size-5 text-amber-600 dark:text-amber-400" />
             <span className="text-sm font-medium text-amber-800 dark:text-amber-300">{error}</span>
           </div>
-          <button onClick={runCheck} disabled={loading} className="text-amber-500 hover:text-amber-700">
+          <button onClick={runCheck} disabled={loading} aria-label="Re-run vault health check" title="Re-run check" className="text-amber-500 hover:text-amber-700">
             <RiRefreshLine className={`size-4 ${loading ? "animate-spin" : ""}`} />
           </button>
         </div>
@@ -74,7 +74,7 @@ export function VaultHealthBanner() {
             {issues.length > 0 ? `${issues.length} issue(s) found` : `All ${checked} vaults healthy`}
           </span>
         </div>
-        <button onClick={runCheck} disabled={loading} className="text-muted-foreground hover:text-foreground">
+        <button onClick={runCheck} disabled={loading} aria-label="Re-run vault health check" title="Re-run check" className="text-muted-foreground hover:text-foreground">
           <RiRefreshLine className={`size-4 ${loading ? "animate-spin" : ""}`} />
         </button>
       </div>

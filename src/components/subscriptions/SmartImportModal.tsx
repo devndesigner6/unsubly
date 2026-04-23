@@ -100,6 +100,7 @@ export function SmartImportModal({ open, onClose, onImported }: Props) {
           </h2>
           <button
             onClick={onClose}
+            aria-label="Close"
             title="Close"
             className="text-gray-500 hover:text-gray-900 dark:hover:text-gray-100"
           >
