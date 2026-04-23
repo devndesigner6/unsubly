@@ -673,14 +673,33 @@ export async function agentRegistryHandler(req, res) {
         const boxName = b.name
         const boxResp = await algod.getApplicationBoxByName(Number(REGISTRY_APP_ID), boxName).do()
         const value = boxResp.value
-        // value layout: [provider:32 bytes][price_microalgos:8 bytes][cycle_days:8 bytes][name:variable]
-        if (!value || value.length < 48) continue
+        // ARC-4 struct layout (head/tail) written by puyapy:
+        //   provider           : 32 bytes (address)
+        //   price_microalgos   : 8  bytes (uint64 big-endian)
+        //   cycle_days         : 8  bytes (uint64 big-endian)
+        //   name_offset        : 2  bytes uint16-BE  -> tail position of name
+        //   ... at tail position:
+        //     name_length      : 2  bytes uint16-BE
+        //     name             : N  bytes UTF-8
+        if (!value || value.length < 52) continue
         const provider = algosdk.encodeAddress(value.slice(0, 32))
         const price = Number(algosdk.decodeUint64(value.slice(32, 40), "safe"))
         const cycle = Number(algosdk.decodeUint64(value.slice(40, 48), "safe"))
-        const name = new TextDecoder().decode(value.slice(48))
+        const nameOffset = (value[48] << 8) | value[49]
+        const nameLen = (value[nameOffset] << 8) | value[nameOffset + 1]
+        const nameStart = nameOffset + 2
+        const name = new TextDecoder().decode(value.slice(nameStart, nameStart + nameLen))
+        // Box name layout: "svc:" prefix (4 bytes) + ARC-4 string (uint16-BE length + bytes).
+        let serviceId = ""
+        if (boxName.length >= 6 && boxName[0] === 0x73 && boxName[1] === 0x76 && boxName[2] === 0x63 && boxName[3] === 0x3a) {
+          const idLen = (boxName[4] << 8) | boxName[5]
+          serviceId = new TextDecoder().decode(boxName.slice(6, 6 + idLen))
+        } else {
+          // Fallback for boxes that pre-date the prefix scheme.
+          serviceId = new TextDecoder().decode(boxName)
+        }
         services.push({
-          service_id: new TextDecoder().decode(boxName),
+          service_id: serviceId,
           provider, price_microalgos: price, cycle_days: cycle, name,
         })
       } catch { /* skip malformed boxes */ }

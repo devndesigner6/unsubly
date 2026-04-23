@@ -479,18 +479,18 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
           {vaultType === "agent" && (
             <div>
               <label className="block text-sm font-medium text-foreground mb-1.5">
-                Agent Wallet Address
+                Auto-Pay Agent Wallet
               </label>
               <input
                 type="text"
                 value={agentAddress}
                 onChange={(e) => setAgentAddress(e.target.value.trim())}
-                placeholder="Agent's Algorand address (auto-fills from env if set)"
+                placeholder="Agent's Algorand address (pre-filled with the Unsubscribely agent)"
                 disabled={isCreating}
                 className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground font-mono text-xs"
               />
               <p className="mt-1 text-xs text-muted-foreground">
-                The autonomous agent will sign release txns on the billing date. Use the deployer/agent wallet your backend controls.
+                This is the wallet of the autonomous agent that pays your subscription on its billing date so you do not have to. By default it is the Unsubscribely agent. You can replace it with any wallet you control if you want to run your own agent.
               </p>
             </div>
           )}
@@ -518,12 +518,12 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
             <div className="rounded-lg bg-green-500/5 border border-green-500/20 p-3 flex items-start gap-2">
               <RiRobotLine className="size-4 mt-0.5 shrink-0 text-green-600 dark:text-green-400" />
               <div>
-                <p className="text-xs font-medium text-green-700 dark:text-green-400">Agent Auto-Release Enabled</p>
+                <p className="text-xs font-medium text-green-700 dark:text-green-400">Agent Auto-Pay Enabled</p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">
-                  The autonomous agent will release this vault on the subscription billing date, no manual action needed.
+                  The agent below will automatically pay this subscription for you on its billing date. You stay in control: kill the vault any time and your funds come back instantly.
                 </p>
                 <p className="text-[10px] font-mono text-muted-foreground mt-1 truncate">
-                  Agent: {agentAddress.slice(0, 8)}…{agentAddress.slice(-8)}
+                  Paying agent: {agentAddress.slice(0, 8)}…{agentAddress.slice(-8)}
                 </p>
               </div>
             </div>
