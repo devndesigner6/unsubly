@@ -11,6 +11,7 @@ import { VAULT_TYPE_LABELS, getNetworkConfig, type VaultType } from "@/lib/algor
 import { RiAddLine, RiShieldLine, RiLockLine, RiAlarmWarningLine, RiFilterLine } from "@remixicon/react"
 import algosdk from "algosdk"
 import { toast } from "sonner"
+import { AsciiEmpty } from "@/components/micro/AsciiEmpty"
 
 function decodeGlobalState(raw: any[]): Record<string, string | number> {
   const result: Record<string, string | number> = {}
@@ -256,17 +257,13 @@ export default function EscrowVaultsPage() {
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
         </div>
       ) : filteredVaults.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border bg-muted/30 p-12 text-center">
-          <RiShieldLine className="mx-auto size-12 text-muted-foreground/50" />
-          <h3 className="mt-4 text-sm font-medium text-foreground">
-            {vaults.length > 0 ? "No vaults match this filter" : "No vaults yet"}
-          </h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {walletAddress
-              ? "Create your first escrow vault to lock a subscription payment"
-              : "Connect your wallet (Pera, Defly, or Lute) to create escrow vaults"}
-          </p>
-        </div>
+        <AsciiEmpty
+          variant="vault"
+          title={vaults.length > 0 ? "No vaults match this filter" : "No vaults yet"}
+          subtitle={walletAddress
+            ? "Create your first escrow vault to lock a subscription payment."
+            : "Connect your wallet (Pera, Defly, or Lute) to create escrow vaults."}
+        />
       ) : (
         <div className="grid items-start gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {filteredVaults.map((vault) => (

@@ -303,7 +303,7 @@ const SidebarLink = React.forwardRef<
       aria-current={isActive ? "page" : undefined}
       data-active={isActive}
       className={cx(
-        "flex items-center justify-between rounded-md p-2 text-base transition hover:bg-gray-200/50 sm:text-sm hover:dark:bg-gray-900",
+        "ink-underline flex items-center justify-between rounded-md p-2 text-base transition hover:bg-gray-200/50 sm:text-sm hover:dark:bg-gray-900",
         "text-gray-900 dark:text-gray-400 hover:dark:text-gray-50",
         "data-[active=true]:text-blue-600 data-[active=true]:dark:text-blue-500",
         focusRing,

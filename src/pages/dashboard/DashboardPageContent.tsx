@@ -20,6 +20,7 @@ import { WalletSelectorModal } from "@/components/algorand/WalletSelectorModal"
 import { useState, useEffect, useMemo } from "react"
 import agentLogoUrl from "@assets/32716952a37bb6ea6d8b0143ec5735c2_1776859681399.png"
 import { WALLET_LOGOS, WALLET_LABELS } from "@/lib/algorand/walletLogos"
+import { RollingNumber } from "@/components/micro/RollingNumber"
 
 export default function DashboardPageContent() {
   const { user } = useAuth()
@@ -405,7 +406,7 @@ export default function DashboardPageContent() {
                     <div className="text-right">
                       <div className="flex items-baseline justify-end gap-1.5 text-white drop-shadow-sm">
                         <span className="text-3xl sm:text-4xl font-light tracking-tight tabular-nums">
-                          {isLoadingBalance ? "…" : balance.toFixed(3)}
+                          {isLoadingBalance ? "…" : <RollingNumber value={balance} decimals={3} />}
                         </span>
                         <span className="text-sm font-medium opacity-90">ALGO</span>
                       </div>

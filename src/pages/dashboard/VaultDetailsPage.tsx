@@ -8,6 +8,7 @@ import { releaseEscrowFunds, releaseEscrowFundsWithProof, releaseAgentVaultV2, k
 import { VaultMemoryTab } from "@/components/vaults/VaultMemoryTab"
 import { ProofOfDeliveryModal } from "@/components/vaults/ProofOfDeliveryModal"
 import { Button } from "@/components/Button"
+import { NftReceiptCard } from "@/components/micro/NftReceiptCard"
 import {
   RiArrowLeftLine, RiLoader4Line, RiShieldLine, RiExternalLinkLine,
   RiCodeLine, RiLockLine, RiLockUnlockLine, RiAlarmWarningLine,
@@ -306,7 +307,7 @@ export default function VaultDetailsPage() {
               {vault.subscription?.name || "Escrow Vault"}
             </h1>
             <span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${statusColor[vault.status] || "bg-muted text-muted-foreground"}`}>
-              {vault.status === "locked" && <RiLockLine className="size-3" />}
+              {vault.status === "locked" && <RiLockLine key={`lock-${vault.status}`} className="size-3 lock-clack" />}
               {vault.status === "released" && <RiLockUnlockLine className="size-3" />}
               {vault.status === "killed" && <RiAlarmWarningLine className="size-3" />}
               {vault.status.charAt(0).toUpperCase() + vault.status.slice(1)}
@@ -608,7 +609,28 @@ export default function VaultDetailsPage() {
       )}
 
       {activeTab === "history" && (
-        <div className="rounded-xl border border-border bg-card">
+        <>
+          {(() => {
+            const releaseTx = payments.find(
+              (p: any) => typeof p?.note === "string" && p.note.toLowerCase().includes("release") && p.algorand_txn_id,
+            )
+            if (!releaseTx) return null
+            const asaMatch = typeof releaseTx.note === "string" ? releaseTx.note.match(/ASA\s+(\d+)/i) : null
+            return (
+              <div className="mb-4 flex justify-center">
+                <NftReceiptCard
+                  amount={Number(releaseTx.amount || vault.amount || 0)}
+                  currency="ALGO"
+                  vendorName={vault.subscription?.name || "Subscription"}
+                  txnId={releaseTx.algorand_txn_id}
+                  explorerUrl={getLoraTransactionUrl(releaseTx.algorand_txn_id, network)}
+                  asaId={asaMatch ? Number(asaMatch[1]) : null}
+                  capturedAt={releaseTx.created_at}
+                />
+              </div>
+            )
+          })()}
+          <div className="rounded-xl border border-border bg-card">
           <div className="border-b border-border p-4">
             <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
               <RiTimeLine className="size-4 text-primary" /> On-Chain Transactions
@@ -668,7 +690,8 @@ export default function VaultDetailsPage() {
               ))}
             </div>
           )}
-        </div>
+          </div>
+        </>
       )}
 
       {actionMsg && (

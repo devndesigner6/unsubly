@@ -11,9 +11,11 @@ import {
   RiLoader4Line, RiSaveLine, RiLogoutBoxLine, RiAlertLine,
   RiUserLine, RiMoneyDollarCircleLine, RiNotification3Line,
   RiShieldLine, RiCheckLine, RiLockPasswordLine,
-  RiArrowLeftRightLine, RiWalletLine,
+  RiArrowLeftRightLine, RiWalletLine, RiPulseLine,
   RiDeleteBinLine, RiErrorWarningLine,
 } from "@remixicon/react"
+import { NetworkFlip } from "@/components/micro/NetworkFlip"
+import { HeartbeatStrip } from "@/components/micro/HeartbeatStrip"
 
 const CURRENCIES = ["USD", "EUR", "GBP", "INR", "AUD", "CAD", "JPY", "SGD", "AED"]
 
@@ -34,6 +36,20 @@ export default function SettingsPage() {
   const [emailAlerts, setEmailAlerts] = useState(true)
   const [weeklyDigest, setWeeklyDigest] = useState(false)
   const [algorandAddress, setAlgorandAddress] = useState("")
+  const [agentHeartbeat, setAgentHeartbeat] = useState<{ at: number; status: "ok" | "fail" | "scheduled" }[]>(
+    () => {
+      // Initialise with the last 24 hour-aligned slots, all marked scheduled.
+      // Real status is filled in once we query agent_actions.
+      const out: { at: number; status: "ok" | "fail" | "scheduled" }[] = []
+      const now = new Date()
+      now.setMinutes(0, 0, 0)
+      for (let i = 23; i >= 0; i--) {
+        const d = new Date(now.getTime() - i * 3600_000)
+        out.push({ at: d.getTime(), status: i === 0 ? "scheduled" : "scheduled" })
+      }
+      return out
+    }
+  )
   const [addressError, setAddressError] = useState("")
 
   // Password change
@@ -80,6 +96,42 @@ export default function SettingsPage() {
       setAddressError("")
     }
   }, [walletAddress])
+
+  // Fetch the last 24h of agent runs from supabase and bucket them into hour
+  // slots for the heartbeat strip.
+  useEffect(() => {
+    if (!user) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const since = new Date(Date.now() - 24 * 3600_000).toISOString()
+        const { data, error } = await supabase
+          .from("agent_actions" as any)
+          .select("created_at, status")
+          .eq("user_id", user.id)
+          .gte("created_at", since)
+          .order("created_at", { ascending: true })
+        if (cancelled || error) return
+        const buckets = new Map<number, "ok" | "fail">()
+        ;(data as any[] | null)?.forEach((row) => {
+          const t = new Date(row.created_at)
+          t.setMinutes(0, 0, 0)
+          const key = t.getTime()
+          const ok = row.status === "ok" || row.status === "success" || row.status === "completed"
+          buckets.set(key, ok ? "ok" : "fail")
+        })
+        setAgentHeartbeat((prev) =>
+          prev.map((tick) => {
+            const hit = buckets.get(tick.at)
+            return hit ? { ...tick, status: hit } : tick
+          }),
+        )
+      } catch {
+        /* table may not exist yet on some envs - keep all scheduled */
+      }
+    })()
+    return () => { cancelled = true }
+  }, [user])
 
   const validateAlgorandAddress = (addr: string): boolean => {
     if (!addr) return true // empty is valid
@@ -342,18 +394,18 @@ export default function SettingsPage() {
               <RiShieldLine className="size-5 text-foreground" />
               <h2 className="text-lg font-semibold text-foreground">Algorand Wallet</h2>
             </div>
-            <button
-              onClick={() => switchNetwork(network === "testnet" ? "mainnet" : "testnet")}
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                network === "mainnet"
-                  ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                  : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-              }`}
-            >
-              <RiArrowLeftRightLine className="size-3" />
-              {network === "mainnet" ? "Mainnet" : "Testnet"}
-            </button>
+            <NetworkFlip network={network as "testnet" | "mainnet"} onChange={(n) => switchNetwork(n)} />
           </div>
+
+          {/* Agent heartbeat strip - last 24 hourly runs */}
+          <div className="mb-4 rounded-lg border border-border bg-muted/40 p-3">
+            <div className="mb-2 flex items-center gap-2 text-xs font-medium text-foreground">
+              <RiPulseLine className="size-3.5" />
+              Autonomous Agent
+            </div>
+            <HeartbeatStrip ticks={agentHeartbeat} />
+          </div>
+
           <div className="space-y-3">
             <div>
               <label className="mb-1 block text-sm font-medium text-foreground">Wallet Address</label>

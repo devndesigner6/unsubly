@@ -7,6 +7,7 @@ import {
   RiLoader4Line, RiCloseLine, RiCheckLine,
 } from "@remixicon/react"
 import { toast } from "sonner"
+import { AsciiEmpty } from "@/components/micro/AsciiEmpty"
 
 interface Folder {
   id: string
@@ -31,6 +32,7 @@ export default function FoldersPage() {
   const [name, setName] = useState("")
   const [color, setColor] = useState(COLORS[0])
   const [saving, setSaving] = useState(false)
+  const [hoverFolderId, setHoverFolderId] = useState<string | null>(null)
 
   async function load() {
     if (!user) return
@@ -144,15 +146,24 @@ export default function FoldersPage() {
         </div>
       )}
 
-      <div className="mt-6 space-y-2">
+      <div
+        className="folder-list mt-6 space-y-2"
+        data-has-active={hoverFolderId != null || undefined}
+        onMouseLeave={() => setHoverFolderId(null)}
+      >
         {folders.length === 0 ? (
-          <div className="rounded-xl border border-border bg-card p-8 text-center">
-            <RiFolderLine className="mx-auto size-10 text-muted-foreground" />
-            <p className="mt-3 text-sm text-muted-foreground">No folders yet. Create one to organize your subscriptions.</p>
-          </div>
+          <AsciiEmpty
+            variant="cabinet"
+            title="No folders yet"
+            subtitle="Create your first folder to organize subscriptions by purpose, project, or owner."
+          />
         ) : (
           folders.map((f) => (
-            <div key={f.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-4 transition-colors hover:bg-muted/50">
+            <div
+              key={f.id}
+              data-active={hoverFolderId === f.id || undefined}
+              onMouseEnter={() => setHoverFolderId(f.id)}
+              className="folder-tab flex items-center justify-between rounded-xl border border-border bg-card p-4 transition-colors hover:bg-muted/50">
               <div className="flex items-center gap-3">
                 <div className="size-4 rounded" style={{ backgroundColor: f.color || COLORS[0] }} />
                 <div>

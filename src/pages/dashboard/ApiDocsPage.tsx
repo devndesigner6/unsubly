@@ -143,7 +143,7 @@ export default function ApiDocsPage() {
   }, [q])
 
   return (
-    <main className="mx-auto w-full max-w-4xl space-y-6 p-4 sm:p-6">
+    <main className="dev-cursor mx-auto w-full max-w-4xl space-y-6 p-4 sm:p-6">
       <header className="space-y-2">
         <div className="flex items-center gap-2">
           <RiBookOpenLine className="size-5 text-gray-700 dark:text-gray-300" />

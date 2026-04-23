@@ -187,7 +187,20 @@ export default function CalendarPageContent() {
       </div>
 
       <div className="mx-auto max-w-7xl p-3 sm:p-6 lg:p-8">
-        <div className="grid grid-cols-7 gap-px rounded-xl border border-border bg-border overflow-hidden">
+        {(() => {
+          const monthsAhead =
+            (year - today.getFullYear()) * 12 + (month - today.getMonth())
+          if (monthsAhead < 6) return null
+          return (
+            <div className="mb-3 rounded-md border border-dashed border-muted-foreground/40 bg-muted/40 p-2 text-center text-[11px] uppercase tracking-wider text-muted-foreground">
+              speculative window: prices and renewals shift beyond a 6-month horizon
+            </div>
+          )
+        })()}
+        <div className={cx(
+          "grid grid-cols-7 gap-px rounded-xl border border-border bg-border overflow-hidden",
+          ((year - today.getFullYear()) * 12 + (month - today.getMonth())) >= 6 && "doomscroll-guard"
+        )}>
           {DAYS.map(day => (
             <div key={day} className="bg-muted py-2 text-center text-xs font-medium text-muted-foreground">
               {day}

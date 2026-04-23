@@ -7,6 +7,7 @@ import {
   RiLoader4Line, RiCloseLine, RiCheckLine,
 } from "@remixicon/react"
 import { toast } from "sonner"
+import { AsciiEmpty } from "@/components/micro/AsciiEmpty"
 
 interface Tag {
   id: string
@@ -140,9 +141,12 @@ export default function TagsPage() {
 
       <div className="mt-6 flex flex-wrap gap-2">
         {tags.length === 0 ? (
-          <div className="w-full rounded-xl border border-border bg-card p-8 text-center">
-            <RiPriceTag3Line className="mx-auto size-10 text-muted-foreground" />
-            <p className="mt-3 text-sm text-muted-foreground">No tags yet. Create one to label your subscriptions.</p>
+          <div className="w-full">
+            <AsciiEmpty
+              variant="tag"
+              title="No tags yet"
+              subtitle="Create one to label your subscriptions across folders."
+            />
           </div>
         ) : (
           tags.map((t) => (

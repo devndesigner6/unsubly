@@ -195,7 +195,7 @@ export default function X402DemoPage() {
     : 3
 
   return (
-    <main className="mx-auto w-full max-w-3xl space-y-6 p-4 sm:p-6">
+    <main className="dev-cursor mx-auto w-full max-w-3xl space-y-6 p-4 sm:p-6">
       <header className="space-y-2">
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-50">
           x402 Demo

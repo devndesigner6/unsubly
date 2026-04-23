@@ -5,6 +5,7 @@ import {
   RiRefreshLine, RiArrowLeftRightLine, RiLoader4Line,
 } from "@remixicon/react"
 import { WalletSelectorModal } from "./WalletSelectorModal"
+import { RippleConfirm } from "@/components/micro/RippleConfirm"
 
 const WALLET_LABELS: Record<string, string> = {
   pera: "Pera",
@@ -149,14 +150,16 @@ export function WalletConnect() {
             {targetLabel}
           </button>
 
-          <button
-            onClick={disconnectWallet}
-            aria-label="Disconnect wallet"
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10 transition-colors sm:flex-initial"
+          <RippleConfirm
+            onConfirm={disconnectWallet}
+            ariaLabel="Disconnect wallet (click again within 3 seconds to confirm)"
+            className="flex-1 sm:flex-initial"
           >
-            <RiLinkUnlinkM className="size-3.5" />
-            Disconnect
-          </button>
+            <span className="flex w-full items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10 transition-colors">
+              <RiLinkUnlinkM className="size-3.5" />
+              Disconnect
+            </span>
+          </RippleConfirm>
         </div>
       </div>
     </>

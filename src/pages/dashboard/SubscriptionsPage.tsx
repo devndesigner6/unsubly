@@ -15,6 +15,7 @@ import {
 } from "@remixicon/react"
 import { useState, useEffect, useMemo, useRef } from "react"
 import CancelHelperModal from "@/components/subscriptions/CancelHelperModal"
+import { ConfirmInline } from "@/components/micro/ConfirmInline"
 import { SmartImportModal } from "@/components/subscriptions/SmartImportModal"
 
 const statusConfig: Record<string, { label: string; icon: any }> = {
@@ -343,27 +344,13 @@ export default function SubscriptionsPage() {
                           <RiForbidLine className="size-4 text-foreground/70" />
                         </Button>
                       )}
-                      {deleteConfirmId === sub.id ? (
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleDelete(sub.id)}
-                            disabled={deleting === sub.id}
-                          >
-                            {deleting === sub.id ? <RiLoader4Line className="size-3 animate-spin" /> : "Delete"}
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => setDeleteConfirmId(null)}>Cancel</Button>
-                        </div>
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setDeleteConfirmId(sub.id)}
-                        >
-                          <RiDeleteBinLine className="size-4 text-destructive" />
-                        </Button>
-                      )}
+                      <ConfirmInline
+                        busy={deleting === sub.id}
+                        onConfirm={() => handleDelete(sub.id)}
+                        trashLabel="Delete subscription"
+                        confirmLabel="Confirm delete"
+                        cancelLabel="Keep subscription"
+                      />
                     </div>
                   </div>
                   <div className="mt-2 text-xs text-muted-foreground">
