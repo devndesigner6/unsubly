@@ -42,8 +42,8 @@ function algodUrlFor(net) {
   return defaultAlgodFor(net)
 }
 
-const SUPABASE_URL   = process.env.SUPABASE_URL
-const SUPABASE_ANON  = process.env.SUPABASE_ANON_KEY
+const SUPABASE_URL   = process.env.SUPABASE_URL  || process.env.VITE_SUPABASE_URL
+const SUPABASE_ANON  = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY
 const AGENT_MNEMONIC = process.env.AGENT_WALLET_MNEMONIC
 
 if (!SUPABASE_URL || !SUPABASE_ANON) {
