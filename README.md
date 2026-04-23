@@ -144,7 +144,7 @@ To get a local copy up and running, follow these steps.
    # Agent runner: "testnet", "mainnet", "testnet,mainnet", or "all".
    ALGO_NETWORK=testnet
    ```
-4. Start the dev server (binds 0.0.0.0:5000 — works on both localhost and Replit)
+4. Start the dev server
    ```sh
    npm run dev
    ```
