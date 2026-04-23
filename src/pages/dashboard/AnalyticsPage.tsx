@@ -98,15 +98,57 @@ export default function AnalyticsPage() {
       amount: Math.round(s.monthlyCost * 100) / 100,
     }))
 
-    // Monthly projection (12 months)
-    const monthlyProjection = Array.from({ length: 12 }, (_, i) => {
-      const date = new Date()
-      date.setMonth(date.getMonth() + i)
+    // Real 12-month projection: walk each sub's billing schedule forward
+    // and sum the actual charges that land in each calendar month.
+    const today = new Date()
+    const startMonth = new Date(today.getFullYear(), today.getMonth(), 1)
+    const buckets: { key: string; label: string; amount: number }[] = Array.from({ length: 12 }, (_, i) => {
+      const d = new Date(startMonth.getFullYear(), startMonth.getMonth() + i, 1)
       return {
-        month: date.toLocaleDateString("en-US", { month: "short" }),
-        amount: Math.round(totalMonthly * 100) / 100,
+        key: `${d.getFullYear()}-${d.getMonth()}`,
+        label: d.toLocaleDateString("en-US", { month: "short" }),
+        amount: 0,
       }
     })
+    const bucketIndex = (d: Date) => {
+      const monthsFromStart = (d.getFullYear() - startMonth.getFullYear()) * 12 + (d.getMonth() - startMonth.getMonth())
+      return monthsFromStart >= 0 && monthsFromStart < 12 ? monthsFromStart : -1
+    }
+    sameCurrencySubs.forEach((sub) => {
+      if (sub.status !== "active") return
+      const cycle = sub.billing_cycle as "monthly" | "yearly" | "quarterly" | "weekly"
+      const amt = sub.amount || 0
+      if (!sub.next_billing_date) {
+        // Fall back to spreading the monthly equivalent evenly
+        for (let i = 0; i < 12; i++) buckets[i].amount += sub.monthlyCost
+        return
+      }
+      let cursor = new Date(sub.next_billing_date)
+      // If the sub's next_billing_date is in the past (overdue), advance it
+      // to today's month so we project from now, not history.
+      while (cursor < startMonth) {
+        if (cycle === "yearly") cursor.setFullYear(cursor.getFullYear() + 1)
+        else if (cycle === "quarterly") cursor.setMonth(cursor.getMonth() + 3)
+        else if (cycle === "weekly") cursor.setDate(cursor.getDate() + 7)
+        else cursor.setMonth(cursor.getMonth() + 1)
+      }
+      const horizonEnd = new Date(startMonth.getFullYear(), startMonth.getMonth() + 12, 0)
+      let safety = 0
+      while (cursor <= horizonEnd && safety++ < 60) {
+        const idx = bucketIndex(cursor)
+        if (idx >= 0) buckets[idx].amount += amt
+        if (cycle === "yearly") cursor = new Date(cursor.getFullYear() + 1, cursor.getMonth(), cursor.getDate())
+        else if (cycle === "quarterly") cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 3, cursor.getDate())
+        else if (cycle === "weekly") cursor = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate() + 7)
+        else cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, cursor.getDate())
+      }
+    })
+    const monthlyProjection = buckets.map((b) => ({
+      month: b.label,
+      amount: Math.round(b.amount * 100) / 100,
+    }))
+    const projectionTotal = monthlyProjection.reduce((s, m) => s + m.amount, 0)
+    const projectionPeak = monthlyProjection.reduce((max, m) => (m.amount > max.amount ? m : max), monthlyProjection[0])
 
     return {
       totalMonthly,
@@ -117,6 +159,8 @@ export default function AnalyticsPage() {
       cycleData,
       topSubsData,
       monthlyProjection,
+      projectionTotal,
+      projectionPeak,
       avgPerSub: sameCurrencySubs.length > 0 ? totalMonthly / sameCurrencySubs.length : 0,
       hasMixedCurrencies,
       currencyBreakdown,
@@ -250,7 +294,26 @@ export default function AnalyticsPage() {
 
             {/* 12 Month Projection */}
             <div className="rounded-xl border border-border bg-card p-5 lg:col-span-2">
-              <h2 className="mb-4 text-lg font-semibold text-foreground">12-Month Spending Projection</h2>
+              <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
+                <div>
+                  <h2 className="text-lg font-semibold text-foreground">12-Month Spending Projection</h2>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Based on each subscription's billing cycle and next renewal date. Spikes show months with yearly or quarterly renewals.
+                  </p>
+                </div>
+                <div className="flex gap-4 text-right">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">12-mo total</p>
+                    <p className="text-sm font-semibold text-foreground">{formatCurrency(analytics.projectionTotal, currency)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Peak month</p>
+                    <p className="text-sm font-semibold text-foreground" title={`Heaviest billing month in the next year: ${analytics.projectionPeak?.month}`}>
+                      {analytics.projectionPeak?.month} · {formatCurrency(analytics.projectionPeak?.amount || 0, currency)}
+                    </p>
+                  </div>
+                </div>
+              </div>
               <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={analytics.monthlyProjection}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
