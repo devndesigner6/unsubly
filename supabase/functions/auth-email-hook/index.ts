@@ -36,9 +36,15 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 
 // Configuration
 const SITE_NAME = "Unsubscribely"
+// Lovable manages SPF/DKIM for these sender records, so the from/sender
+// domains are kept fixed even before a custom domain is purchased.
 const SENDER_DOMAIN = "notify.unsubscribely.app"
-const ROOT_DOMAIN = "unsubscribely.app"
 const FROM_DOMAIN = "notify.unsubscribely.app"
+// SITE_URL is what gets baked into the *body* of the email (footer links,
+// "Visit Unsubscribely" buttons). Default to the live Vercel deployment so
+// recipients aren't sent to a domain we do not own. Override with the
+// SITE_URL env var once a custom domain is live.
+const SITE_URL = Deno.env.get("SITE_URL") || "https://unsubly2.vercel.app"
 
 // Sample data for preview mode ONLY (not used in actual email sending).
 // URLs are baked in at scaffold time from the project's real data.
@@ -219,7 +225,7 @@ async function handleWebhook(req: Request): Promise<Response> {
   // Build template props from payload.data (HookData structure)
   const templateProps = {
     siteName: SITE_NAME,
-    siteUrl: `https://${ROOT_DOMAIN}`,
+    siteUrl: SITE_URL,
     recipient: payload.data.email,
     confirmationUrl: payload.data.url,
     token: payload.data.token,

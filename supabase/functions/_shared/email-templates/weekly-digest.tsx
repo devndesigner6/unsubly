@@ -29,7 +29,7 @@ interface WeeklyDigestEmailProps {
 
 export const WeeklyDigestEmail = ({
   siteName = 'Unsubscribely',
-  siteUrl = 'https://unsubscribely.app',
+  siteUrl = 'https://unsubly2.vercel.app',
   recipientName,
   totalMonthly = 0,
   totalYearly = 0,

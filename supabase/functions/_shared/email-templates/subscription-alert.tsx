@@ -22,7 +22,7 @@ interface SubscriptionAlertEmailProps {
 
 export const SubscriptionAlertEmail = ({
   siteName = 'Unsubscribely',
-  siteUrl = 'https://unsubscribely.app',
+  siteUrl = 'https://unsubly2.vercel.app',
   recipientName,
   subscriptions = [],
 }: SubscriptionAlertEmailProps) => {
