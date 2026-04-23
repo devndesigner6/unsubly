@@ -130,8 +130,19 @@ To get a local copy up and running, follow these steps.
    VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_anon_key
    GROQ_API_KEY=your_groq_api_key
    AGENT_WALLET_MNEMONIC=your_25_word_algorand_mnemonic
-   # Set after you deploy ServiceRegistry to testnet:
-   SERVICE_REGISTRY_APP_ID=
+
+   # Per-network ServiceRegistry app ids. Set whichever you have deployed.
+   # Legacy SERVICE_REGISTRY_APP_ID still works as a testnet fallback.
+   SERVICE_REGISTRY_APP_ID_TESTNET=
+   SERVICE_REGISTRY_APP_ID_MAINNET=
+
+   # Optional per-network algod overrides (paid Nodely / self-hosted node).
+   # Public AlgoNode endpoints are used when these are unset.
+   ALGOD_TESTNET_URL=
+   ALGOD_MAINNET_URL=
+
+   # Agent runner: "testnet", "mainnet", "testnet,mainnet", or "all".
+   ALGO_NETWORK=testnet
    ```
 4. Start the dev server (binds 0.0.0.0:5000 — works on both localhost and Replit)
    ```sh
@@ -186,9 +197,21 @@ For a full walkthrough with transaction screenshots, see the [live demo](https:/
 - [x] On-chain payment resume
 - [x] Kill switch on every vault
 - [x] Lora Explorer links on every transaction
-- [ ] Mainnet deployment
+- [x] AgentEscrowVaultV2 with Box Storage for immutable BillingRecord ledger
+- [x] On-chain ServiceRegistry for A2A service discovery
+- [x] Algorand-flavoured x402 payment middleware (HTTP 402 + on-chain settlement)
+- [x] ARC-56 typed client and live API reference page
+- [x] Proof-of-Delivery notes attached to every release transaction
+- [x] Smart Import (paste an email body or bank CSV, get a parsed subscription)
+- [x] Renewal Radar with 7/14/30-day risk grading
+- [x] Dispute Center with on-chain arbitrator release/kill
+- [x] Network toggle (Testnet/Mainnet) with runtime switching across the whole app
+- [x] Multi-network agent runner (`ALGO_NETWORK=testnet,mainnet` or `all`)
+- [x] Public agent registry endpoint with per-IP rate limit and pagination
+- [x] Persistent Postgres rate limiter for the AI optimizer
+- [ ] Mainnet deployment of ServiceRegistry and AgentEscrowVaultV2 singletons
 - [ ] Mobile app using Expo
-- [ ] Multi-wallet support for Defly and Lute
+- [ ] Multi-wallet support for Defly and Lute (currently included via `@txnlab/use-wallet`)
 - [ ] Recurring ASA token payment automation
 - [ ] DAO-based arbitration for dispute vaults
 
