@@ -37,10 +37,20 @@ export default function RegistryPickerModal({ onClose, onPick }: PickerProps) {
         const res = await fetch(`/api/agent/registry?network=${network}`)
         const json = await res.json()
         if (!alive) return
-        if (json?.services && Array.isArray(json.services)) {
+        // Server response shapes (all currently HTTP 200 except 5xx):
+        //   undeployed   → { registry_app_id: null, services: [], message: "...not deployed..." }
+        //   deployed     → { registry_app_id: <num>, services: [...], count, total, ... }
+        //   server error → { error: "..." }  (often non-200)
+        // Order matters: check "undeployed" BEFORE the services array, otherwise
+        // an undeployed registry is misclassified as an empty-but-deployed list.
+        if (!res.ok) {
+          setError(json?.error || json?.message || `Failed to load registry (HTTP ${res.status})`)
+        } else if (json?.registry_app_id == null) {
+          setError(`No service registry deployed on ${network}. Switch networks to discover services.`)
+        } else if (Array.isArray(json?.services)) {
           setServices(json.services)
         } else {
-          setError(json?.message || "Registry empty")
+          setError(json?.error || json?.message || "Failed to load registry")
         }
       } catch (e: any) {
         if (alive) setError(e?.message || "Failed to load registry")

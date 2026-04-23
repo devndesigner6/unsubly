@@ -136,7 +136,9 @@ export default function VaultDetailsPage() {
     }
   }
 
-  useEffect(() => { loadVault() }, [user, id])
+  // Refetch when the user toggles networks — vault state lives on a specific chain.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { loadVault() }, [user, id, network])
 
   const signTransaction = async (txn: any): Promise<Uint8Array[]> => {
     return await peraWallet.signTransaction([[{ txn }]])

@@ -578,14 +578,69 @@ export async function advanceBillingHandler(req, res) {
 // Read-only endpoint that returns the on-chain service registry contents.
 // Wallets / agents discover available subscription services here.
 //
+// Per-IP rate limit for the public registry read.
+// Cheap in-memory token bucket — fine for a single Node instance; if we ever
+// scale horizontally, swap for the supabase-backed limiter (rate-limit.mjs).
+const REGISTRY_DEFAULT_LIMIT = 100
+const REGISTRY_MAX_LIMIT = 500
+const REGISTRY_RATE_PER_MIN = 60
+const REGISTRY_MAX_TRACKED_IPS = 5000
+// Map iteration order = insertion order, which we rely on for LRU-style eviction.
+const _registryHits = new Map() // ip -> { count, windowStart }
+function registryRateLimitOk(ip) {
+  const now = Date.now()
+  const windowMs = 60_000
+  const entry = _registryHits.get(ip)
+  if (!entry || now - entry.windowStart >= windowMs) {
+    // Refresh insertion order so this IP is now the most-recent in the Map.
+    if (entry) _registryHits.delete(ip)
+    _registryHits.set(ip, { count: 1, windowStart: now })
+
+    // Hard cap on tracked IPs. Drop expired entries first, then evict the
+    // oldest insertion-order entries if still over the cap. This guarantees
+    // the Map can never grow without bound, even under a flood of unique IPs
+    // within a single window.
+    if (_registryHits.size > REGISTRY_MAX_TRACKED_IPS) {
+      const cutoff = now - windowMs
+      for (const [k, v] of _registryHits) {
+        if (v.windowStart < cutoff) _registryHits.delete(k)
+        if (_registryHits.size <= REGISTRY_MAX_TRACKED_IPS) break
+      }
+      while (_registryHits.size > REGISTRY_MAX_TRACKED_IPS) {
+        const oldest = _registryHits.keys().next().value
+        if (oldest === undefined) break
+        _registryHits.delete(oldest)
+      }
+    }
+    return true
+  }
+  if (entry.count >= REGISTRY_RATE_PER_MIN) return false
+  entry.count++
+  return true
+}
+
 export async function agentRegistryHandler(req, res) {
   if (req.method !== "GET") return jsonRes(res, 405, { error: "Method Not Allowed" })
+
+  // Resolve client IP (trust the first X-Forwarded-For hop when behind the Replit proxy).
+  const fwd = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim()
+  const ip = fwd || req.socket?.remoteAddress || "unknown"
+  if (!registryRateLimitOk(ip)) {
+    res.setHeader("Retry-After", "60")
+    return jsonRes(res, 429, { error: "Too many requests. Try again in a minute." })
+  }
 
   try {
     // Network selection: ?network=testnet|mainnet (default testnet).
     const url = new URL(req.url || "/", "http://localhost")
     const requested = (url.searchParams.get("network") || "testnet").toLowerCase()
     const network = requested === "mainnet" ? "mainnet" : "testnet"
+
+    // Pagination: ?limit=N (1..500), defaults to 100.
+    const limitRaw = Number(url.searchParams.get("limit") || REGISTRY_DEFAULT_LIMIT)
+    const limit = Number.isFinite(limitRaw)
+      ? Math.max(1, Math.min(REGISTRY_MAX_LIMIT, Math.floor(limitRaw)))
+      : REGISTRY_DEFAULT_LIMIT
 
     // Per-network app id (with single-value back-compat for testnet only).
     const REGISTRY_APP_ID = network === "mainnet"
@@ -608,9 +663,12 @@ export async function agentRegistryHandler(req, res) {
       : (process.env.ALGOD_TESTNET_URL || "https://testnet-api.algonode.cloud")
     const algod = new algosdk.Algodv2(process.env.ALGOD_TOKEN || "", algodUrl, "")
     const boxes = await algod.getApplicationBoxes(Number(REGISTRY_APP_ID)).do()
+    const allBoxes = boxes.boxes || []
+    const totalBoxes = allBoxes.length
+    const sliced = allBoxes.slice(0, limit)
     const services = []
 
-    for (const b of (boxes.boxes || [])) {
+    for (const b of sliced) {
       try {
         const boxName = b.name
         const boxResp = await algod.getApplicationBoxByName(Number(REGISTRY_APP_ID), boxName).do()
@@ -628,7 +686,15 @@ export async function agentRegistryHandler(req, res) {
       } catch { /* skip malformed boxes */ }
     }
 
-    jsonRes(res, 200, { registry_app_id: Number(REGISTRY_APP_ID), network, services, count: services.length })
+    jsonRes(res, 200, {
+      registry_app_id: Number(REGISTRY_APP_ID),
+      network,
+      services,
+      count: services.length,
+      total: totalBoxes,
+      limit,
+      truncated: totalBoxes > services.length,
+    })
   } catch (err) {
     console.error("[agent-registry] error:", err)
     jsonRes(res, 500, { error: err.message || "Registry lookup failed" })

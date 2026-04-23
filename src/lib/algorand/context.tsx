@@ -244,10 +244,17 @@ function AlgorandBridge({
         setActiveNetwork(toNetworkId(net))
 
         const label = net === "mainnet" ? "Mainnet" : "Testnet"
+        // After switching networks the wallet is force-disconnected (most wallets
+        // don't support cross-network signing). Surface a one-tap "Reconnect" CTA
+        // in the success toast so the user can finish the toggle in one click.
         toast.success(`Switched to ${label}`, {
           description: activeWallet
             ? "Reconnect your wallet to continue."
             : "Select a wallet to connect.",
+          action: {
+            label: activeWallet ? "Reconnect" : "Connect",
+            onClick: () => setShowWalletSelector(true),
+          },
         })
       } finally {
         setNetworkSwitching(false)

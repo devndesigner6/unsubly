@@ -3,7 +3,16 @@
  *
  * Releases locked escrow vaults on-chain when subscriptions are due.
  * Supports both standard ALGO vaults and ASA token vaults.
- * Works on testnet and mainnet — set ALGO_NETWORK=mainnet to target mainnet.
+ *
+ * Network selection (ALGO_NETWORK env var):
+ *   - "testnet"           → run testnet only (default, for back-compat)
+ *   - "mainnet"           → run mainnet only
+ *   - "testnet,mainnet"   → run both networks sequentially in one invocation
+ *   - "all"               → alias for "testnet,mainnet"
+ *
+ * Per-network algod URL overrides:
+ *   ALGOD_TESTNET_URL / ALGOD_MAINNET_URL (preferred)
+ *   ALGOD_URL (legacy, applied to whichever single network is active)
  *
  * Reads due vaults from Supabase, signs release() via agent wallet,
  * submits on-chain via Algorand, then syncs status back to DB.
@@ -11,15 +20,30 @@
 
 import algosdk from "algosdk"
 
-const NETWORK = process.env.ALGO_NETWORK || "testnet"
+const NETWORK_ENV = (process.env.ALGO_NETWORK || "testnet").toLowerCase()
+const NETWORKS = NETWORK_ENV === "all"
+  ? ["testnet", "mainnet"]
+  : NETWORK_ENV.split(",").map(s => s.trim()).filter(n => n === "testnet" || n === "mainnet")
+if (NETWORKS.length === 0) NETWORKS.push("testnet")
 
-const DEFAULT_ALGOD = NETWORK === "mainnet"
-  ? "https://mainnet-api.algonode.cloud"
-  : "https://testnet-api.algonode.cloud"
+function defaultAlgodFor(net) {
+  return net === "mainnet"
+    ? "https://mainnet-api.algonode.cloud"
+    : "https://testnet-api.algonode.cloud"
+}
+
+function algodUrlFor(net) {
+  // Per-network override → legacy single ALGOD_URL (only when running one net) → public default
+  const perNet = net === "mainnet"
+    ? process.env.ALGOD_MAINNET_URL
+    : process.env.ALGOD_TESTNET_URL
+  if (perNet) return perNet
+  if (NETWORKS.length === 1 && process.env.ALGOD_URL) return process.env.ALGOD_URL
+  return defaultAlgodFor(net)
+}
 
 const SUPABASE_URL   = process.env.SUPABASE_URL
 const SUPABASE_ANON  = process.env.SUPABASE_ANON_KEY
-const ALGOD_URL      = process.env.ALGOD_URL || DEFAULT_ALGOD
 const AGENT_MNEMONIC = process.env.AGENT_WALLET_MNEMONIC
 
 if (!SUPABASE_URL || !SUPABASE_ANON) {
@@ -31,7 +55,9 @@ if (!SUPABASE_URL || !SUPABASE_ANON) {
 const SEL_RELEASE = new Uint8Array([0x07, 0x6b, 0xbd, 0x4d]) // release()void
 const SEL_RELEASE_V2 = new Uint8Array([0x61, 0x17, 0xcc, 0xb8]) // AgentEscrowVaultV2.release(uint64)uint64
 
-const LOW_BALANCE_THRESHOLD = NETWORK === "mainnet" ? 0.5 : 0.1
+function lowBalanceThresholdFor(net) {
+  return net === "mainnet" ? 0.5 : 0.1
+}
 const MAX_RETRIES   = 3
 const RETRY_DELAY_MS = 4_000
 
@@ -159,7 +185,7 @@ async function fetchDueVaults(today) {
       console.log(`Found ${subs.length} due subscription(s) via DB`)
       const subIds = subs.map(s => s.id).join(",")
       const dbVaults = await supabaseGet(
-        `escrow_vaults?status=eq.locked&subscription_id=in.(${subIds})&select=id,app_id,app_address,subscription_id,user_id,amount,vault_type,asa_id`
+        `escrow_vaults?status=eq.locked&subscription_id=in.(${subIds})&select=id,app_id,app_address,subscription_id,user_id,amount,vault_type,asa_id,network`
       )
       return { vaults: Array.isArray(dbVaults) ? dbVaults : [], subs }
     }
@@ -170,12 +196,132 @@ async function fetchDueVaults(today) {
   return { vaults: [], subs: [] }
 }
 
+// ── Per-network release loop ─────────────────────────────────────────────────
+async function runForNetwork(network, agentAccount, today, vaults, subs) {
+  const algodUrl = algodUrlFor(network)
+  console.log(`\n──────── Network: ${network} | Algod: ${algodUrl} ────────`)
+  const algodClient = new algosdk.Algodv2("", algodUrl, "")
+  const lowThreshold = lowBalanceThresholdFor(network)
+
+  // Balance check (per network — agent address is the same on both chains but funded separately)
+  try {
+    const info = await algodClient.accountInformation(agentAccount.addr).do()
+    const balance = Number(info.amount) / 1e6
+    console.log(`  Balance: ${balance} ALGO`)
+    const fundUrl = network === "mainnet"
+      ? "https://www.algorand.foundation/"
+      : "https://bank.testnet.algorand.network/"
+    if (balance < lowThreshold) {
+      console.warn(`  WARNING: Agent balance low on ${network} (< ${lowThreshold} ALGO). Fund at: ${fundUrl}`)
+      console.warn(`::warning title=Low Agent Balance (${network})::Balance below threshold — fund the agent wallet`)
+    }
+    if (balance < 0.001) {
+      console.warn(`  CRITICAL: Agent wallet nearly empty on ${network} (${balance} ALGO). Transactions will fail without fees.`)
+      console.warn(`  Fund the agent wallet at: ${fundUrl}`)
+      console.warn(`::warning title=Agent Wallet Empty (${network})::Fund the agent wallet to enable on-chain releases`)
+    }
+  } catch (e) {
+    console.warn(`  Could not fetch agent balance on ${network}: ${e.message}`)
+  }
+
+  // Filter vaults to this network when the row carries explicit network metadata.
+  // Vaults missing a `network` column are assumed to belong to the only network being run
+  // (back-compat: pre-multi-network rows). When running both nets, we still attempt them
+  // on each — the wrong-network attempt will TEAL-reject and be skipped gracefully.
+  const networkVaults = vaults.filter(v => !v.network || v.network === network)
+  if (networkVaults.length === 0) {
+    console.log(`  No vaults targeted at ${network}.`)
+    return { released: 0, failed: 0 }
+  }
+
+  return await processVaults(algodClient, agentAccount, network, networkVaults, subs)
+}
+
+async function processVaults(algodClient, agentAccount, network, vaults, subsArray) {
+  let released = 0, failed = 0
+  for (const vault of vaults) {
+    const sub     = subsArray.find(s => s.id === vault.subscription_id)
+    const isAsa     = vault.vault_type === "asa"
+    const isAgentV2 = vault.vault_type === "agent_v2"
+    const typeTag   = isAsa ? "[ASA]" : isAgentV2 ? "[AGENT v2]" : "[ALGO]"
+    console.log(`  → ${typeTag} Vault ${vault.id} | App #${vault.app_id}${vault.asa_id ? ` | ASA #${vault.asa_id}` : ""} | ${sub?.name ?? "manual"}`)
+
+    try {
+      let txId
+      if (isAsa) {
+        txId = await withRetry(
+          `ASA release App#${vault.app_id}`,
+          () => releaseAsaVault(algodClient, agentAccount, vault.app_id, vault.asa_id)
+        )
+      } else if (isAgentV2) {
+        txId = await withRetry(
+          `AgentV2 release App#${vault.app_id}`,
+          () => releaseAgentVaultV2(algodClient, agentAccount, vault.app_id, vault.amount)
+        )
+      } else {
+        txId = await withRetry(
+          `ALGO release App#${vault.app_id}`,
+          () => releaseAlgoVault(algodClient, agentAccount, vault.app_id)
+        )
+      }
+
+      console.log(`    ✓ Released: ${txId}`)
+      console.log(`    🔗 https://lora.algokit.io/${network}/transaction/${txId}`)
+
+      const dbStatus = await supabasePatch(
+        `escrow_vaults?id=eq.${vault.id}`,
+        { status: "released", released_at: new Date().toISOString(), txn_id: txId }
+      )
+
+      if (vault.subscription_id) {
+        try {
+          const subRows = await supabaseGet(
+            `subscriptions?id=eq.${vault.subscription_id}&select=billing_cycle,next_billing_date`
+          )
+          const subRow = Array.isArray(subRows) ? subRows[0] : null
+          const cycle = subRow?.billing_cycle || "monthly"
+          const baseStr = subRow?.next_billing_date || new Date().toISOString().split("T")[0]
+          const next = new Date(baseStr + "T00:00:00")
+          switch (cycle) {
+            case "weekly":    next.setDate(next.getDate() + 7); break
+            case "quarterly": next.setMonth(next.getMonth() + 3); break
+            case "yearly":    next.setFullYear(next.getFullYear() + 1); break
+            case "monthly":
+            default:          next.setMonth(next.getMonth() + 1); break
+          }
+          await supabasePatch(
+            `subscriptions?id=eq.${vault.subscription_id}`,
+            { next_billing_date: next.toISOString().split("T")[0], last_billed_at: new Date().toISOString() }
+          )
+        } catch (advErr) {
+          console.warn(`    ⚠ Could not advance billing date: ${advErr.message}`)
+        }
+      }
+
+      console.log(`    DB sync: ${dbStatus === 204 ? "ok" : `status ${dbStatus}`}`)
+      released++
+    } catch (err) {
+      const msg = err.message || ""
+      const isAuthError = msg.includes("assert") || msg.includes("TEAL") ||
+        msg.includes("transaction rejected") || msg.includes("rejected by logic")
+      if (isAuthError) {
+        console.warn(`    ⚠ Skipped on ${network} (agent not authorized for this vault — release manually via Pera wallet): App #${vault.app_id}`)
+        console.warn(`::warning title=Vault Skipped::App #${vault.app_id} on ${network} — agent address not authorized in contract`)
+      } else {
+        console.error(`    ✗ Failed on ${network} (all retries exhausted): ${msg}`)
+        console.error(`::error title=Vault Release Failed::App #${vault.app_id} on ${network} — ${msg}`)
+        failed++
+      }
+    }
+  }
+  return { released, failed }
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 async function main() {
   const startTime = Date.now()
   console.log("=== Unsubscribely Autonomous Agent v2 ===")
-  console.log(`Network  : ${NETWORK}`)
-  console.log(`Algod    : ${ALGOD_URL}`)
+  console.log(`Networks : ${NETWORKS.join(", ")}`)
   console.log(`Time     : ${new Date().toISOString()}`)
   console.log()
 
@@ -187,33 +333,7 @@ async function main() {
   const agentAccount = algosdk.mnemonicToSecretKey(AGENT_MNEMONIC)
   console.log(`Agent    : ${agentAccount.addr}`)
 
-  const algodClient = new algosdk.Algodv2("", ALGOD_URL, "")
-
-  // Balance check
-  try {
-    const info = await algodClient.accountInformation(agentAccount.addr).do()
-    const balance = Number(info.amount) / 1e6
-    console.log(`Balance  : ${balance} ALGO`)
-    const fundUrl = NETWORK === "mainnet"
-      ? "https://www.algorand.foundation/"
-      : "https://bank.testnet.algorand.network/"
-    if (balance < LOW_BALANCE_THRESHOLD) {
-      console.warn(`WARNING: Agent balance low (< ${LOW_BALANCE_THRESHOLD} ALGO). Fund at: ${fundUrl}`)
-      console.warn("::warning title=Low Agent Balance::Balance below threshold — fund the agent wallet")
-    }
-    if (balance < 0.001) {
-      // Not enough for fees — warn but don't abort.
-      // If no vaults are due today the run will still succeed.
-      // If vaults ARE due, each tx will fail and we'll report them individually.
-      console.warn(`CRITICAL: Agent wallet nearly empty (${balance} ALGO). Transactions will fail without fees.`)
-      console.warn(`Fund the agent wallet at: ${fundUrl}`)
-      console.warn("::warning title=Agent Wallet Empty::Fund the agent wallet to enable on-chain releases")
-    }
-  } catch (e) {
-    console.warn(`Could not fetch agent balance: ${e.message}`)
-  }
-
-  // Fetch due vaults
+  // Fetch due vaults ONCE (DB is shared across networks).
   const today = new Date().toISOString().split("T")[0]
   console.log(`\nChecking subscriptions due on or before ${today}...`)
 
@@ -241,98 +361,21 @@ async function main() {
   console.log(`\nFound ${vaults.length} vault(s) to release`)
   if (standardVaults.length) console.log(`  Standard ALGO vaults : ${standardVaults.length}`)
   if (asaVaults.length)      console.log(`  ASA token vaults     : ${asaVaults.length}`)
-  console.log()
 
   const subsArray = Array.isArray(subs) ? subs : []
-  let released = 0, failed = 0
+  let totalReleased = 0, totalFailed = 0
 
-  for (const vault of vaults) {
-    const sub     = subsArray.find(s => s.id === vault.subscription_id)
-    const isAsa     = vault.vault_type === "asa"
-    const isAgentV2 = vault.vault_type === "agent_v2"
-    const typeTag   = isAsa ? "[ASA]" : isAgentV2 ? "[AGENT v2]" : "[ALGO]"
-    console.log(`→ ${typeTag} Vault ${vault.id} | App #${vault.app_id}${vault.asa_id ? ` | ASA #${vault.asa_id}` : ""} | ${sub?.name ?? "manual"}`)
-
-    try {
-      let txId
-      if (isAsa) {
-        txId = await withRetry(
-          `ASA release App#${vault.app_id}`,
-          () => releaseAsaVault(algodClient, agentAccount, vault.app_id, vault.asa_id)
-        )
-      } else if (isAgentV2) {
-        txId = await withRetry(
-          `AgentV2 release App#${vault.app_id}`,
-          () => releaseAgentVaultV2(algodClient, agentAccount, vault.app_id, vault.amount)
-        )
-      } else {
-        txId = await withRetry(
-          `ALGO release App#${vault.app_id}`,
-          () => releaseAlgoVault(algodClient, agentAccount, vault.app_id)
-        )
-      }
-
-      console.log(`  ✓ Released: ${txId}`)
-      console.log(`  🔗 https://lora.algokit.io/${NETWORK}/transaction/${txId}`)
-
-      // Sync vault status
-      const dbStatus = await supabasePatch(
-        `escrow_vaults?id=eq.${vault.id}`,
-        { status: "released", released_at: new Date().toISOString(), txn_id: txId }
-      )
-
-      // Advance subscription billing date — respect the actual billing cycle.
-      if (vault.subscription_id) {
-        try {
-          const subRows = await supabaseGet(
-            `subscriptions?id=eq.${vault.subscription_id}&select=billing_cycle,next_billing_date`
-          )
-          const subRow = Array.isArray(subRows) ? subRows[0] : null
-          const cycle = subRow?.billing_cycle || "monthly"
-          const baseStr = subRow?.next_billing_date || new Date().toISOString().split("T")[0]
-          const next = new Date(baseStr + "T00:00:00")
-          switch (cycle) {
-            case "weekly":    next.setDate(next.getDate() + 7); break
-            case "quarterly": next.setMonth(next.getMonth() + 3); break
-            case "yearly":    next.setFullYear(next.getFullYear() + 1); break
-            case "monthly":
-            default:          next.setMonth(next.getMonth() + 1); break
-          }
-          await supabasePatch(
-            `subscriptions?id=eq.${vault.subscription_id}`,
-            { next_billing_date: next.toISOString().split("T")[0], last_billed_at: new Date().toISOString() }
-          )
-        } catch (advErr) {
-          console.warn(`  ⚠ Could not advance billing date: ${advErr.message}`)
-        }
-      }
-
-      console.log(`  DB sync: ${dbStatus === 204 ? "ok" : `status ${dbStatus}`}`)
-      released++
-    } catch (err) {
-      const msg = err.message || ""
-      // Detect TEAL authorization rejections — agent address mismatch in contract.
-      // These are expected for vaults created before the agent address was corrected.
-      // Skip gracefully; user can manually release via Pera wallet.
-      const isAuthError = msg.includes("assert") || msg.includes("TEAL") ||
-        msg.includes("transaction rejected") || msg.includes("rejected by logic")
-      if (isAuthError) {
-        console.warn(`  ⚠ Skipped (agent not authorized for this vault — release manually via Pera wallet): App #${vault.app_id}`)
-        console.warn(`  ::warning title=Vault Skipped::App #${vault.app_id} — agent address not authorized in contract`)
-      } else {
-        console.error(`  ✗ Failed (all retries exhausted): ${msg}`)
-        console.error(`  ::error title=Vault Release Failed::App #${vault.app_id} — ${msg}`)
-        failed++
-      }
-    }
-    console.log()
+  for (const network of NETWORKS) {
+    const { released, failed } = await runForNetwork(network, agentAccount, today, vaults, subsArray)
+    totalReleased += released
+    totalFailed += failed
   }
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1)
-  console.log(`=== Summary: ${released} released, ${failed} failed | ${elapsed}s ===`)
+  console.log(`\n=== Summary: ${totalReleased} released, ${totalFailed} failed across [${NETWORKS.join(", ")}] | ${elapsed}s ===`)
 
-  if (failed > 0) {
-    console.error(`::error title=Agent Run Failed::${failed} vault(s) failed to release on ${NETWORK}`)
+  if (totalFailed > 0) {
+    console.error(`::error title=Agent Run Failed::${totalFailed} vault(s) failed to release across [${NETWORKS.join(", ")}]`)
     process.exit(1)
   }
 }
