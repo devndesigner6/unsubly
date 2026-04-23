@@ -253,12 +253,12 @@ export default function AIOptimizerPage() {
           <div className="space-y-5">
 
             {/* Re-analyze button */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground">
                 <RiLightbulbLine className="size-5 text-primary" />
                 AI Recommendations
               </h2>
-              <Button variant="secondary" onClick={runAnalysis} disabled={loading || cooldown > 0}>
+              <Button className="w-full sm:w-auto" variant="secondary" onClick={runAnalysis} disabled={loading || cooldown > 0}>
                 <RiRefreshLine className="mr-1.5 size-4" />
                 {cooldown > 0 ? `Re-analyze in ${cooldown}s` : "Re-analyze"}
               </Button>
@@ -293,15 +293,15 @@ export default function AIOptimizerPage() {
                 {analysis.spending.breakdown && analysis.spending.breakdown.length > 0 && (
                   <div className="divide-y divide-border rounded-lg border border-border overflow-hidden">
                     {analysis.spending.breakdown.map((item, i) => (
-                      <div key={i} className="flex items-center justify-between px-4 py-2.5 bg-card">
-                        <div className="flex items-center gap-2.5">
-                          <span className={`size-2 rounded-full ${PRIORITY_DOT[item.risk] ?? "bg-border"}`} />
-                          <span className="text-sm font-medium text-foreground">{item.name}</span>
+                      <div key={i} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-2.5 bg-card">
+                        <div className="flex min-w-0 items-center gap-2.5">
+                          <span className={`size-2 shrink-0 rounded-full ${PRIORITY_DOT[item.risk] ?? "bg-border"}`} />
+                          <span className="truncate text-sm font-medium text-foreground">{item.name}</span>
                           {item.category && (
-                            <span className="text-xs text-muted-foreground">{item.category}</span>
+                            <span className="truncate text-xs text-muted-foreground">{item.category}</span>
                           )}
                         </div>
-                        <span className="text-sm font-semibold text-foreground">
+                        <span className="shrink-0 text-sm font-semibold text-foreground">
                           ${Number(item.monthly).toFixed(2)}/mo
                         </span>
                       </div>

@@ -218,15 +218,16 @@ export default function EscrowVaultsPage() {
       </div>
 
       {/* Actions & Filter */}
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-2">
           <h2 className="text-lg font-semibold text-foreground">Your Vaults</h2>
           {vaultTypesInUse.length > 1 && (
-            <div className="flex items-center gap-1 ml-3">
+            <div className="flex items-center gap-1 sm:ml-3">
               <RiFilterLine className="size-3.5 text-muted-foreground" />
               <select
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value as VaultType | "all")}
+                aria-label="Filter vaults by type"
                 className="rounded-md border border-input bg-background px-2 py-1 text-xs text-foreground"
               >
                 <option value="all">All Types</option>
@@ -237,11 +238,11 @@ export default function EscrowVaultsPage() {
             </div>
           )}
         </div>
-        <span title={!walletAddress ? "Connect your Pera or Defly wallet first to create a vault" : undefined}>
+        <span className="w-full sm:w-auto" title={!walletAddress ? "Connect your Pera or Defly wallet first to create a vault" : undefined}>
         <button
           onClick={() => setShowCreateModal(true)}
           disabled={!walletAddress}
-          className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 sm:w-auto"
         >
           <RiAddLine className="size-4" />
           Create Vault

@@ -93,12 +93,12 @@ export default function TagsPage() {
 
   return (
     <div className="mx-auto max-w-3xl p-4 sm:p-6 lg:p-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Tags</h1>
           <p className="mt-1 text-sm text-muted-foreground">Label your subscriptions with tags</p>
         </div>
-        <Button onClick={() => { setShowForm(true); setEditingId(null); setName(""); setColor(COLORS[0]) }}>
+        <Button className="w-full sm:w-auto" onClick={() => { setShowForm(true); setEditingId(null); setName(""); setColor(COLORS[0]) }}>
           <RiAddLine className="mr-1.5 size-4" /> New Tag
         </Button>
       </div>
@@ -117,12 +117,13 @@ export default function TagsPage() {
             placeholder="Tag name"
             className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           />
-          <div className="mt-3 flex items-center gap-2">
+          <div className="mt-3 flex flex-wrap items-center gap-2">
             <span className="text-xs text-muted-foreground">Color:</span>
             {COLORS.map((c) => (
               <button
                 key={c}
                 onClick={() => setColor(c)}
+                aria-label={`Select color ${c}`}
                 className={`size-6 rounded-full border-2 transition-all ${color === c ? "border-foreground scale-110" : "border-transparent"}`}
                 style={{ backgroundColor: c }}
               />

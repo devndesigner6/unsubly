@@ -245,12 +245,12 @@ export default function PaymentMethodsPage() {
 
   return (
     <div className="mx-auto max-w-3xl p-4 sm:p-6 lg:p-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Payment Methods</h1>
           <p className="mt-1 text-sm text-muted-foreground">Manage the cards and accounts linked to your subscriptions</p>
         </div>
-        <Button onClick={() => { resetForm(); setShowForm(true) }}>
+        <Button className="w-full sm:w-auto" onClick={() => { resetForm(); setShowForm(true) }}>
           <RiAddLine className="mr-1.5 size-4" /> Add Method
         </Button>
       </div>

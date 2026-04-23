@@ -95,7 +95,7 @@ export default function OnChainResumePage() {
 
       {/* Share Controls */}
       <div className="mb-6 rounded-xl border border-border bg-card p-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
             <RiShareLine className="size-4 text-primary" />
             <span className="text-sm font-medium text-foreground">Public Resume Link</span>

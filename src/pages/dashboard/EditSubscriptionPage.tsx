@@ -120,19 +120,19 @@ export default function EditSubscriptionPage() {
     <div className="min-h-screen bg-background">
       <div className="relative overflow-hidden border-b border-border bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800">
         <div className="relative mx-auto max-w-7xl px-3 py-6 sm:px-6 sm:py-8 lg:px-8">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
               <Link to="/subscriptions" className="mb-2 inline-flex items-center gap-1 text-xs text-blue-200 hover:text-white transition-colors sm:text-sm">
                 <RiArrowLeftLine className="size-3.5 sm:size-4" />
                 Back to Subscriptions
               </Link>
               <div className="flex items-center gap-3 text-white">
-                <div className="flex size-10 items-center justify-center rounded-xl bg-white/10 backdrop-blur-sm sm:size-12">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white/10 backdrop-blur-sm sm:size-12">
                   <RiEditLine className="size-5 sm:size-6" />
                 </div>
-                <div>
-                  <h1 className="text-xl font-bold sm:text-2xl">{subscription.name}</h1>
-                  <p className="text-sm text-blue-100">
+                <div className="min-w-0">
+                  <h1 className="truncate text-xl font-bold sm:text-2xl">{subscription.name}</h1>
+                  <p className="truncate text-sm text-blue-100">
                     {formatCurrency(subscription.amount, subscription.currency || "USD")} / {subscription.billing_cycle}
                   </p>
                 </div>

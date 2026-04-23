@@ -107,9 +107,9 @@ export default function ServiceRegistryPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
+    <div className="space-y-6 p-4 sm:p-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2">
             <RiStoreLine className="size-6 text-primary" />
             On-Chain Service Registry
@@ -119,7 +119,7 @@ export default function ServiceRegistryPage() {
             discover offerings here without ever calling a centralized API.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             variant={showForm ? "secondary" : "primary"}
             onClick={() => setShowForm((v) => !v)}
