@@ -83,6 +83,17 @@ Here is why this is different:
 
 The project was built for AlgoBharat Hack Series 3.0, targeting the Agentic Commerce track, specifically the A2A Autonomous Payments category.
 
+### Deployed contracts (Algorand TestNet)
+
+| Contract | App ID | Explorer |
+|---|---|---|
+| ServiceRegistry (A2A discovery, 5 services seeded) | `759205676` | [Lora](https://lora.algokit.io/testnet/application/759205676) |
+| AgentEscrowVaultV2 template (Box-storage billing history) | `759205677` | [Lora](https://lora.algokit.io/testnet/application/759205677) |
+
+Autonomous agent wallet: [`FPUU5F3QQSE77CXE2VD3WQQSVOYWWDXVV265W7XQTBNNZN6VMNRMPV55IY`](https://lora.algokit.io/testnet/account/FPUU5F3QQSE77CXE2VD3WQQSVOYWWDXVV265W7XQTBNNZN6VMNRMPV55IY)
+
+Per-user vaults (Standard, AgentV2, Time-Lock, Multi-Sig, Dispute, ASA) are deployed on demand from the dashboard. MainNet singletons are not yet deployed; the app shows clear guards on mainnet for ServiceRegistry-dependent UIs.
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ### Built With
@@ -133,7 +144,7 @@ To get a local copy up and running, follow these steps.
 
    # Per-network ServiceRegistry app ids. Set whichever you have deployed.
    # Legacy SERVICE_REGISTRY_APP_ID still works as a testnet fallback.
-   SERVICE_REGISTRY_APP_ID_TESTNET=
+   SERVICE_REGISTRY_APP_ID_TESTNET=759205676
    SERVICE_REGISTRY_APP_ID_MAINNET=
 
    # Optional per-network algod overrides (paid Nodely / self-hosted node).
@@ -189,7 +200,7 @@ For a full walkthrough with transaction screenshots, see the [live demo](https:/
 <!-- ROADMAP -->
 ## Roadmap
 
-- [x] Five escrow vault types: Standard, Time-Lock, Multi-Sig, Dispute, ASA
+- [x] Six escrow vault types: Standard, AgentV2, Time-Lock, Multi-Sig, Dispute, ASA
 - [x] A2A autonomous agent via GitHub Actions daily cron
 - [x] ARC-3 NFT payment receipts
 - [x] ARC-4 ABI compliant contracts compiled to TEAL v11
