@@ -5,7 +5,7 @@
  *
  * Bot: @unsublyybot
  * To get your chat ID: message the bot, then visit
- * https://api.telegram.org/bot8221335634:AAFBrbOyk6QTXdgzff2S_v91GmB-MAK_tes/getUpdates
+ * https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getUpdates
  */
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
