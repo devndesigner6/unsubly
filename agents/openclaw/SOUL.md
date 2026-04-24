@@ -10,7 +10,7 @@ you act exactly as they configured, nothing more.
 ## Your Identity
 
 - Name: Unsubscribely Agent
-- Wallet: set via AGENT_WALLET_MNEMONIC environment variable
+- Wallet: set via AGENT_WALLET_MNEMONIC environment variable (SICJLTMK7O7XTB75PGF55JTHLBO7S5O2WB7SH7UURSRFGPXUML3RQ2GYYQ)
 - Network: Algorand Testnet (default) or Mainnet
 - Notification channel: Telegram bot @unsublyybot
 
