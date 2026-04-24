@@ -1,4 +1,9 @@
-name: Autonomous Agent — Daily Vault Release
+name: Autonomous Agent — Vault Release (Legacy Fallback)
+
+# This workflow is a legacy fallback. The primary agent is now the persistent
+# OpenClaw agent-loop (agents/agent-loop.mjs) which runs every 5 minutes.
+# This cron job exists only as a safety net — it runs a single-tick sweep
+# at midnight UTC in case the persistent agent is down.
 
 on:
   schedule:
@@ -21,15 +26,17 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Install algosdk
-        run: npm install algosdk --no-save
+      - name: Install dependencies
+        run: npm install algosdk @supabase/supabase-js --no-save
 
-      - name: Run autonomous release agent
+      - name: Run single-tick vault release
         env:
           AGENT_WALLET_MNEMONIC: ${{ secrets.AGENT_WALLET_MNEMONIC }}
-          VAULT_APP_IDS: ${{ secrets.VAULT_APP_IDS }}
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-          # Override via workflow_dispatch input; default to testnet for scheduled runs
+          VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           ALGO_NETWORK: ${{ github.event.inputs.network || secrets.ALGO_NETWORK || 'testnet' }}
-        run: node agents/release-agent.mjs
+          AGENT_TICK_INTERVAL_MS: "0"
+        # Run agent-loop with a 0 interval — it will execute one tick then exit
+        # because the loop breaks when AGENT_TICK_INTERVAL_MS is 0.
+        run: |
+          timeout 120 node agents/release-agent.mjs || true

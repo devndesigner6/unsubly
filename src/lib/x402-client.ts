@@ -1,52 +1,154 @@
 /**
- * x402 client wrapper, agentic commerce HTTP 402 payment flow.
+ * x402 client — Algorand-native HTTP 402 payment flow.
  *
- * Wraps `fetch` so any call to a 402-paywalled endpoint will:
- *   1. Receive a 402 with a paymentRequirements descriptor.
- *   2. Sign + submit the payment using the configured wallet.
- *   3. Re-issue the request with an X-PAYMENT header so the server unlocks.
+ * Replaces the EVM-only x402-fetch library with a native Algorand
+ * implementation that:
+ *   1. Receives a 402 with paymentRequirements (payTo, maxAmountRequired).
+ *   2. Builds an Algorand Payment txn via algosdk.
+ *   3. Signs with the user's connected wallet (Pera / Defly / Lute).
+ *   4. Submits on-chain and retries the request with X-PAYMENT header.
+ *   5. Returns the response + X-PAYMENT-RESPONSE receipt.
  *
- * For agents calling AI / data services that follow the x402 protocol, this
- * is what makes the call truly "agentic commerce" instead of a plain REST call.
- *
- * Reference: https://github.com/coinbase/x402
+ * Reference: https://x402.org
  */
 
-import { wrapFetchWithPayment } from "x402-fetch"
+import algosdk from "algosdk"
 
-let _wrappedFetch: typeof fetch | null = null
+function extractTxId(response: unknown): string {
+  if (typeof response === "string") return response
+  const r = response as Record<string, unknown>
+  return String(r?.txid ?? r?.txId ?? r?.["txId"] ?? "")
+}
 
-/**
- * Returns a fetch-compatible function that auto-handles HTTP 402 challenges.
- * Pass it the wallet account (algosdk-style or viem-style) the agent should
- * spend from. The first call lazy-initializes the wrapper.
- */
-export function getX402Fetch(walletAccount: unknown): typeof fetch {
-  if (_wrappedFetch) return _wrappedFetch
-  // x402-fetch accepts a viem-like account; for Algorand-only flows the
-  // payment scheme is configured server-side and this still permits the
-  // agent to receive the 402 challenge metadata for downstream handling.
-  _wrappedFetch = wrapFetchWithPayment(fetch, walletAccount as never) as typeof fetch
-  return _wrappedFetch
+interface PaymentRequirement {
+  payTo: string
+  maxAmountRequired: string
+  network: string
+  resource?: string
+  description?: string
+}
+
+interface X402Challenge {
+  x402Version: number
+  error: string
+  accepts: PaymentRequirement[]
+}
+
+interface AlgorandSigner {
+  addr: string
+  signTxn: (txn: Uint8Array) => Uint8Array
+}
+
+interface TransactionSigner {
+  (txnGroup: algosdk.Transaction[], indexesToSign: number[]): Promise<Uint8Array[]>
+}
+
+interface X402WalletConfig {
+  senderAddress: string
+  signer: TransactionSigner
+  algodClient: algosdk.Algodv2
 }
 
 /**
- * Lower-level helper for endpoints that may or may not require payment.
- * Returns the parsed JSON body and, when applicable, the payment receipt
- * the server included in the X-PAYMENT-RESPONSE header.
+ * Lower-level: handle a 402 challenge by building, signing, and submitting
+ * an Algorand Payment txn, then retrying the original request.
+ */
+async function handleChallenge(
+  url: string,
+  init: RequestInit,
+  challenge: X402Challenge,
+  wallet: X402WalletConfig,
+): Promise<{ response: Response; paymentTxid: string }> {
+  const req = challenge.accepts[0]
+  if (!req?.payTo || !req?.maxAmountRequired) {
+    throw new Error("x402: 402 response missing payTo or maxAmountRequired")
+  }
+
+  const amount = Number(req.maxAmountRequired)
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new Error(`x402: invalid payment amount: ${req.maxAmountRequired}`)
+  }
+
+  // Build the payment txn
+  const params = await wallet.algodClient.getTransactionParams().do()
+  const txn = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+    sender: wallet.senderAddress,
+    receiver: req.payTo,
+    amount,
+    suggestedParams: { ...params, fee: 1000, flatFee: true },
+  })
+
+  // Sign via the wallet adapter's signer (Pera/Defly/Lute)
+  const signedArr = await wallet.signer([txn], [0])
+  const signedTxn = signedArr[0]
+
+  // Submit on-chain
+  const sendRes = await wallet.algodClient.sendRawTransaction(signedTxn).do()
+  const txId = extractTxId(sendRes)
+  await algosdk.waitForConfirmation(wallet.algodClient, txId, 4)
+
+  // Base64-encode the signed txn for the X-PAYMENT header
+  const signedB64 = Buffer.from(signedTxn).toString("base64")
+
+  // Retry the original request with payment proof
+  const retryInit: RequestInit = {
+    ...init,
+    headers: { ...init.headers, "X-PAYMENT": signedB64 },
+  }
+  const response = await fetch(url, retryInit)
+
+  return { response, paymentTxid: txId }
+}
+
+/**
+ * Fetch with automatic x402 payment handling (Algorand-native).
+ *
+ * If the endpoint returns 402, this function handles the payment challenge
+ * transparently and returns the final response.
+ *
+ * @returns The parsed JSON body, the payment receipt (if any), and the
+ *          payment txid (if a payment was made).
  */
 export async function fetchWithX402<T = unknown>(
   url: string,
   init: RequestInit,
-  walletAccount: unknown,
-): Promise<{ data: T; paymentReceipt: string | null }> {
-  const f = getX402Fetch(walletAccount)
-  const res = await f(url, init)
-  if (!res.ok) {
-    const body = await res.text()
-    throw new Error(`x402 request failed (${res.status}): ${body}`)
+  wallet: X402WalletConfig,
+): Promise<{ data: T; paymentReceipt: string | null; paymentTxid: string | null }> {
+  // First attempt
+  const firstRes = await fetch(url, init)
+
+  if (firstRes.status !== 402) {
+    if (!firstRes.ok) {
+      const body = await firstRes.text()
+      throw new Error(`x402 request failed (${firstRes.status}): ${body}`)
+    }
+    const data = (await firstRes.json()) as T
+    const paymentReceipt = firstRes.headers.get("X-PAYMENT-RESPONSE")
+    return { data, paymentReceipt, paymentTxid: null }
   }
-  const data = (await res.json()) as T
-  const paymentReceipt = res.headers.get("X-PAYMENT-RESPONSE")
-  return { data, paymentReceipt }
+
+  // Handle 402 challenge
+  const challengeBody = (await firstRes.json()) as X402Challenge
+  const { response, paymentTxid } = await handleChallenge(url, init, challengeBody, wallet)
+
+  if (!response.ok) {
+    const body = await response.text()
+    throw new Error(`x402 request failed after payment (${response.status}): ${body}`)
+  }
+
+  const data = (await response.json()) as T
+  const paymentReceipt = response.headers.get("X-PAYMENT-RESPONSE")
+  return { data, paymentReceipt, paymentTxid }
+}
+
+/**
+ * Create an X402WalletConfig from the useWallet hook's signer and address.
+ * This is the bridge between the wallet adapter and the x402 client.
+ */
+export function createX402Wallet(
+  senderAddress: string,
+  signer: TransactionSigner,
+  algodClient: algosdk.Algodv2,
+): X402WalletConfig {
+  return { senderAddress, signer, algodClient }
 }

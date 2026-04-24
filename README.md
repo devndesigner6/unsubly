@@ -106,7 +106,10 @@ flowchart LR
     X402 -->|verify payment| Algorand[(Algorand TestNet)]
     Vaults --> Algorand
     Registry --> Algorand
-    Cron[GitHub Actions daily cron] -->|AGENT_RUN_SECRET| AgentRun[/api/agent-run/]
+    Agent[OpenClaw Agent loop] -->|service role| Supabase
+    Agent -->|release/kill| Vaults
+    Agent -->|x402 pay| X402
+    Cron[GH Actions fallback cron] -->|AGENT_RUN_SECRET| AgentRun[/api/agent-run/]
     AgentRun -->|release/kill| Vaults
     AgentRun -->|mint ARC-3 receipt| Algorand
 ```
@@ -156,6 +159,7 @@ To get a local copy up and running, follow these steps.
    ```env
    VITE_SUPABASE_URL=your_supabase_url
    VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_anon_key
+   SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
    GROQ_API_KEY=your_groq_api_key
    AGENT_WALLET_MNEMONIC=your_25_word_algorand_mnemonic
 
@@ -174,6 +178,9 @@ To get a local copy up and running, follow these steps.
 
    # Shared secret required to call /api/agent-run from the GitHub Actions cron.
    AGENT_RUN_SECRET=
+
+   # Optional: Telegram notifications from the autonomous agent.
+   TELEGRAM_BOT_TOKEN=
 
    # Optional: Sentry error monitoring (no-op when unset).
    SENTRY_DSN=
@@ -216,7 +223,8 @@ To get a local copy up and running, follow these steps.
 2. Connect your Pera Wallet from the dashboard.
 3. Add a subscription manually or import a spreadsheet via CSV.
 4. Open Escrow Vaults, pick a vault type, and fund it with ALGO. Pera Wallet will ask you to sign two transactions: one to deploy the contract, one to fund it.
-5. The autonomous agent runs every day. When a billing date hits, it calls `release()` on the vault contract and the funds go to the recipient on-chain. No click from you needed.
+5. The autonomous agent runs every 5 minutes. When a billing date hits, it calls `release()` on the vault contract and the funds go to the recipient on-chain. No click from you needed.
+   To start the agent locally: `npm run agent`
 6. After release, open the vault details page and mint an ARC-3 NFT receipt. This is a permanent record on Algorand that proves the payment happened.
 7. Use the AI Optimizer to see which subscriptions are costing the most relative to how much you use them.
 
@@ -228,7 +236,11 @@ For a full walkthrough with transaction screenshots, see the [live demo](https:/
 ## Roadmap
 
 - [x] Six escrow vault types: Standard, AgentV2, Time-Lock, Multi-Sig, Dispute, ASA
-- [x] A2A autonomous agent via GitHub Actions daily cron
+- [x] OpenClaw autonomous agent (persistent 5-minute tick, replaces daily cron)
+- [x] Subscription guardrails (budget caps, trial dates, pause flags)
+- [x] Algorand-native x402 client (replaces EVM-only x402-fetch)
+- [x] Telegram user notifications from the agent
+- [x] A2A autonomous agent via GitHub Actions daily cron (legacy fallback)
 - [x] ARC-3 NFT payment receipts
 - [x] ARC-4 ABI compliant contracts compiled to TEAL v11
 - [x] AI spending optimizer

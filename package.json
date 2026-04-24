@@ -26,6 +26,7 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview --port 5000 --host 0.0.0.0",
     "start": "node server.js",
+    "agent": "node agents/agent-loop.mjs",
     "deploy:contracts": "node scripts/deploy.js",
     "test": "vitest run",
     "test:watch": "vitest"
@@ -62,8 +63,6 @@
     "tailwind-variants": "^0.3.1",
     "vite": "^7.3.1",
     "vite-plugin-pwa": "^1.2.0",
-    "x402": "^1.2.0",
-    "x402-fetch": "^1.2.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
