@@ -1,0 +1,17 @@
+{
+  "name": "unsubscribely-openclaw-agent",
+  "version": "1.0.0",
+  "description": "Unsubscribely autonomous payment agent — OpenClaw persistent loop",
+  "type": "module",
+  "main": "agent-loop.mjs",
+  "scripts": {
+    "start": "node agent-loop.mjs",
+    "dev": "node --watch agent-loop.mjs"
+  },
+  "dependencies": {
+    "algosdk": "3.2.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

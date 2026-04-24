@@ -1,0 +1,26 @@
+app = "unsubscribely-agent"
+primary_region = "sin"
+
+[build]
+  dockerfile = "Dockerfile.agent"
+
+# Pure background worker — no HTTP port needed
+[processes]
+  agent = "node agent-loop.mjs"
+
+[env]
+  ALGO_NETWORK = "testnet"
+
+# Secrets set via: fly secrets set KEY=value
+# Required secrets:
+#   AGENT_WALLET_MNEMONIC
+#   SUPABASE_URL
+#   SUPABASE_SERVICE_ROLE_KEY
+#   TELEGRAM_BOT_TOKEN
+#   TELEGRAM_CHAT_ID
+#   AGENT_RUN_SECRET
+
+[[vm]]
+  memory = "256mb"
+  cpu_kind = "shared"
+  cpus = 1
