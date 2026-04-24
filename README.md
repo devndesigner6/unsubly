@@ -90,7 +90,7 @@ The project was built for AlgoBharat Hack Series 3.0, targeting the Agentic Comm
 | ServiceRegistry (A2A discovery, 5 services seeded) | `759205676` | [Lora](https://lora.algokit.io/testnet/application/759205676) |
 | AgentEscrowVaultV2 template (Box-storage billing history) | `759205677` | [Lora](https://lora.algokit.io/testnet/application/759205677) |
 
-Autonomous agent wallet: [`FPUU5F3QQSE77CXE2VD3WQQSVOYWWDXVV265W7XQTBNNZN6VMNRMPV55IY`](https://lora.algokit.io/testnet/account/FPUU5F3QQSE77CXE2VD3WQQSVOYWWDXVV265W7XQTBNNZN6VMNRMPV55IY)
+Autonomous agent wallet: [`SICJLTMK7O7XTB75PGF55JTHLBO7S5O2WB7SH7UURSRFGPXUML3RQ2GYYQ`](https://lora.algokit.io/testnet/account/SICJLTMK7O7XTB75PGF55JTHLBO7S5O2WB7SH7UURSRFGPXUML3RQ2GYYQ)
 
 Per-user vaults (Standard, AgentV2, Time-Lock, Multi-Sig, Dispute, ASA) are deployed on demand from the dashboard. MainNet singletons are not yet deployed; the app shows clear guards on mainnet for ServiceRegistry-dependent UIs.
 
@@ -106,9 +106,10 @@ flowchart LR
     X402 -->|verify payment| Algorand[(Algorand TestNet)]
     Vaults --> Algorand
     Registry --> Algorand
-    Cron[GitHub Actions daily cron] -->|AGENT_RUN_SECRET| AgentRun[/api/agent-run/]
-    AgentRun -->|release/kill| Vaults
-    AgentRun -->|mint ARC-3 receipt| Algorand
+    OpenClaw[OpenClaw Agent on Railway] -->|every 5 min| AgentRun[/api/agent-run/]
+    AgentRun -->|release()| Vaults
+    AgentRun -->|Telegram notify| User
+    Cron[GitHub Actions daily cron fallback] -->|AGENT_RUN_SECRET| AgentRun
 ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -156,24 +157,33 @@ To get a local copy up and running, follow these steps.
    ```env
    VITE_SUPABASE_URL=your_supabase_url
    VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_anon_key
+   SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
    GROQ_API_KEY=your_groq_api_key
    AGENT_WALLET_MNEMONIC=your_25_word_algorand_mnemonic
+   VITE_AGENT_WALLET_ADDRESS=your_agent_wallet_address
 
-   # Per-network ServiceRegistry app ids. Set whichever you have deployed.
-   # Legacy SERVICE_REGISTRY_APP_ID still works as a testnet fallback.
+   # Per-network ServiceRegistry app ids.
    SERVICE_REGISTRY_APP_ID_TESTNET=759205676
    SERVICE_REGISTRY_APP_ID_MAINNET=
 
-   # Optional per-network algod overrides (paid Nodely / self-hosted node).
-   # Public AlgoNode endpoints are used when these are unset.
+   # Optional per-network algod overrides (public AlgoNode used when unset).
    ALGOD_TESTNET_URL=
    ALGOD_MAINNET_URL=
 
-   # Agent runner: "testnet", "mainnet", "testnet,mainnet", or "all".
+   # Agent runner network: "testnet", "mainnet", "testnet,mainnet", or "all".
    ALGO_NETWORK=testnet
 
-   # Shared secret required to call /api/agent-run from the GitHub Actions cron.
+   # Shared secret required to call /api/agent-run from the cron.
    AGENT_RUN_SECRET=
+
+   # x402 payment middleware (optional — endpoint works without it).
+   X402_PAY_TO_ADDRESS=
+   X402_PRICE_MICROALGOS=1000
+   X402_NETWORK=algorand-testnet
+
+   # Telegram notifications for the OpenClaw agent.
+   TELEGRAM_BOT_TOKEN=
+   TELEGRAM_CHAT_ID=
 
    # Optional: Sentry error monitoring (no-op when unset).
    SENTRY_DSN=
@@ -216,7 +226,7 @@ To get a local copy up and running, follow these steps.
 2. Connect your Pera Wallet from the dashboard.
 3. Add a subscription manually or import a spreadsheet via CSV.
 4. Open Escrow Vaults, pick a vault type, and fund it with ALGO. Pera Wallet will ask you to sign two transactions: one to deploy the contract, one to fund it.
-5. The autonomous agent runs every day. When a billing date hits, it calls `release()` on the vault contract and the funds go to the recipient on-chain. No click from you needed.
+5. The autonomous OpenClaw agent runs every 5 minutes on Railway. When a billing date hits, it calls `release()` on the vault contract and the funds go to the recipient on-chain. You get a Telegram notification confirming the payment. No click from you needed.
 6. After release, open the vault details page and mint an ARC-3 NFT receipt. This is a permanent record on Algorand that proves the payment happened.
 7. Use the AI Optimizer to see which subscriptions are costing the most relative to how much you use them.
 
@@ -228,7 +238,8 @@ For a full walkthrough with transaction screenshots, see the [live demo](https:/
 ## Roadmap
 
 - [x] Six escrow vault types: Standard, AgentV2, Time-Lock, Multi-Sig, Dispute, ASA
-- [x] A2A autonomous agent via GitHub Actions daily cron
+- [x] OpenClaw persistent AI agent (runs every 5 min on Railway, replaces GitHub Actions cron)
+- [x] Telegram notifications via @unsublyybot on every vault release
 - [x] ARC-3 NFT payment receipts
 - [x] ARC-4 ABI compliant contracts compiled to TEAL v11
 - [x] AI spending optimizer
