@@ -102,14 +102,14 @@ flowchart LR
     App --> Supabase[(Supabase Postgres + RLS)]
     App -->|sign txns| Vaults[Per-user escrow vaults]
     App -->|read| Registry[ServiceRegistry app]
-    App -->|HTTP 402| X402[/api/ai-optimizer x402 middleware/]
+    App -->|HTTP 402| X402[api/ai-optimizer x402 middleware]
     X402 -->|verify payment| Algorand[(Algorand TestNet)]
     Vaults --> Algorand
     Registry --> Algorand
-    OpenClaw[OpenClaw Agent on Railway] -->|every 5 min| AgentRun[/api/agent-run/]
-    AgentRun -->|release()| Vaults
+    OpenClaw[OpenClaw Agent on Railway] -->|every 5 min| AgentRun[api/agent-run]
+    AgentRun -->|release vault| Vaults
     AgentRun -->|Telegram notify| User
-    Cron[GitHub Actions daily cron fallback] -->|AGENT_RUN_SECRET| AgentRun
+    Cron[GitHub Actions daily fallback] -->|AGENT_RUN_SECRET| AgentRun
 ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
