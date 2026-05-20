@@ -3,16 +3,18 @@ import fs from "fs"
 import path from "path"
 import { fileURLToPath, pathToFileURL } from "url"
 
-// No-op when SENTRY_DSN is unset, so dev environments stay quiet.
-import "./server/sentry.mjs"
-
 import {
-  aiOptimizerHandler,
   agentRunHandler,
   advanceBillingHandler,
   agentRegistryHandler,
   x402DemoHandler,
+  chatHandler,
 } from "./server/handlers.mjs"
+import { telegramConnectHandler } from "./api/telegram-connect.mjs"
+import { telegramWebhookHandler } from "./api/telegram-webhook.mjs"
+import { gmailScanHandler } from "./api/gmail-scan.mjs"
+import { saveCredentialsHandler } from "./api/save-credentials.mjs"
+import dodoWebhookHandler from "./api/dodo-webhook.mjs"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname  = path.dirname(__filename)
@@ -128,11 +130,16 @@ function wrap(handler) {
 }
 
 const apiRoutes = {
-  "/api/ai-optimizer":   wrap(aiOptimizerHandler),
-  "/api/agent-run":      wrap(agentRunHandler),
-  "/api/advance-billing":wrap(advanceBillingHandler),
-  "/api/agent/registry": wrap(agentRegistryHandler),
-  "/api/x402-demo":      wrap(x402DemoHandler),
+  "/api/ai-optimizer":       wrap(chatHandler),
+  "/api/agent-run":          wrap(agentRunHandler),
+  "/api/advance-billing":    wrap(advanceBillingHandler),
+  "/api/agent/registry":     wrap(agentRegistryHandler),
+  "/api/x402-demo":          wrap(x402DemoHandler),
+  "/api/telegram-connect":   wrap(telegramConnectHandler),
+  "/api/telegram-webhook":   wrap(telegramWebhookHandler),
+  "/api/gmail-scan":         wrap(gmailScanHandler),
+  "/api/save-credentials":   wrap(saveCredentialsHandler),
+  "/api/dodo-webhook":       wrap(dodoWebhookHandler),
 }
 
 const server = http.createServer(async function (req, res) {

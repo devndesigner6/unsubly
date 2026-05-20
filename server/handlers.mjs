@@ -91,6 +91,8 @@ let _aiOptimizerWrapped = null
 function _getAiOptimizerHandler() {
   if (_aiOptimizerWrapped) return _aiOptimizerWrapped
   const payTo = process.env.X402_PAY_TO_ADDRESS
+    || process.env.VITE_AGENT_WALLET_ADDRESS
+    || null
   if (!payTo) {
     _aiOptimizerWrapped = _aiOptimizerCore
     return _aiOptimizerWrapped
@@ -123,9 +125,11 @@ let _x402DemoWrapped = null
 function _getX402DemoHandler() {
   if (_x402DemoWrapped) return _x402DemoWrapped
   const payTo = process.env.X402_PAY_TO_ADDRESS
+    || process.env.VITE_AGENT_WALLET_ADDRESS
+    || null
   if (!payTo) {
     _x402DemoWrapped = (_req, res) => jsonRes(res, 503, {
-      error: "x402 demo unavailable — server is missing X402_PAY_TO_ADDRESS",
+      error: "x402 demo unavailable — set X402_PAY_TO_ADDRESS in Vercel environment variables",
     })
     return _x402DemoWrapped
   }
@@ -305,8 +309,11 @@ Respond with ONLY the JSON structure specified.`
     })
 
     // Exponential backoff: up to 3 retries on 429 with jitter (1s, 3s, 9s ± 30%)
+    // Hard cap: total retry time ≤ 30 seconds
+    const retryStart = Date.now()
     let aiRes = await callGroq()
     for (let attempt = 0; attempt < 3 && aiRes.status === 429; attempt++) {
+      if (Date.now() - retryStart > 28_000) break // hard 28s cap
       const baseMs = 1000 * Math.pow(3, attempt)
       const jitter = baseMs * 0.3 * (Math.random() - 0.5) * 2
       await new Promise((r) => setTimeout(r, Math.max(500, baseMs + jitter)))
@@ -424,7 +431,7 @@ export async function agentRunHandler(req, res) {
     const subIds = dueSubs.map((s) => s.id)
     const { data: vaults } = await supabase
       .from("escrow_vaults")
-      .select("id, app_id, subscription_id, amount, vault_type, app_address")
+      .select("id, app_id, subscription_id, amount, vault_type, app_address, escrow_address")
       .in("subscription_id", subIds)
       .eq("status", "locked")
 
@@ -455,16 +462,101 @@ export async function agentRunHandler(req, res) {
 
     const results = { checked: activeSubs.length, released: 0, skipped: 0, errors: [], actions: [], agent_mode: agentMode }
 
+    // Send Telegram alerts for due-today subscriptions that haven't been alerted yet
+    const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
+    let alertsSent = 0
+    for (const sub of dueSubs) {
+      try {
+        // Check if alert already sent
+        const { data: existingAlert } = await supabase
+          .from("agent_renewal_alerts")
+          .select("id")
+          .eq("subscription_id", sub.id)
+          .limit(1)
+        if (existingAlert && existingAlert.length > 0) continue
+
+        // Get user's telegram chat_id
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("telegram_chat_id")
+          .eq("id", sub.user_id)
+          .limit(1)
+        const chatId = profiles?.[0]?.telegram_chat_id
+        if (!chatId || !BOT_TOKEN) continue
+
+        // Get vault info
+        const matchingVault = vaults?.find((v) => v.subscription_id === sub.id)
+        const amountStr = matchingVault ? `${matchingVault.amount} ALGO` : "unknown"
+
+        // Insert alert
+        await supabase.from("agent_renewal_alerts").insert({
+          subscription_id: sub.id,
+          vault_id: matchingVault?.id || null,
+          alert_sent_at: new Date().toISOString(),
+          alert_type: "today",
+          user_decision: null,
+        })
+
+        // Send Telegram
+        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: `🚨 Due TODAY\n\n${sub.name} is due TODAY (${amountStr}).\n\nReply "keep ${sub.name.toLowerCase()}" to pay and continue\nReply "cancel ${sub.name.toLowerCase()}" to cancel and get ALGO back`,
+            disable_web_page_preview: true,
+          }),
+        })
+        alertsSent++
+      } catch (err) {
+        console.warn(`[agent-run] alert for ${sub.name} failed: ${err.message}`)
+      }
+    }
+
+    // If we sent new alerts, STOP here — don't release anything until user decides
+    if (alertsSent > 0) {
+      return jsonRes(res, 200, {
+        success: true,
+        message: `Sent ${alertsSent} renewal alert(s). Waiting for user decision before releasing.`,
+        released: 0, checked: activeSubs.length, alerts_sent: alertsSent,
+      })
+    }
+
     for (const vault of vaults) {
       const sub = activeSubs.find((s) => s.id === vault.subscription_id)
       const subName = sub?.name ?? "Unknown"
       let txid = null
       let mode = "db-only"
 
+      // Check if there's a pending renewal alert with no decision — don't release yet
+      try {
+        const { data: pendingAlerts } = await supabase
+          .from("agent_renewal_alerts")
+          .select("id, user_decision")
+          .eq("subscription_id", vault.subscription_id)
+          .limit(1)
+        if (pendingAlerts && pendingAlerts.length > 0) {
+          const decision = pendingAlerts[0].user_decision
+          if (decision === null || decision === "cancel") {
+            results.skipped++
+            results.actions.push({ vault_id: vault.id, name: subName, status: decision === null ? "waiting_for_decision" : "cancel_in_progress" })
+            continue
+          }
+        }
+      } catch {}
       try {
         const isAgentVault = vault.vault_type === "agent" || vault.vault_type === "agent_v2"
-        const isAgentV2 = vault.vault_type === "agent_v2"
-        // Idempotency for ALL modes (including db-only sim): exactly one
+        // Detect actual contract version from on-chain global state — DB vault_type may be stale
+        let isAgentV2 = vault.vault_type === "agent_v2"
+        if (algodClient && vault.app_id) {
+          try {
+            const appInfo = await algodClient.getApplicationByID(Number(vault.app_id)).do()
+            const gs = appInfo?.params?.["global-state"] ?? appInfo?.params?.globalState ?? []
+            isAgentV2 = gs.some(e => {
+              try { return Buffer.from(e.key, "base64").toString("utf-8") === "cycle_index" } catch { return false }
+            })
+          } catch { /* keep DB value as fallback */ }
+        }
         // agent_actions row per (vault, billing period). Without this the agent
         // appends a duplicate row on every tick.
         const gotLock = await _acquireRunLock(vault.id, sub?.next_billing_date)
@@ -475,29 +567,79 @@ export async function agentRunHandler(req, res) {
         if (algodClient && agentAccount && vault.app_id && isAgentVault) {
           try {
             const params = await algodClient.getTransactionParams().do()
+            const minFee = Number(params.minFee ?? params.fee ?? 1000) || 1000
             const amountMicro = Math.round(Number(vault.amount || 0) * 1_000_000)
-            const txn = algosdk.makeApplicationCallTxnFromObject({
-              sender: agentAccount.addr,
-              suggestedParams: { ...params, fee: 2000, flatFee: true },
-              appIndex: Number(vault.app_id),
-              onComplete: algosdk.OnApplicationComplete.NoOpOC,
-              appArgs: isAgentV2
-                ? [RELEASE_V2_SELECTOR, algosdk.encodeUint64(amountMicro)]
-                : [RELEASE_SELECTOR],
-              boxes: isAgentV2 ? [{ appIndex: Number(vault.app_id), name: new Uint8Array(0) }] : undefined,
-            })
-            const signed = txn.signTxn(agentAccount.sk)
-            const sendRes = await algodClient.sendRawTransaction(signed).do()
-            txid = sendRes.txId ?? sendRes.txid ?? ""
-            const confirmed = await algosdk.waitForConfirmation(algodClient, txid, 4)
-            // Hard-check the txn actually succeeded; algod returns pool-error
-            // for txns that confirmed-but-failed (e.g. logic eval rejected).
-            if (confirmed?.["pool-error"]) {
-              throw new Error(`pool-error: ${confirmed["pool-error"]}`)
-            }
-            // Success requires confirmed-round to be set.
-            if (!(confirmed?.["confirmed-round"] || confirmed?.confirmedRound)) {
-              throw new Error("Txn never confirmed in a round")
+            const appId = Number(vault.app_id)
+
+            if (isAgentV2) {
+              // AgentEscrowVaultV2: needs atomic group [MBR payment + release() call]
+              // Box name = "h:" + uint64(next_cycle_index)
+              // Read current cycle_index from global state first
+              let nextCycleIndex = 1
+              try {
+                const appInfo = await algodClient.getApplicationByID(appId).do()
+                const gs = appInfo?.params?.["global-state"] ?? appInfo?.params?.globalState ?? []
+                const entry = gs.find(e => {
+                  try { return Buffer.from(e.key, "base64").toString("utf-8") === "cycle_index" } catch { return false }
+                })
+                if (entry) nextCycleIndex = (entry.value?.uint ?? 0) + 1
+              } catch { /* default to 1 */ }
+
+              const boxPrefix = Buffer.from("h:")
+              const boxIndex = algosdk.encodeUint64(nextCycleIndex)
+              const boxName = new Uint8Array(boxPrefix.length + boxIndex.length)
+              boxName.set(boxPrefix, 0)
+              boxName.set(boxIndex, boxPrefix.length)
+
+              // Box MBR: 2500 + 400 * (key_len + value_len) = 2500 + 400*(10+24) = 16100 µALGO
+              const BOX_MBR = 16100
+              const appAddress = algosdk.getApplicationAddress(appId)
+
+              // Txn 1: MBR payment to fund the new box
+              const mbrTxn = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+                sender: agentAccount.addr,
+                receiver: appAddress,
+                amount: BOX_MBR,
+                suggestedParams: { ...params, fee: minFee, flatFee: true },
+              })
+              // Txn 2: release() call
+              const releaseTxn = algosdk.makeApplicationCallTxnFromObject({
+                sender: agentAccount.addr,
+                suggestedParams: { ...params, fee: minFee * 2, flatFee: true },
+                appIndex: appId,
+                onComplete: algosdk.OnApplicationComplete.NoOpOC,
+                appArgs: [RELEASE_V2_SELECTOR, algosdk.encodeUint64(amountMicro)],
+                boxes: [{ appIndex: appId, name: boxName }],
+                // Recipient must be in foreign accounts so AVM inner txn can access it
+                accounts: vault.escrow_address ? [vault.escrow_address] : undefined,
+              })
+
+              // Assign group ID
+              algosdk.assignGroupID([mbrTxn, releaseTxn])
+
+              const signedMbr = mbrTxn.signTxn(agentAccount.sk)
+              const signedRelease = releaseTxn.signTxn(agentAccount.sk)
+
+              const sendRes = await algodClient.sendRawTransaction([signedMbr, signedRelease]).do()
+              txid = sendRes.txId ?? sendRes.txid ?? ""
+              const confirmed = await algosdk.waitForConfirmation(algodClient, txid, 4)
+              if (confirmed?.["pool-error"]) throw new Error(`pool-error: ${confirmed["pool-error"]}`)
+              if (!(confirmed?.["confirmed-round"] || confirmed?.confirmedRound)) throw new Error("Txn never confirmed in a round")
+            } else {
+              // Standard agent vault: single release() call
+              const txn = algosdk.makeApplicationCallTxnFromObject({
+                sender: agentAccount.addr,
+                suggestedParams: { ...params, fee: minFee * 2, flatFee: true },
+                appIndex: appId,
+                onComplete: algosdk.OnApplicationComplete.NoOpOC,
+                appArgs: [RELEASE_SELECTOR],
+              })
+              const signed = txn.signTxn(agentAccount.sk)
+              const sendRes = await algodClient.sendRawTransaction(signed).do()
+              txid = sendRes.txId ?? sendRes.txid ?? ""
+              const confirmed = await algosdk.waitForConfirmation(algodClient, txid, 4)
+              if (confirmed?.["pool-error"]) throw new Error(`pool-error: ${confirmed["pool-error"]}`)
+              if (!(confirmed?.["confirmed-round"] || confirmed?.confirmedRound)) throw new Error("Txn never confirmed in a round")
             }
             mode = "on-chain"
           } catch (onChainErr) {
@@ -519,11 +661,15 @@ export async function agentRunHandler(req, res) {
             .eq("id", vault.id)
         }
 
-        await supabase.from("agent_actions").insert({
+        // agent_actions table only allows INSERT via service_role (RLS blocks user JWT).
+        // Always use the service client here regardless of auth mode.
+        const svcClient = _getServiceClient()
+        const actionClient = svcClient || supabase
+        await actionClient.from("agent_actions").insert({
           action_type: "auto_release",
           vault_id: vault.id,
           subscription_id: vault.subscription_id,
-          user_id: user.id,
+          user_id: user.id === "agent-cron" ? vault.user_id ?? user.id : user.id,
           payload: {
             subscription_name: subName, amount: vault.amount, mode, txid,
             agent_address: agentAccount?.addr ?? null,
@@ -567,7 +713,7 @@ export async function advanceBillingHandler(req, res) {
       .select("id, next_billing_date, billing_cycle")
       .eq("user_id", user.id)
       .in("status", ["active", "trial"])
-      .lt("next_billing_date", today)
+      .lte("next_billing_date", today)  // BUG FIX: was .lt() — today's dates were skipped
 
     if (!subs?.length) return jsonRes(res, 200, { success: true, advanced: 0 })
 
@@ -583,7 +729,11 @@ export async function advanceBillingHandler(req, res) {
       const d = new Date(dateStr + "T00:00:00")
       const now = new Date()
       now.setHours(0, 0, 0, 0)
-      while (d < now) {
+      const VALID_CYCLES = ["weekly", "monthly", "quarterly", "yearly"]
+      if (!VALID_CYCLES.includes(cycle)) return dateStr // unknown cycle — don't advance
+      let iterations = 0
+      while (d < now && iterations < 1000) {
+        iterations++
         if (cycle === "weekly")    d.setDate(d.getDate() + 7)
         else if (cycle === "monthly")   d.setMonth(d.getMonth() + 1)
         else if (cycle === "quarterly") d.setMonth(d.getMonth() + 3)
@@ -754,5 +904,186 @@ export async function agentRegistryHandler(req, res) {
   } catch (err) {
     console.error("[agent-registry] error:", err)
     jsonRes(res, 500, { error: err.message || "Registry lookup failed" })
+  }
+}
+
+// ── /api/ai-optimizer (Chat) ────────────────────────────────────────────────
+// Interactive AI chat endpoint. Accepts conversation
+// history + user context, calls Cerebras (gpt-oss-120b), returns structured
+// JSON with reply text and optional action buttons.
+
+export async function chatHandler(req, res) {
+  if (req.method !== "POST") return jsonRes(res, 405, { error: "Method Not Allowed" })
+
+  try {
+    const authHeader = req.headers.authorization || ""
+    const tokenForLimit = authHeader.replace(/^Bearer\s+/i, "").slice(0, 80) || (req.socket?.remoteAddress ?? "anon")
+    const allowed = await rateLimitAllow("pulse_chat", tokenForLimit, 30, 3600)
+    if (!allowed) return jsonRes(res, 429, { error: "Rate limit: 30 messages/hour. Please wait." })
+
+    const { supabase: sb, user } = await getAuthedUserAndClient(req)
+
+    const body = await readBody(req)
+    let parsedBody
+    try { parsedBody = JSON.parse(body || "{}") } catch {
+      return jsonRes(res, 400, { error: "Invalid JSON body" })
+    }
+
+    const { messages = [] } = parsedBody
+    if (!Array.isArray(messages)) return jsonRes(res, 400, { error: "messages must be an array" })
+    if (messages.length > 50) return jsonRes(res, 400, { error: "Too many messages (max 50)" })
+
+    // Fetch user data for context
+    const [subsRes, vaultsRes, profileRes] = await Promise.all([
+      sb.from("subscriptions")
+        .select("id, name, amount, currency, billing_cycle, status, next_billing_date, category")
+        .eq("user_id", user.id)
+        .limit(50),
+      sb.from("escrow_vaults")
+        .select("id, subscription_id, amount, currency, status, vault_type, created_at, unlock_time")
+        .eq("user_id", user.id)
+        .limit(50),
+      sb.from("profiles")
+        .select("currency")
+        .eq("id", user.id)
+        .single(),
+    ])
+
+    const subscriptions = subsRes.data || []
+    const vaults = vaultsRes.data || []
+    const userCurrency = profileRes.data?.currency || "USD"
+
+    // Calculate spending stats
+    const activeSubs = subscriptions.filter((s) => s.status === "active")
+    const totalMonthly = activeSubs.reduce((sum, s) => {
+      const amt = Number(s.amount) || 0
+      switch (s.billing_cycle) {
+        case "weekly":    return sum + amt * 4.33
+        case "monthly":   return sum + amt
+        case "quarterly": return sum + amt / 3
+        case "yearly":    return sum + amt / 12
+        default:          return sum + amt
+      }
+    }, 0)
+
+    const totalVaultLocked = vaults
+      .filter((v) => v.status === "locked")
+      .reduce((sum, v) => sum + (Number(v.amount) || 0), 0)
+
+    // Map vaults to subscriptions
+    const vaultMap = {}
+    for (const v of vaults) {
+      if (v.subscription_id) vaultMap[v.subscription_id] = v
+    }
+
+    // Build subscription context block
+    const subsBlock = subscriptions.length > 0
+      ? subscriptions.map((s, i) => {
+          const vault = vaultMap[s.id]
+          const vaultInfo = vault ? `vault: ${vault.status} (${vault.amount} ALGO, ${vault.vault_type})` : "no vault"
+          return `${i + 1}. "${s.name}" | ${s.status} | ${s.currency} ${s.amount}/${s.billing_cycle || "mo"} | next: ${s.next_billing_date || "unknown"} | category: ${s.category || "uncategorized"} | ${vaultInfo}`
+        }).join("\n")
+      : "No subscriptions tracked yet."
+
+    const vaultsBlock = vaults.length > 0
+      ? vaults.map((v, i) => `${i + 1}. ${v.vault_type} | ${v.status} | ${v.amount} ALGO | sub: ${v.subscription_id || "unlinked"}`).join("\n")
+      : "No vaults created."
+
+    const systemPrompt = `You are Pulse, the Unsubscribely AI assistant embedded in the web dashboard. You help users manage their subscriptions intelligently — finding savings, suggesting vault strategies, and providing spending insights.
+
+## USER CONTEXT
+
+### Subscriptions (${activeSubs.length} active, ${subscriptions.length} total)
+${subsBlock}
+
+### Escrow Vaults (${vaults.length} total, ${totalVaultLocked} ALGO locked)
+${vaultsBlock}
+
+### Spending Stats
+- Currency: ${userCurrency}
+- Total monthly spend: ${userCurrency} ${totalMonthly.toFixed(2)}/mo
+- Annual projected: ${userCurrency} ${(totalMonthly * 12).toFixed(2)}/yr
+- Active subscriptions: ${activeSubs.length}
+- Vaults: ${vaults.length} (${totalVaultLocked.toFixed(4)} ALGO locked)
+
+## RULES
+1. Be concise but informative. Use **bold** for emphasis and • for lists.
+2. NEVER show UUIDs. Always use subscription names.
+3. When suggesting actions, include them in the "actions" array.
+4. Available action hrefs: "/subscriptions" (manage/cancel subs), "/escrow-vaults" (create/manage vaults), "/analytics" (spending charts), "/calendar" (billing calendar), "/settings" (account settings).
+5. Match action labels to what the user should do: "Cancel [Name]", "Create Vault for [Name]", "View Analytics", "Check Calendar", etc.
+6. For spending questions, give specific numbers from the context.
+7. For the initial greeting, provide a brief spending summary and one actionable insight.
+8. Use emoji sparingly (1-2 per message max).
+
+## RESPONSE FORMAT
+Return ONLY valid JSON (no markdown backticks wrapping it):
+{
+  "reply": "Your message to the user (can use **bold**, • bullets, line breaks)",
+  "actions": [
+    {"label": "Button Text", "type": "link", "href": "/page-path"}
+  ]
+}
+
+The "actions" array is optional. Only include it when you have specific actionable suggestions. Each action becomes a clickable button in the UI.`
+
+    // Build messages array for Cerebras
+    const chatMessages = [
+      { role: "system", content: systemPrompt },
+      ...messages.slice(-20).map((m) => ({
+        role: m.role === "user" ? "user" : "assistant",
+        content: typeof m.content === "string" ? m.content : JSON.stringify(m.content),
+      })),
+    ]
+
+    // Call Cerebras
+    const CEREBRAS_API_KEY = getEnv("CEREBRAS_API_KEY")
+    const cerebrasRes = await fetch("https://api.cerebras.ai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${CEREBRAS_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-oss-120b",
+        messages: chatMessages,
+        temperature: 0.4,
+        max_tokens: 800,
+      }),
+      signal: AbortSignal.timeout(20000),
+    })
+
+    if (!cerebrasRes.ok) {
+      const errText = await cerebrasRes.text().catch(() => "")
+      console.warn(`[pulse] Cerebras API error ${cerebrasRes.status}: ${errText.slice(0, 200)}`)
+      return jsonRes(res, 502, { error: "AI service temporarily unavailable" })
+    }
+
+    const cerebrasData = await cerebrasRes.json()
+    const content = cerebrasData?.choices?.[0]?.message?.content?.trim()
+
+    if (!content) {
+      return jsonRes(res, 502, { error: "Empty response from AI" })
+    }
+
+    // Parse JSON from response
+    const jsonMatch = content.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) {
+      return jsonRes(res, 200, { reply: content, actions: [] })
+    }
+
+    try {
+      const parsed = JSON.parse(jsonMatch[0])
+      return jsonRes(res, 200, {
+        reply: parsed.reply || content,
+        actions: Array.isArray(parsed.actions) ? parsed.actions : [],
+      })
+    } catch {
+      return jsonRes(res, 200, { reply: content, actions: [] })
+    }
+  } catch (err) {
+    if (err.status) return jsonRes(res, err.status, { error: err.message })
+    console.error("[pulse] error:", err)
+    jsonRes(res, 500, { error: "Internal server error" })
   }
 }

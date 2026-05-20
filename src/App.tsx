@@ -35,15 +35,15 @@ const SettingsPage = lazy(() => import("@/pages/dashboard/SettingsPage"))
 const EscrowVaultsPage = lazy(() => import("@/pages/dashboard/EscrowVaultsPage"))
 const VaultDetailsPage = lazy(() => import("@/pages/dashboard/VaultDetailsPage"))
 const OnChainResumePage = lazy(() => import("@/pages/dashboard/OnChainResumePage"))
-const TransactionHistoryPage = lazy(() => import("@/pages/dashboard/TransactionHistoryPage"))
-const AIOptimizerPage = lazy(() => import("@/pages/dashboard/AIOptimizerPage"))
+const ChatPage = lazy(() => import("@/pages/dashboard/ChatPage"))
 const ServiceRegistryPage = lazy(() => import("@/pages/dashboard/ServiceRegistryPage"))
 const X402DemoPage = lazy(() => import("@/pages/dashboard/X402DemoPage"))
-const ApiDocsPage = lazy(() => import("@/pages/dashboard/ApiDocsPage"))
-const RenewalRadarPage = lazy(() => import("@/pages/dashboard/RenewalRadarPage"))
-const DisputeCenterPage = lazy(() => import("@/pages/dashboard/DisputeCenterPage"))
+const ConnectAgentPage = lazy(() => import("@/pages/dashboard/ConnectAgentPage"))
 const CoSignerApprovalPage = lazy(() => import("@/pages/CoSignerApprovalPage"))
 const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"))
+const PrivacyPage = lazy(() => import("@/pages/PrivacyPage"))
+const TermsPage = lazy(() => import("@/pages/TermsPage"))
+const DocsPage = lazy(() => import("@/pages/DocsPage"))
 
 // Fetch live exchange rates once at startup, fire and forget, falls back to static rates
 initExchangeRates()
@@ -83,13 +83,16 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <BrowserRouter>
-      <ThemeProvider defaultTheme="light" disableTransitionOnChange attribute="class">
+      <ThemeProvider defaultTheme="dark" disableTransitionOnChange attribute="class">
         <AuthProvider>
           <Suspense fallback={<FullScreenLoader />}>
             <Routes>
               {/* Marketing */}
               <Route element={<MarketingLayout />}>
                 <Route path="/" element={<HomePage />} />
+                <Route path="/privacy" element={<PrivacyPage />} />
+                <Route path="/terms" element={<TermsPage />} />
+                <Route path="/docs" element={<DocsPage />} />
               </Route>
 
               {/* Public / no-auth routes */}
@@ -127,14 +130,11 @@ export default function App() {
                 <Route path="/payment-methods" element={<PaymentMethodsPage />} />
                 <Route path="/escrow-vaults" element={<EscrowVaultsPage />} />
                 <Route path="/escrow-vaults/:id" element={<VaultDetailsPage />} />
-                <Route path="/ai-optimizer" element={<AIOptimizerPage />} />
+                <Route path="/ai-optimizer" element={<ChatPage />} />
                 <Route path="/service-registry" element={<ServiceRegistryPage />} />
                 <Route path="/x402-demo" element={<X402DemoPage />} />
-                <Route path="/api-docs" element={<ApiDocsPage />} />
-                <Route path="/renewal-radar" element={<RenewalRadarPage />} />
-                <Route path="/dispute-center" element={<DisputeCenterPage />} />
+                <Route path="/connect-agent" element={<ConnectAgentPage />} />
                 <Route path="/onchain-resume" element={<OnChainResumePage />} />
-                <Route path="/transactions" element={<TransactionHistoryPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
               </Route>
 

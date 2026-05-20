@@ -7,11 +7,16 @@ import { algoToMicroalgos, VAULT_TYPE_LABELS, type VaultType } from "@/lib/algor
 import {
   deployAgentEscrowContractV2, deployEscrowContract, deployTimeLockContract,
   deployMultiSigContract, deployDisputeContract, deployASAContract, fundEscrowContract,
+  optinASAVault,
 } from "@/lib/algorand/contract"
-import { RiCloseLine, RiLockLine, RiTimeLine, RiGroupLine, RiShieldLine, RiCoinLine, RiRobotLine } from "@remixicon/react"
+import { RiCloseLine, RiLockLine, RiTimeLine, RiGroupLine, RiShieldLine, RiCoinLine, RiRobotLine, RiShieldCheckLine } from "@remixicon/react"
 import { toast } from "sonner"
+import { findSubscription, getFaviconUrl } from "@/data/subscriptionCatalog"
+import { useAlgoPrice } from "@/hooks/useAlgoPrice"
 
 const AGENT_ADDRESS = import.meta.env.VITE_AGENT_WALLET_ADDRESS as string | undefined
+const KNOWN_AGENT_ADDRESS = "RVHOYLPY4L47JYCYEMCP7EMEC2AZ3HV53YHSL2ZISX6PSO5EQ6H5YVAE5U"
+const EFFECTIVE_AGENT_ADDRESS = AGENT_ADDRESS || KNOWN_AGENT_ADDRESS
 
 interface Subscription {
   id: string
@@ -24,44 +29,52 @@ interface CreateVaultModalProps {
   isOpen: boolean
   onClose: () => void
   onCreated: () => void
+  defaultVaultType?: VaultType
 }
 
 const VAULT_TYPE_ICONS: Record<VaultType, typeof RiLockLine> = {
-  standard:    RiLockLine,
-  agent:       RiRobotLine,
-  agent_v2:    RiRobotLine,
-  time_locked: RiTimeLine,
-  multi_sig:   RiGroupLine,
-  dispute:     RiShieldLine,
-  asa:         RiCoinLine,
+  standard:               RiLockLine,
+  agent:                  RiRobotLine,
+  agent_v2:               RiRobotLine,
+  time_locked:            RiTimeLine,
+  multi_sig:              RiGroupLine,
+  dispute:                RiShieldLine,
+  asa:                    RiCoinLine,
+  cancellation_insurance: RiShieldCheckLine,
 }
 
 const VAULT_TYPE_DESCRIPTIONS: Record<VaultType, string> = {
-  standard:    "Basic escrow, you release manually",
-  agent:       "Agent auto-releases on billing date",
-  agent_v2:    "Agent auto-releases with on-chain billing history",
-  time_locked: "Auto-releases after a set date",
-  multi_sig:   "Requires co-signer approval",
-  dispute:     "Arbitrator can resolve disputes",
-  asa:         "Lock ASA tokens instead of ALGO",
+  standard:               "Basic escrow, you release manually",
+  agent:                  "Agent auto-releases on billing date",
+  agent_v2:               "Agent auto-releases with on-chain billing history",
+  time_locked:            "Auto-releases after a set date",
+  multi_sig:              "Requires co-signer approval",
+  dispute:                "Arbitrator can resolve disputes",
+  asa:                    "Lock ASA tokens instead of ALGO",
+  cancellation_insurance: "Cancel & prove it → get ALGO back. Miss it → vendor gets paid",
 }
 
-export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModalProps) {
+export function CreateVaultModal({ isOpen, onClose, onCreated, defaultVaultType }: CreateVaultModalProps) {
   const { user } = useAuth()
   const { walletAddress, algodClient, peraWallet, balance, refreshBalance } = useAlgorand()
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
   const [selectedSubscription, setSelectedSubscription] = useState("")
+  const [subSearchQuery, setSubSearchQuery] = useState("")
+  const [showSubDropdown, setShowSubDropdown] = useState(false)
   const [amount, setAmount] = useState("")
   const [recipientAddress, setRecipientAddress] = useState("")
-  const [vaultType, setVaultType] = useState<VaultType>("standard")
+  const [vaultType, setVaultType] = useState<VaultType>(defaultVaultType || (localStorage.getItem("ub:vault-tooltip-seen") ? "standard" : "agent_v2"))
   const [unlockDate, setUnlockDate] = useState("")
   const [coSignerAddress, setCoSignerAddress] = useState("")
   const [arbitratorAddress, setArbitratorAddress] = useState("")
   const [assetId, setAssetId] = useState("")
-  const [agentAddress, setAgentAddress] = useState(AGENT_ADDRESS ?? "")
+  const [agentAddress, setAgentAddress] = useState(EFFECTIVE_AGENT_ADDRESS ?? "")
   const [isCreating, setIsCreating] = useState(false)
   const [step, setStep] = useState("")
   const [errorMsg, setErrorMsg] = useState("")
+  const [usdAmount, setUsdAmount] = useState("")
+  const [inputMode, setInputMode] = useState<"algo" | "usd">("algo")
+  const { price: algoUsdPrice } = useAlgoPrice()
 
   useEffect(() => {
     if (!user || !isOpen) return
@@ -85,7 +98,10 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
     }
   }, [selectedSubscription, subscriptions])
 
-  const signTransaction = async (txn: any): Promise<Uint8Array[]> => {
+  const signTransaction = async (txn: algosdk.Transaction | algosdk.Transaction[]): Promise<Uint8Array[]> => {
+    if (Array.isArray(txn)) {
+      return await peraWallet.signTransaction([txn.map(t => ({ txn: t }))])
+    }
     return await peraWallet.signTransaction([[{ txn }]])
   }
 
@@ -109,6 +125,13 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
   const handleCreate = async () => {
     if (!walletAddress || !user || !amount) return
     setErrorMsg("")
+
+    // Runtime guard: ensure vault_type is a known supported type
+    const SUPPORTED_TYPES: VaultType[] = ["standard", "agent", "agent_v2", "time_locked", "multi_sig", "dispute", "asa", "cancellation_insurance"]
+    if (!SUPPORTED_TYPES.includes(vaultType)) {
+      setErrorMsg(`Unsupported vault type: ${vaultType}. Please select a valid vault type.`)
+      return
+    }
 
     // Validate + clean each address up-front so on-chain calls always receive
     // canonical 58-char Algorand addresses (no leading/trailing whitespace).
@@ -134,7 +157,7 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
     }
 
     let cleanAgent = ""
-    if (vaultType === "agent") {
+    if (vaultType === "agent" || vaultType === "agent_v2" || vaultType === "cancellation_insurance") {
       const v = validateAddress(agentAddress, "Agent")
       if (!v.ok) {
         setErrorMsg(`${v.error} Tip: paste the agent's full Algorand address (it will sign release txns autonomously when bills are due).`)
@@ -185,6 +208,8 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
 
       switch (vaultType) {
         case "agent":
+        case "agent_v2":
+        case "cancellation_insurance":
           deployResult = await deployAgentEscrowContractV2(
             algodClient, walletAddress, recipient, cleanAgent, signTransaction
           )
@@ -216,7 +241,16 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
 
       const { appId, appAddress, txnId: deployTxnId } = deployResult
 
-      setStep("Funding escrow vault… (sign txn 2/2 in Pera Wallet)")
+      // For ASA vaults: opt the contract into the ASA before funding.
+      // Without this the app account cannot receive ASA tokens.
+      if (vaultType === "asa" && assetId) {
+        setStep("Opting contract into ASA… (sign txn 2/3 in Pera Wallet)")
+        await optinASAVault(algodClient, walletAddress, appId, signTransaction)
+        setStep("Funding escrow vault… (sign txn 3/3 in Pera Wallet)")
+      } else {
+        setStep("Funding escrow vault… (sign txn 2/2 in Pera Wallet)")
+      }
+
       const fundTxnId = await fundEscrowContract(
         algodClient, walletAddress, appAddress, algoToMicroalgos(algoAmount), signTransaction
       )
@@ -236,7 +270,7 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
         unlock_time: vaultType === "time_locked" ? new Date(unlockDate).toISOString() : null,
         co_signer_address: vaultType === "multi_sig" ? cleanCoSigner : null,
         arbitrator_address: vaultType === "dispute" ? cleanArbitrator : null,
-        agent_address: vaultType === "agent" ? cleanAgent : null,
+        agent_address: (vaultType === "agent" || vaultType === "agent_v2") ? cleanAgent : null,
         asset_id: vaultType === "asa" ? Number(assetId) : null,
       }
 
@@ -285,6 +319,7 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
       onClose()
       setAmount("")
       setSelectedSubscription("")
+      setSubSearchQuery("")
       setRecipientAddress("")
       setVaultType("standard")
       setUnlockDate("")
@@ -300,6 +335,10 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
 
       if (raw.includes("CONNECT_MODAL_CLOSED") || raw.toLowerCase().includes("cancel")) {
         friendly = "Transaction cancelled, nothing was sent."
+      } else if (raw.includes("4100") || raw.toLowerCase().includes("pending") || raw.toLowerCase().includes("another transaction request")) {
+        friendly = "Pera Wallet has a pending request. Open Pera Wallet on your phone, reject any pending transaction, then try again."
+      } else if (raw.toLowerCase().includes("unable to parse") || raw.toLowerCase().includes("invalid request format")) {
+        friendly = "Pera Wallet couldn't read the transaction. Make sure Pera is updated to the latest version, then try again."
       } else if (raw.toLowerCase().includes("insufficient") || raw.toLowerCase().includes("below min")) {
         friendly = "Your wallet doesn't have enough ALGO. You need at least 0.3 ALGO to cover the vault minimum balance and fees."
       } else if (raw.toLowerCase().includes("network") || raw.toLowerCase().includes("fetch")) {
@@ -324,36 +363,72 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-border bg-card p-6 shadow-xl">
+      <div className="w-full max-w-md max-h-[85vh] overflow-y-auto rounded-2xl border border-border bg-card p-4 sm:p-6 shadow-xl mx-3">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-semibold text-foreground">Create Escrow Vault</h2>
-          <button onClick={onClose} disabled={isCreating} aria-label="Close" title="Close" className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted transition-colors disabled:opacity-50">
-            <RiCloseLine className="size-5" />
-          </button>
+          <div className="flex items-center gap-3">
+            {/* Step indicator */}
+            {isCreating && (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span className={`size-5 rounded-full flex items-center justify-center text-[10px] font-bold ${step.includes("1/") || step.includes("1 of") || step.includes("txn 1") ? "bg-foreground text-background" : "bg-muted text-foreground"}`}>1</span>
+                <span className="size-3 border-t border-border" />
+                <span className={`size-5 rounded-full flex items-center justify-center text-[10px] font-bold ${step.includes("2/") || step.includes("2 of") || step.includes("txn 2") ? "bg-foreground text-background" : "bg-muted text-foreground"}`}>2</span>
+                {vaultType === "asa" && (
+                  <>
+                    <span className="size-3 border-t border-border" />
+                    <span className={`size-5 rounded-full flex items-center justify-center text-[10px] font-bold ${step.includes("3/") || step.includes("txn 3") ? "bg-foreground text-background" : "bg-muted text-foreground"}`}>3</span>
+                  </>
+                )}
+              </div>
+            )}
+            <button onClick={onClose} disabled={isCreating} aria-label="Close" title="Close" className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted transition-colors disabled:opacity-50">
+              <RiCloseLine className="size-5" />
+            </button>
+          </div>
         </div>
 
         <div className="space-y-4">
           {/* Vault Type Selection */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">Vault Type</label>
+
+            {/* First-time tooltip — shows once */}
+            {!localStorage.getItem("ub:vault-tooltip-seen") && (
+              <div className="mb-2 rounded-lg border border-red-200 bg-red-50 dark:border-red-900/40 dark:bg-red-950/20 px-3 py-2 text-[11px] text-red-800 dark:text-red-300">
+                <span className="font-medium">Recommended:</span> Agent-Managed v2 lets the autonomous agent release payments on billing day automatically. No manual action needed.
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-2">
-              {(Object.keys(VAULT_TYPE_LABELS) as VaultType[]).map((type) => {
+              {(["agent_v2", "agent", "standard", "time_locked", "multi_sig", "dispute", "asa", "cancellation_insurance"] as VaultType[]).map((type) => {
                 const Icon = VAULT_TYPE_ICONS[type]
+                const isAgentType = type === "agent" || type === "agent_v2"
                 return (
                   <button
                     key={type}
-                    onClick={() => setVaultType(type)}
+                    onClick={() => {
+                      setVaultType(type)
+                      localStorage.setItem("ub:vault-tooltip-seen", "1")
+                    }}
                     disabled={isCreating}
                     className={`flex items-start gap-2 rounded-lg border p-3 text-left transition-colors ${
-                      vaultType === type
-                        ? "border-primary bg-primary/5 text-foreground"
-                        : "border-border bg-background text-muted-foreground hover:border-primary/30"
+                      isAgentType
+                        ? vaultType === type
+                          ? "border-red-500 bg-red-600 text-white"
+                          : "border-red-500/50 bg-red-600/90 text-white hover:bg-red-600"
+                        : vaultType === type
+                          ? "border-primary bg-primary/5 text-foreground"
+                          : "border-border bg-background text-muted-foreground hover:border-primary/30"
                     }`}
                   >
-                    <Icon className="size-4 mt-0.5 shrink-0" />
+                    {isAgentType ? (
+                      <RiRobotLine className="size-4 mt-0.5 shrink-0 text-white" />
+                    ) : (
+                      <Icon className="size-4 mt-0.5 shrink-0" />
+                    )}
                     <div>
                       <p className="text-xs font-medium">{VAULT_TYPE_LABELS[type]}</p>
-                      <p className="text-[10px] opacity-70">{VAULT_TYPE_DESCRIPTIONS[type]}</p>
+                      <p className={`text-[10px] ${isAgentType ? "text-white/70" : "opacity-70"}`}>{VAULT_TYPE_DESCRIPTIONS[type]}</p>
                     </div>
                   </button>
                 )
@@ -365,39 +440,149 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
             <label className="block text-sm font-medium text-foreground mb-1.5">
               Link to Subscription (optional)
             </label>
-            <select
-              value={selectedSubscription}
-              onChange={(e) => setSelectedSubscription(e.target.value)}
-              disabled={isCreating}
-              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
-            >
-              <option value="">No linked subscription</option>
-              {subscriptions.map((sub) => (
-                <option key={sub.id} value={sub.id}>
-                  {sub.name} ({sub.amount} {sub.currency})
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search your subscriptions..."
+                value={subSearchQuery}
+                onChange={(e) => {
+                  setSubSearchQuery(e.target.value)
+                  setShowSubDropdown(true)
+                  if (!e.target.value) setSelectedSubscription("")
+                }}
+                onFocus={() => setShowSubDropdown(true)}
+                onBlur={() => setTimeout(() => setShowSubDropdown(false), 200)}
+                disabled={isCreating}
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground"
+                autoComplete="off"
+              />
+              {showSubDropdown && (
+                <div className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto rounded-lg border border-border bg-card shadow-lg">
+                  {subscriptions
+                    .filter(s => !subSearchQuery || s.name.toLowerCase().includes(subSearchQuery.toLowerCase()))
+                    .map((sub) => {
+                      const entry = findSubscription(sub.name)
+                      const domain = entry?.domain
+                      return (
+                        <button
+                          key={sub.id}
+                          type="button"
+                          className={`flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors ${selectedSubscription === sub.id ? "bg-muted" : "hover:bg-muted/50"}`}
+                          onMouseDown={(e) => {
+                            e.preventDefault()
+                            setSelectedSubscription(sub.id)
+                            setSubSearchQuery(sub.name)
+                            setShowSubDropdown(false)
+                          }}
+                        >
+                          {domain ? (
+                            <img src={getFaviconUrl(domain)} alt="" className="size-5 rounded object-contain bg-white border border-border p-0.5 shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }} />
+                          ) : (
+                            <div className="size-5 rounded bg-muted flex items-center justify-center shrink-0">
+                              <span className="text-[8px] font-bold text-muted-foreground">{sub.name.charAt(0)}</span>
+                            </div>
+                          )}
+                          <span className="font-medium text-foreground truncate">{sub.name}</span>
+                          <span className="ml-auto text-xs text-muted-foreground shrink-0">{sub.amount} {sub.currency}</span>
+                        </button>
+                      )
+                    })}
+                  {subscriptions.filter(s => !subSearchQuery || s.name.toLowerCase().includes(subSearchQuery.toLowerCase())).length === 0 && (
+                    <p className="px-3 py-2 text-xs text-muted-foreground">No subscriptions found</p>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-foreground mb-1.5">
-              Amount (ALGO)
+              Amount
             </label>
-            <input
-              type="number"
-              step="0.0001"
-              min="0.001"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="0.00"
-              disabled={isCreating}
-              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
-            />
-            {balance > 0 && (
-              <p className="mt-1 text-xs text-muted-foreground">
-                Available: {balance.toFixed(4)} ALGO
-              </p>
+            {/* Toggle between ALGO and USD input */}
+            <div className="flex items-center gap-2 mb-2">
+              <button
+                type="button"
+                onClick={() => setInputMode("algo")}
+                className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${inputMode === "algo" ? "bg-foreground text-background" : "bg-muted text-muted-foreground"}`}
+              >
+                ALGO
+              </button>
+              <button
+                type="button"
+                onClick={() => setInputMode("usd")}
+                disabled={!algoUsdPrice}
+                className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-50 ${inputMode === "usd" ? "bg-foreground text-background" : "bg-muted text-muted-foreground"}`}
+              >
+                USD
+              </button>
+              {algoUsdPrice && (
+                <span className="text-[10px] text-muted-foreground ml-auto">
+                  1 ALGO ≈ ${algoUsdPrice.toFixed(4)}
+                </span>
+              )}
+            </div>
+            {inputMode === "algo" ? (
+              <input
+                type="number"
+                step="0.0001"
+                min="0.001"
+                value={amount}
+                onChange={(e) => {
+                  setAmount(e.target.value)
+                  if (algoUsdPrice && e.target.value) setUsdAmount((parseFloat(e.target.value) * algoUsdPrice).toFixed(2))
+                }}
+                placeholder="0.00 ALGO"
+                disabled={isCreating}
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+              />
+            ) : (
+              <input
+                type="number"
+                step="0.01"
+                min="0.01"
+                value={usdAmount}
+                onChange={(e) => {
+                  setUsdAmount(e.target.value)
+                  if (algoUsdPrice && e.target.value) setAmount((parseFloat(e.target.value) / algoUsdPrice).toFixed(4))
+                }}
+                placeholder="0.00 USD"
+                disabled={isCreating}
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+              />
+            )}
+            <div className="mt-1 flex items-center justify-between">
+              {balance > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Available: {balance.toFixed(4)} ALGO
+                </p>
+              )}
+              {inputMode === "usd" && amount && (
+                <p className="text-xs text-muted-foreground">
+                  ≈ {amount} ALGO
+                </p>
+              )}
+              {inputMode === "algo" && usdAmount && algoUsdPrice && (
+                <p className="text-xs text-muted-foreground">
+                  ≈ ${usdAmount} USD <span className="text-muted-foreground/50">(Gora Oracle)</span>
+                </p>
+              )}
+            </div>
+            {/* Tinyman swap suggestion when balance is low */}
+            {balance > 0 && Number(amount) > 0 && balance < Number(amount) + 0.3 && (
+              <div className="mt-2 rounded-lg border border-amber-200 dark:border-amber-500/20 bg-amber-50/50 dark:bg-amber-500/5 px-3 py-2">
+                <p className="text-[11px] text-amber-700 dark:text-amber-400 font-medium">
+                  Need {(Number(amount) + 0.3 - balance).toFixed(4)} more ALGO
+                </p>
+                <a
+                  href={`https://testnet.tinyman.org/#/swap?asset_in=10458941&asset_out=0`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 mt-1 text-[10px] text-amber-600 dark:text-amber-300 hover:underline"
+                >
+                  Swap USDC → ALGO on Tinyman DEX ↗
+                </a>
+              </div>
             )}
           </div>
 
@@ -476,10 +661,10 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
             </div>
           )}
 
-          {vaultType === "agent" && (
+          {(vaultType === "agent" || vaultType === "agent_v2" || vaultType === "cancellation_insurance") && (
             <div>
               <label className="block text-sm font-medium text-foreground mb-1.5">
-                Auto-Pay Agent Wallet
+                {vaultType === "cancellation_insurance" ? "Agent Wallet (releases to vendor if not cancelled)" : "Auto-Pay Agent Wallet"}
               </label>
               <input
                 type="text"
@@ -514,9 +699,10 @@ export function CreateVaultModal({ isOpen, onClose, onCreated }: CreateVaultModa
             </div>
           )}
 
-          {vaultType === "agent" && agentAddress ? (
+          {(vaultType === "agent" || vaultType === "agent_v2" || vaultType === "cancellation_insurance") && agentAddress ? (
             <div className="rounded-lg bg-green-500/5 border border-green-500/20 p-3 flex items-start gap-2">
-              <RiRobotLine className="size-4 mt-0.5 shrink-0 text-green-600 dark:text-green-400" />
+              <img src="/openclaw.svg" alt="OpenClaw" className="size-4 mt-0.5 shrink-0 dark:hidden" />
+              <img src="/openclaw-dark.svg" alt="OpenClaw" className="size-4 mt-0.5 shrink-0 hidden dark:block" />
               <div>
                 <p className="text-xs font-medium text-green-700 dark:text-green-400">Agent Auto-Pay Enabled</p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">

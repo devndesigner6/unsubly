@@ -80,14 +80,15 @@ export function getLoraAddressUrl(address: string, network: AlgorandNetwork = "t
   return `https://lora.algokit.io/${network}/account/${address}`
 }
 
-export type VaultType = "standard" | "agent" | "agent_v2" | "time_locked" | "multi_sig" | "dispute" | "asa"
+export type VaultType = "standard" | "agent" | "agent_v2" | "time_locked" | "multi_sig" | "dispute" | "asa" | "cancellation_insurance"
 
 export const VAULT_TYPE_LABELS: Record<VaultType, string> = {
-  standard:    "Standard",
-  agent:       "Agent-Managed",
-  agent_v2:    "Agent-Managed v2",
-  time_locked: "Time-Locked",
-  multi_sig:   "Multi-Sig",
-  dispute:     "Dispute Escrow",
-  asa:         "ASA Token",
+  standard:                 "Standard",
+  agent:                    "Agent-Managed",
+  agent_v2:                 "Agent-Managed v2",
+  time_locked:              "Time-Locked",
+  multi_sig:                "Multi-Sig",
+  dispute:                  "Dispute Escrow",
+  asa:                      "ASA Token",
+  cancellation_insurance:   "Cancel Insurance",
 }

@@ -24,21 +24,21 @@ const buttonVariants = tv({
         // text color
         "text-white",
         // background color
-        "bg-gray-900 dark:bg-white dark:text-gray-900",
+        "bg-gray-900 dark:bg-white dark:text-black",
         // hover color
-        "hover:bg-gray-800 dark:hover:bg-gray-100",
+        "hover:bg-gray-800 dark:hover:bg-white/90",
         // active
         "active:scale-[0.98]",
       ],
       secondary: [
         // border
-        "border-gray-200 dark:border-gray-800",
+        "border-gray-200 dark:border-white/10",
         // text color
-        "text-gray-900 dark:text-gray-50",
+        "text-gray-900 dark:text-white",
         // background color
-        "bg-white dark:bg-gray-950",
+        "bg-white dark:bg-black",
         // hover color
-        "hover:bg-gray-50 hover:border-gray-300 dark:hover:bg-gray-900 dark:hover:border-gray-700",
+        "hover:bg-gray-50 hover:border-gray-300 dark:hover:bg-white/5 dark:hover:border-white/20",
         // active
         "active:scale-[0.98]",
       ],
@@ -46,11 +46,11 @@ const buttonVariants = tv({
         // border
         "border-transparent",
         // text color
-        "text-gray-700 dark:text-gray-300",
+        "text-gray-700 dark:text-white/70",
         // background color
-        "bg-gray-100 dark:bg-gray-800",
+        "bg-gray-100 dark:bg-white/10",
         // hover color
-        "hover:bg-gray-200 dark:hover:bg-gray-700",
+        "hover:bg-gray-200 dark:hover:bg-white/15",
         // active
         "active:scale-[0.98]",
       ],
@@ -58,11 +58,11 @@ const buttonVariants = tv({
         // border
         "border-transparent",
         // text color
-        "text-gray-700 dark:text-gray-300",
+        "text-gray-700 dark:text-white/70",
         // background
         "bg-transparent",
         // hover color
-        "hover:bg-gray-100 dark:hover:bg-gray-800",
+        "hover:bg-gray-100 dark:hover:bg-white/10",
         // active
         "active:scale-[0.98]",
       ],

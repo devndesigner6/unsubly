@@ -23,8 +23,8 @@ export function Switch({
       disabled={disabled}
       onClick={() => onCheckedChange(!checked)}
       className={cx(
-        "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900",
-        checked ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-600",
+        "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-black",
+        checked ? "bg-blue-600" : "bg-gray-300 dark:bg-white/20",
         disabled && "cursor-not-allowed opacity-50",
         className,
       )}

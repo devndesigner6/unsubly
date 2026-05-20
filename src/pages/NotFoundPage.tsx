@@ -29,7 +29,7 @@ export default function NotFoundPage() {
 
       <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
         <Button asChild>
-          <Link to="/">
+          <Link to="/dashboard">
             <RiHome3Line className="mr-2 size-4" />
             Back to dashboard
           </Link>

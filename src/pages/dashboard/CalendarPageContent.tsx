@@ -169,9 +169,9 @@ export default function CalendarPageContent() {
           <div className="flex flex-col gap-3 text-white sm:flex-row sm:items-center sm:justify-between">
             <h1 className="text-xl font-bold sm:text-2xl">Payment Calendar</h1>
             <div className="flex items-center gap-2 rounded-lg bg-white/10 p-1 self-start sm:self-auto">
-              <button onClick={() => setCurrentDate(new Date(year, month - 1, 1))} aria-label="Previous month" title="Previous month" className="p-1 hover:bg-white/10 rounded"><RiArrowLeftSLine /></button>
+              <button onClick={() => setCurrentDate(new Date(year, month - 1, 1))} aria-label="Previous month" title="Previous month" className="flex size-9 items-center justify-center hover:bg-white/10 rounded-md transition-colors"><RiArrowLeftSLine className="size-5" /></button>
               <span className="min-w-[110px] text-center font-medium sm:min-w-[120px]">{MONTHS[month]} {year}</span>
-              <button onClick={() => setCurrentDate(new Date(year, month + 1, 1))} aria-label="Next month" title="Next month" className="p-1 hover:bg-white/10 rounded"><RiArrowRightSLine /></button>
+              <button onClick={() => setCurrentDate(new Date(year, month + 1, 1))} aria-label="Next month" title="Next month" className="flex size-9 items-center justify-center hover:bg-white/10 rounded-md transition-colors"><RiArrowRightSLine className="size-5" /></button>
             </div>
           </div>
           <div className="mt-4 flex flex-wrap gap-3 text-sm text-white">
@@ -216,7 +216,7 @@ export default function CalendarPageContent() {
             return (
               <div key={day} className={cx(
                 "group relative min-h-[60px] bg-card p-1 transition-colors hover:bg-accent/50 sm:min-h-[100px] sm:p-2",
-                isPast && "opacity-60"
+                day && isPast && "opacity-60"
               )}>
                 <span className={cx(
                   "flex size-6 items-center justify-center rounded-full text-xs font-medium",

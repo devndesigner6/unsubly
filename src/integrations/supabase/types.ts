@@ -212,8 +212,10 @@ export type Database = {
           currency: string
           default_alert_days: number | null
           email_alerts: boolean | null
+          google_access_token: string | null
           id: string
           name: string | null
+          telegram_chat_id: string | null
           updated_at: string
           weekly_digest: boolean | null
         }
@@ -224,8 +226,10 @@ export type Database = {
           currency?: string
           default_alert_days?: number | null
           email_alerts?: boolean | null
+          google_access_token?: string | null
           id: string
           name?: string | null
+          telegram_chat_id?: string | null
           updated_at?: string
           weekly_digest?: boolean | null
         }
@@ -236,8 +240,10 @@ export type Database = {
           currency?: string
           default_alert_days?: number | null
           email_alerts?: boolean | null
+          google_access_token?: string | null
           id?: string
           name?: string | null
+          telegram_chat_id?: string | null
           updated_at?: string
           weekly_digest?: boolean | null
         }
@@ -306,8 +312,11 @@ export type Database = {
           alert_enabled: boolean | null
           amount: number
           billing_cycle: Database["public"]["Enums"]["billing_cycle"]
+          cancelled_at: string | null
+          cancellation_method: string | null
           category: string | null
           created_at: string
+          credentials_set_at: string | null
           currency: string | null
           description: string | null
           folder_id: string | null
@@ -318,6 +327,9 @@ export type Database = {
           next_billing_date: string
           notes: string | null
           payment_method_id: string | null
+          service_password_enc: string | null
+          service_username: string | null
+          source: string
           start_date: string
           status: Database["public"]["Enums"]["subscription_status"] | null
           updated_at: string
@@ -329,8 +341,11 @@ export type Database = {
           alert_enabled?: boolean | null
           amount: number
           billing_cycle: Database["public"]["Enums"]["billing_cycle"]
+          cancelled_at?: string | null
+          cancellation_method?: string | null
           category?: string | null
           created_at?: string
+          credentials_set_at?: string | null
           currency?: string | null
           description?: string | null
           folder_id?: string | null
@@ -341,6 +356,9 @@ export type Database = {
           next_billing_date: string
           notes?: string | null
           payment_method_id?: string | null
+          service_password_enc?: string | null
+          service_username?: string | null
+          source?: string
           start_date: string
           status?: Database["public"]["Enums"]["subscription_status"] | null
           updated_at?: string
@@ -352,8 +370,11 @@ export type Database = {
           alert_enabled?: boolean | null
           amount?: number
           billing_cycle?: Database["public"]["Enums"]["billing_cycle"]
+          cancelled_at?: string | null
+          cancellation_method?: string | null
           category?: string | null
           created_at?: string
+          credentials_set_at?: string | null
           currency?: string | null
           description?: string | null
           folder_id?: string | null
@@ -364,6 +385,9 @@ export type Database = {
           next_billing_date?: string
           notes?: string | null
           payment_method_id?: string | null
+          service_password_enc?: string | null
+          service_username?: string | null
+          source?: string
           start_date?: string
           status?: Database["public"]["Enums"]["subscription_status"] | null
           updated_at?: string
@@ -411,6 +435,144 @@ export type Database = {
           name?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      agent_renewal_alerts: {
+        Row: {
+          alert_sent_at: string
+          alert_type: string
+          created_at: string
+          decided_at: string | null
+          id: string
+          subscription_id: string
+          user_decision: string | null
+          vault_id: string | null
+        }
+        Insert: {
+          alert_sent_at?: string
+          alert_type?: string
+          created_at?: string
+          decided_at?: string | null
+          id?: string
+          subscription_id: string
+          user_decision?: string | null
+          vault_id?: string | null
+        }
+        Update: {
+          alert_sent_at?: string
+          alert_type?: string
+          created_at?: string
+          decided_at?: string | null
+          id?: string
+          subscription_id?: string
+          user_decision?: string | null
+          vault_id?: string | null
+        }
+        Relationships: []
+      }
+      subscription_guardrails: {
+        Row: {
+          budget_cap: number | null
+          is_trial: boolean | null
+          pause_before_paid_renewal: boolean | null
+          require_confirmation: boolean | null
+          subscription_id: string
+          trial_end_date: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          budget_cap?: number | null
+          is_trial?: boolean | null
+          pause_before_paid_renewal?: boolean | null
+          require_confirmation?: boolean | null
+          subscription_id: string
+          trial_end_date?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          budget_cap?: number | null
+          is_trial?: boolean | null
+          pause_before_paid_renewal?: boolean | null
+          require_confirmation?: boolean | null
+          subscription_id?: string
+          trial_end_date?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      agent_actions: {
+        Row: {
+          action_type: string
+          created_at: string
+          id: string
+          payload: Json | null
+          status: string
+          subscription_id: string | null
+          txid: string | null
+          user_id: string
+          vault_id: string | null
+        }
+        Insert: {
+          action_type?: string
+          created_at?: string
+          id?: string
+          payload?: Json | null
+          status?: string
+          subscription_id?: string | null
+          txid?: string | null
+          user_id: string
+          vault_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          id?: string
+          payload?: Json | null
+          status?: string
+          subscription_id?: string | null
+          txid?: string | null
+          user_id?: string
+          vault_id?: string | null
+        }
+        Relationships: []
+      }
+      agent_pending_decisions: {
+        Row: {
+          chat_id: string | null
+          created_at: string
+          decided_at: string | null
+          decision: string | null
+          expires_at: string
+          id: string
+          notified_at: string
+          subscription_id: string | null
+          user_id: string
+          vault_id: string | null
+        }
+        Insert: {
+          chat_id?: string | null
+          created_at?: string
+          decided_at?: string | null
+          decision?: string | null
+          expires_at: string
+          id?: string
+          notified_at?: string
+          subscription_id?: string | null
+          user_id: string
+          vault_id?: string | null
+        }
+        Update: {
+          chat_id?: string | null
+          created_at?: string
+          decided_at?: string | null
+          decision?: string | null
+          expires_at?: string
+          id?: string
+          notified_at?: string
+          subscription_id?: string | null
+          user_id?: string
+          vault_id?: string | null
         }
         Relationships: []
       }

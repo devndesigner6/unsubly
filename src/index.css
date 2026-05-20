@@ -2,6 +2,30 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: "Departure Mono";
+  src: url("/fonts/DepartureMono-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Satoshi";
+  src: url("https://cdn.jsdelivr.net/gh/nicholasgillespie/fonts@main/satoshi/Satoshi-Variable.woff2") format("woff2");
+  font-weight: 300 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Satoshi";
+  src: url("https://cdn.jsdelivr.net/gh/nicholasgillespie/fonts@main/satoshi/Satoshi-VariableItalic.woff2") format("woff2");
+  font-weight: 300 900;
+  font-style: italic;
+  font-display: swap;
+}
+
 @layer base {
   :root {
     --background: 40 20% 96%;
@@ -25,30 +49,36 @@
     --ring: 30 10% 10%;
     --radius: 0.5rem;
 
+    --accent-gold: 38 65% 58%;
+    --accent-gold-hover: 38 70% 47%;
+
     --font-display: "Instrument Serif", Georgia, serif;
-    --font-body: "DM Sans", system-ui, sans-serif;
+    --font-body: "Satoshi", "DM Sans", system-ui, sans-serif;
   }
 
   .dark {
-    --background: 30 10% 6%;
-    --foreground: 40 20% 92%;
-    --card: 30 10% 8%;
-    --card-foreground: 40 20% 92%;
-    --popover: 30 10% 8%;
-    --popover-foreground: 40 20% 92%;
-    --primary: 40 20% 92%;
-    --primary-foreground: 30 10% 6%;
-    --secondary: 30 10% 14%;
-    --secondary-foreground: 40 20% 92%;
-    --muted: 30 10% 14%;
-    --muted-foreground: 40 10% 55%;
-    --accent: 30 10% 14%;
-    --accent-foreground: 40 20% 92%;
+    --background: 0 0% 4%;
+    --foreground: 0 0% 93%;
+    --card: 0 0% 7%;
+    --card-foreground: 0 0% 93%;
+    --popover: 0 0% 7%;
+    --popover-foreground: 0 0% 93%;
+    --primary: 0 0% 93%;
+    --primary-foreground: 0 0% 4%;
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 93%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 52%;
+    --accent: 0 0% 12%;
+    --accent-foreground: 0 0% 93%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 100%;
-    --border: 30 10% 18%;
-    --input: 30 10% 18%;
-    --ring: 40 20% 92%;
+    --border: 0 0% 16%;
+    --input: 0 0% 16%;
+    --ring: 0 0% 93%;
+
+    --accent-gold: 43 72% 62%;
+    --accent-gold-hover: 43 80% 52%;
   }
 
   * {
@@ -69,6 +99,53 @@
 
   .font-body {
     font-family: var(--font-body);
+  }
+
+  .font-mono-pixel {
+    font-family: "Departure Mono", "Courier New", monospace;
+  }
+
+  /* Accent gold utilities */
+  .text-accent-gold {
+    color: hsl(var(--accent-gold));
+  }
+  .bg-accent-gold {
+    background-color: hsl(var(--accent-gold));
+  }
+  .border-accent-gold {
+    border-color: hsl(var(--accent-gold));
+  }
+  .glow-gold {
+    box-shadow: 0 0 20px hsl(var(--accent-gold) / 0.15), 0 0 6px hsl(var(--accent-gold) / 0.1);
+  }
+  .glow-gold-sm {
+    box-shadow: 0 0 12px hsl(var(--accent-gold) / 0.12);
+  }
+
+  /* Ghost watermark text behind headings */
+  .ghost-text {
+    position: absolute;
+    top: -0.15em;
+    left: -0.02em;
+    font-family: var(--font-display);
+    font-size: clamp(6rem, 15vw, 12rem);
+    font-weight: 400;
+    line-height: 1;
+    color: hsl(var(--foreground));
+    opacity: 0.03;
+    pointer-events: none;
+    user-select: none;
+    white-space: nowrap;
+    z-index: -1;
+  }
+
+  /* Hide scrollbar but keep scroll functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 
   /* === Micro-interaction utilities === */
@@ -178,3 +255,42 @@
   50%      { transform: scaleY(1); }
 }
 
+
+/* Phrase fade-in animation for Hero headline cycling */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-out {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-6px); }
+}
+@keyframes slide {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+@keyframes shimmer {
+  0%   { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out both;
+}
+.animate-fade-out {
+  animation: fade-out 0.25s ease-in both;
+}
+
+
+/* Mobile touch feedback */
+@media (hover: none) {
+  button, a, [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Safe area for notched devices */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}

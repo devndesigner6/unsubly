@@ -40,7 +40,7 @@ export function VaultMemoryTab({ appId, vaultType }: Props) {
   const isV2 = vaultType === "agent_v2" || vaultType === "agent"
   if (!isV2) {
     return (
-      <div className="rounded border border-dashed border-gray-300 px-4 py-6 text-center text-sm text-gray-500 dark:border-gray-700">
+      <div className="rounded border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
         On-chain billing history is only available on Agent Escrow Vault v2.
       </div>
     )
@@ -49,13 +49,13 @@ export function VaultMemoryTab({ appId, vaultType }: Props) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-gray-100">
+        <h3 className="flex items-center gap-2 text-sm font-medium text-foreground">
           <RiHistoryLine className="size-4" /> On-chain billing history
         </h3>
         <a
           href={`https://lora.algokit.io/testnet/application/${appId}`}
           target="_blank" rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-900 dark:hover:text-gray-100"
+          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
           title="View boxes in Lora explorer"
         >
           Boxes <RiExternalLinkLine className="size-3" />
@@ -63,7 +63,7 @@ export function VaultMemoryTab({ appId, vaultType }: Props) {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-8 text-gray-500">
+        <div className="flex items-center justify-center py-8 text-muted-foreground">
           <RiLoader4Line className="mr-2 size-4 animate-spin" /> Reading boxes…
         </div>
       ) : error ? (
@@ -71,19 +71,19 @@ export function VaultMemoryTab({ appId, vaultType }: Props) {
           Could not read on-chain history: {error}
         </div>
       ) : records.length === 0 ? (
-        <div className="rounded border border-dashed border-gray-300 px-4 py-6 text-center text-sm text-gray-500 dark:border-gray-700">
+        <div className="rounded border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
           No releases yet. Once the agent (or you) releases funds, each cycle
           appears here as a permanent on-chain record.
         </div>
       ) : (
-        <ul className="divide-y divide-gray-200 overflow-hidden rounded border border-gray-200 dark:divide-gray-800 dark:border-gray-800">
+        <ul className="divide-y divide-border overflow-hidden rounded border border-border">
           {records.map((r) => (
             <li key={r.cycle} className="flex items-center gap-4 p-3 text-sm">
-              <span className="w-12 shrink-0 font-mono text-xs text-gray-500">#{r.cycle}</span>
-              <span className="flex-1 text-gray-900 dark:text-gray-100">
+              <span className="w-12 shrink-0 font-mono text-xs text-muted-foreground">#{r.cycle}</span>
+              <span className="flex-1 text-foreground">
                 {microalgosToAlgo(r.amount)} ALGO
               </span>
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-muted-foreground">
                 {new Date(r.timestamp * 1000).toLocaleString()}
               </span>
             </li>

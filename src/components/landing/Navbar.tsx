@@ -1,10 +1,10 @@
 import { Button } from "@/components/Button"
 import { Logo } from "@/components/Logo"
-import { cx } from "@/lib/utils"
-import useScroll from "@/lib/useScroll"
-import { RiMenuLine, RiCloseLine } from "@remixicon/react"
+import { RiMenuLine, RiCloseLine, RiMoonLine, RiSunLine } from "@remixicon/react"
 import { Link } from "react-router-dom"
-import { useState } from "react"
+import { useState, useRef } from "react"
+import { useTheme } from "next-themes"
+import { motion, useScroll as useMotionScroll, useMotionValueEvent } from "motion/react"
 
 const navigation = [
   { name: "Platform", href: "#features" },
@@ -13,77 +13,127 @@ const navigation = [
 ]
 
 export function Navbar() {
-  const scrolled = useScroll(50)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const { theme, setTheme } = useTheme()
+  const [hidden, setHidden] = useState(false)
+  const { scrollY } = useMotionScroll()
+  const lastScrollY = useRef(0)
+
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    const prev = lastScrollY.current
+    if (latest > prev && latest > 150) {
+      setHidden(true)
+    } else {
+      setHidden(false)
+    }
+    lastScrollY.current = latest
+  })
+
+  const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark")
 
   return (
-    <header
-      className={cx(
-        "fixed inset-x-0 top-0 z-50 transition-all duration-500",
-        scrolled
-          ? "border-b border-border bg-background/90 backdrop-blur-xl"
-          : "bg-transparent",
-      )}
+    <motion.header
+      animate={{ y: hidden ? -100 : 0 }}
+      transition={{ duration: 0.3, ease: "easeInOut" }}
+      className="fixed inset-x-0 top-0 z-50 flex justify-center pt-4 px-4"
     >
-      <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 lg:px-8">
-        <Link to="/" className="flex items-center gap-3 group">
-          <div className="flex size-9 items-center justify-center rounded-xl bg-foreground transition-transform group-hover:scale-105">
-            <Logo className="size-5 text-background" />
+      {/* Floating pill navbar */}
+      <nav className="flex items-center gap-1 rounded-full border border-border/60 bg-background/80 backdrop-blur-xl shadow-[0_2px_20px_-4px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_20px_-4px_rgba(0,0,0,0.3)] px-2 py-1.5 max-w-fit">
+        {/* Logo */}
+        <Link to="/" className="flex items-center gap-2 pl-2 pr-3 group">
+          <div className="flex size-7 items-center justify-center rounded-lg bg-foreground transition-transform group-hover:scale-105">
+            <Logo className="size-3.5 text-background" />
           </div>
-          <span className="text-base font-medium tracking-tight text-foreground">
+          <span className="text-sm font-medium tracking-tight text-foreground hidden sm:block">
             Unsubscribely
           </span>
         </Link>
 
-        <div className="hidden items-center gap-1 md:flex">
+        {/* Divider */}
+        <div className="hidden md:block w-px h-5 bg-border/60 mx-1" />
+
+        {/* Nav links */}
+        <div className="hidden md:flex items-center">
           {navigation.map((item) => (
             <a
               key={item.name}
               href={item.href}
-              className="px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+              className="px-3 py-1.5 text-[13px] text-muted-foreground transition-colors hover:text-foreground rounded-full hover:bg-muted/50"
             >
               {item.name}
             </a>
           ))}
         </div>
 
-        <div className="hidden items-center gap-3 md:flex">
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground">Log In</Link>
-          </Button>
-          <Button size="sm" asChild className="rounded-full bg-foreground text-background hover:bg-foreground/90 px-5">
-            <Link to="/register">Get Started</Link>
-          </Button>
+        {/* Divider */}
+        <div className="hidden md:block w-px h-5 bg-border/60 mx-1" />
+
+        {/* Right side actions */}
+        <div className="hidden md:flex items-center gap-1">
+          <button
+            onClick={toggleTheme}
+            className="flex size-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground hover:bg-muted/50"
+            aria-label="Toggle theme"
+          >
+            {theme === "dark" ? <RiSunLine className="size-3.5" /> : <RiMoonLine className="size-3.5" />}
+          </button>
+          <Link
+            to="/login"
+            className="px-3 py-1.5 text-[13px] text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-muted/50"
+          >
+            Log In
+          </Link>
+          <Link
+            to="/register"
+            className="px-4 py-1.5 text-[13px] font-medium bg-foreground text-background rounded-full hover:bg-foreground/90 transition-colors"
+          >
+            Get Started
+          </Link>
         </div>
 
-        <button
-          className="flex size-10 items-center justify-center rounded-xl hover:bg-muted md:hidden transition-colors"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          aria-expanded={mobileMenuOpen}
-          aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-        >
-          {mobileMenuOpen ? (
-            <RiCloseLine className="size-5 text-foreground" />
-          ) : (
-            <RiMenuLine className="size-5 text-foreground" />
-          )}
-        </button>
+        {/* Mobile menu button */}
+        <div className="flex items-center gap-1 md:hidden">
+          <button
+            onClick={toggleTheme}
+            className="flex size-8 items-center justify-center rounded-full text-muted-foreground hover:bg-muted/50 transition-colors"
+            aria-label="Toggle theme"
+          >
+            {theme === "dark" ? <RiSunLine className="size-4" /> : <RiMoonLine className="size-4" />}
+          </button>
+          <button
+            className="flex size-8 items-center justify-center rounded-full hover:bg-muted/50 transition-colors"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-expanded={mobileMenuOpen}
+            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+          >
+            {mobileMenuOpen ? (
+              <RiCloseLine className="size-4 text-foreground" />
+            ) : (
+              <RiMenuLine className="size-4 text-foreground" />
+            )}
+          </button>
+        </div>
       </nav>
 
+      {/* Mobile dropdown */}
       {mobileMenuOpen && (
-        <div className="absolute inset-x-0 top-full border-t border-border bg-background/95 backdrop-blur-xl px-6 py-6 md:hidden">
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="absolute top-full mt-2 inset-x-4 rounded-2xl border border-border/60 bg-background/95 backdrop-blur-xl shadow-lg px-4 py-4 md:hidden"
+        >
           <div className="flex flex-col gap-1">
             {navigation.map((item) => (
               <a
                 key={item.name}
                 href={item.href}
-                className="px-4 py-3 text-base text-muted-foreground hover:text-foreground transition-colors"
+                className="px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 {item.name}
               </a>
             ))}
-            <div className="flex flex-col gap-3 pt-6 mt-4 border-t border-border">
+            <div className="flex flex-col gap-2 pt-4 mt-3 border-t border-border/60">
               <Button variant="secondary" asChild className="justify-center rounded-full">
                 <Link to="/login">Log In</Link>
               </Button>
@@ -92,8 +142,8 @@ export function Navbar() {
               </Button>
             </div>
           </div>
-        </div>
+        </motion.div>
       )}
-    </header>
+    </motion.header>
   )
 }

@@ -1,9 +1,12 @@
 /**
- * Client-side configuration for per-subscription guardrails. Stored in
- * localStorage to avoid coupling these hackathon features to a Supabase
- * migration. The same shape can later be moved into a `subscription_config`
- * table without changing any caller.
+ * Per-subscription guardrails — stored in Supabase subscription_guardrails table.
+ *
+ * Previously stored in localStorage, which meant the OpenClaw agent (which reads
+ * from the DB) never saw the user's settings. This version writes to and reads
+ * from Supabase so the agent and the UI are always in sync.
  */
+
+import { supabase } from "@/integrations/supabase/client"
 
 export interface SubscriptionGuardrails {
   /** Maximum amount the agent is allowed to release per cycle (in the
@@ -16,35 +19,59 @@ export interface SubscriptionGuardrails {
   pauseBeforePaidRenewal: boolean
 }
 
-const KEY_PREFIX = "ub:guardrails:"
-
 const DEFAULT: SubscriptionGuardrails = {
   budgetCap: null,
   trialEndDate: null,
   pauseBeforePaidRenewal: false,
 }
 
-export function getGuardrails(subscriptionId: string): SubscriptionGuardrails {
-  if (typeof window === "undefined") return DEFAULT
+/**
+ * Read guardrails for a subscription from Supabase.
+ * Returns defaults if no row exists or on error.
+ */
+export async function getGuardrails(subscriptionId: string): Promise<SubscriptionGuardrails> {
   try {
-    const raw = window.localStorage.getItem(KEY_PREFIX + subscriptionId)
-    if (!raw) return DEFAULT
-    const parsed = JSON.parse(raw) as Partial<SubscriptionGuardrails>
+    const { data, error } = await supabase
+      .from("subscription_guardrails")
+      .select("budget_cap, trial_end_date, pause_before_paid_renewal")
+      .eq("subscription_id", subscriptionId)
+      .maybeSingle()
+
+    if (error || !data) return DEFAULT
+
     return {
-      budgetCap: typeof parsed.budgetCap === "number" ? parsed.budgetCap : null,
-      trialEndDate: typeof parsed.trialEndDate === "string" ? parsed.trialEndDate : null,
-      pauseBeforePaidRenewal: Boolean(parsed.pauseBeforePaidRenewal),
+      budgetCap: typeof data.budget_cap === "number" ? data.budget_cap : null,
+      trialEndDate: typeof data.trial_end_date === "string" ? data.trial_end_date : null,
+      pauseBeforePaidRenewal: Boolean(data.pause_before_paid_renewal),
     }
   } catch {
     return DEFAULT
   }
 }
 
-export function setGuardrails(subscriptionId: string, g: SubscriptionGuardrails) {
-  if (typeof window === "undefined") return
+/**
+ * Write guardrails for a subscription to Supabase (upsert).
+ */
+export async function setGuardrails(
+  subscriptionId: string,
+  g: SubscriptionGuardrails
+): Promise<void> {
   try {
-    window.localStorage.setItem(KEY_PREFIX + subscriptionId, JSON.stringify(g))
-  } catch { /* storage full / unavailable */ }
+    await supabase
+      .from("subscription_guardrails")
+      .upsert(
+        {
+          subscription_id: subscriptionId,
+          budget_cap: g.budgetCap,
+          trial_end_date: g.trialEndDate,
+          pause_before_paid_renewal: g.pauseBeforePaidRenewal,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "subscription_id" }
+      )
+  } catch {
+    /* silently fail — guardrails are best-effort */
+  }
 }
 
 export interface RenewalRisk {

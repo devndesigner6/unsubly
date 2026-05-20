@@ -28,12 +28,14 @@ export default defineConfig(({ mode }) => {
         async configureServer(server) {
           // Lazy-import the shared handlers so any import errors surface clearly.
           const {
-            aiOptimizerHandler,
+            chatHandler,
             agentRunHandler,
             advanceBillingHandler,
             agentRegistryHandler,
             x402DemoHandler,
           } = await import("./server/handlers.mjs");
+          const { gmailScanHandler } = await import("./api/gmail-scan.mjs");
+          const { saveCredentialsHandler } = await import("./api/save-credentials.mjs");
 
           const wrap = (h: (req: any, res: any) => Promise<void>) =>
             async (req: any, res: any, next: any) => {
@@ -49,11 +51,13 @@ export default defineConfig(({ mode }) => {
               }
             };
 
-          server.middlewares.use("/api/ai-optimizer",   wrap(aiOptimizerHandler));
+          server.middlewares.use("/api/ai-optimizer",   wrap(chatHandler));
           server.middlewares.use("/api/agent-run",      wrap(agentRunHandler));
           server.middlewares.use("/api/advance-billing",wrap(advanceBillingHandler));
           server.middlewares.use("/api/agent/registry", wrap(agentRegistryHandler));
           server.middlewares.use("/api/x402-demo",      wrap(x402DemoHandler));
+          server.middlewares.use("/api/gmail-scan",         wrap(gmailScanHandler));
+          server.middlewares.use("/api/save-credentials",   wrap(saveCredentialsHandler));
         },
       },
     ],

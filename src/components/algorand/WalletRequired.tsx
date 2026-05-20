@@ -2,6 +2,7 @@ import { useAlgorand } from "@/lib/algorand/context"
 import { WalletSelectorModal } from "./WalletSelectorModal"
 import { shortenAddress } from "@/lib/algorand/constants"
 import { RiWalletLine, RiPlugLine, RiShieldLine, RiArrowRightLine, RiSmartphoneLine } from "@remixicon/react"
+import { useRef } from "react"
 
 const PHRASES = [
   {
@@ -29,10 +30,12 @@ interface WalletRequiredProps {
 
 export function WalletRequired({ children, feature }: WalletRequiredProps) {
   const { walletAddress, savedWalletAddress, setShowWalletSelector, isConnecting } = useAlgorand()
+  // Fix: use useRef so the phrase is chosen once per mount, not on every re-render
+  const phraseRef = useRef(PHRASES[Math.floor(Math.random() * PHRASES.length)])
 
   if (walletAddress) return <>{children}</>
 
-  const phrase = PHRASES[Math.floor(Math.random() * PHRASES.length)]
+  const phrase = phraseRef.current
   const hasSaved = !!savedWalletAddress
 
   return (

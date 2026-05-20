@@ -94,7 +94,7 @@ function addrBytes(address: string): Uint8Array {
   return algosdk.decodeAddress(address).publicKey
 }
 
-type SignFn = (txn: algosdk.Transaction) => Promise<Uint8Array[]>
+type SignFn = (txn: algosdk.Transaction | algosdk.Transaction[]) => Promise<Uint8Array[]>
 
 // ── Core deployment ────────────────────────────────────────────────────────
 
@@ -131,6 +131,11 @@ async function deployApp(
   )
   if (appId === 0) throw new Error("Failed to retrieve application ID after deployment")
   const appAddress = String(algosdk.getApplicationAddress(appId))
+
+  // Small delay to let WalletConnect close the first signing session before
+  // the next signing request (fund txn). Without this Pera throws 4100.
+  await new Promise((r) => setTimeout(r, 800))
+
   return { appId, appAddress, txnId }
 }
 
@@ -284,9 +289,28 @@ export async function releaseEscrowFunds(
 const SEL_RELEASE_V2 = new Uint8Array([0x61, 0x17, 0xcc, 0xb8])
 
 /**
- * Release funds from an Agent Escrow Vault v2. v2 takes an explicit `amount`
- * (microAlgos) and writes a BillingRecord into Box Storage. Only the creator
- * or the named agent can call this.
+ * Build the box name the AgentEscrowVaultV2 contract writes billing records to.
+ * Contract stores: BoxMap key = "h:" + arc4.UInt64(new_index)
+ * new_index = current cycle_index + 1
+ */
+function buildBillingBoxName(nextCycleIndex: number): Uint8Array {
+  const prefix = new TextEncoder().encode("h:")
+  const indexBytes = algosdk.encodeUint64(nextCycleIndex)
+  const name = new Uint8Array(prefix.length + indexBytes.length)
+  name.set(prefix, 0)
+  name.set(indexBytes, prefix.length)
+  return name
+}
+
+/**
+ * Release funds from an Agent Escrow Vault v2.
+ *
+ * Sends two transactions as an atomic group signed together in ONE Pera popup:
+ *   1. MBR payment to fund the new billing-record box (16100 µALGO)
+ *   2. The release(uint64) app call with the correct box reference
+ *
+ * Both txns are grouped and signed in a single Pera Wallet prompt to avoid
+ * the 4100 "pending transaction" error that occurs when signing sequentially.
  */
 export async function releaseAgentVaultV2(
   algodClient: algosdk.Algodv2, senderAddress: string, appId: number,
@@ -295,17 +319,59 @@ export async function releaseAgentVaultV2(
 ): Promise<string> {
   const params = await algodClient.getTransactionParams().do()
   const minFee = Number(params.minFee ?? params.fee ?? 1000) || 1000
+
+  // Read current cycle_index from global state to compute the correct box name
+  let nextCycleIndex = 1
+  try {
+    const appInfo = await algodClient.getApplicationByID(appId).do() as any
+    const globalState: Array<{ key: string; value: { type: number; uint: number } }> =
+      appInfo?.params?.["global-state"] ?? appInfo?.params?.globalState ?? []
+    const cycleEntry = globalState.find((e) => {
+      try {
+        // algosdk v3 may return key as base64 string or already decoded
+        const decoded = typeof e.key === "string" ? atob(e.key) : new TextDecoder().decode(e.key as any)
+        return decoded === "cycle_index"
+      } catch { return false }
+    })
+    if (cycleEntry) nextCycleIndex = (cycleEntry.value?.uint ?? 0) + 1
+  } catch {
+    // Default to 1 — first release
+  }
+
+  const boxName = buildBillingBoxName(nextCycleIndex)
+  const appAddress = algosdk.getApplicationAddress(appId)
+
+  // Box MBR: 2500 (base) + 400 * (key_len + value_len)
+  // key = "h:" (2 bytes) + uint64 (8 bytes) = 10 bytes; value = BillingRecord = 24 bytes
+  const BOX_MBR = 2500 + 400 * (10 + 24) // 16100 µALGO
+
   const noteBytes = proof ? clampNoteBytes(`ub:proof-of-delivery:${proof}`, 900) : undefined
-  const txn = algosdk.makeApplicationCallTxnFromObject({
-    sender: senderAddress, appIndex: appId,
+
+  // Build both txns
+  const mbrTxn = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+    sender: senderAddress,
+    receiver: appAddress,
+    amount: BOX_MBR,
+    suggestedParams: { ...params, fee: minFee, flatFee: true },
+  })
+  const releaseTxn = algosdk.makeApplicationCallTxnFromObject({
+    sender: senderAddress,
+    appIndex: appId,
     onComplete: algosdk.OnApplicationComplete.NoOpOC,
     suggestedParams: { ...params, fee: minFee * 2, flatFee: true },
     appArgs: [SEL_RELEASE_V2, algosdk.encodeUint64(amountMicroAlgos)],
-    boxes: [{ appIndex: appId, name: new Uint8Array(0) }],
+    boxes: [{ appIndex: appId, name: boxName }],
     note: noteBytes,
   })
-  const signedTxns = await signTransaction(txn)
-  const sendResponse = await algodClient.sendRawTransaction(signedTxns[0]).do()
+
+  // Assign group ID so both txns are atomic
+  algosdk.assignGroupID([mbrTxn, releaseTxn])
+
+  // Sign BOTH txns in a single Pera Wallet popup (avoids 4100 error)
+  const signedGroup = await signTransaction([mbrTxn, releaseTxn] as any)
+
+  // Send the group
+  const sendResponse = await algodClient.sendRawTransaction(signedGroup).do()
   const txnId = extractTxId(sendResponse)
   await algosdk.waitForConfirmation(algodClient, txnId, 4)
   return txnId
@@ -419,6 +485,21 @@ export async function approveMultiSig(
   signTransaction: SignFn,
 ): Promise<string> {
   return callMethod(algodClient, senderAddress, appId, SEL.approve, signTransaction, true)
+}
+
+/**
+ * Opt an ASA escrow vault's application account into the ASA so it can
+ * receive tokens. Must be called by the creator after deployment and before
+ * funding the vault with ASA tokens.
+ */
+export async function optinASAVault(
+  algodClient: algosdk.Algodv2, senderAddress: string, appId: number,
+  signTransaction: SignFn,
+): Promise<string> {
+  const txnId = await callMethod(algodClient, senderAddress, appId, SEL.optin, signTransaction, false)
+  // Delay to let WalletConnect close session before next signing call
+  await new Promise((r) => setTimeout(r, 800))
+  return txnId
 }
 
 export async function deleteEscrowContract(

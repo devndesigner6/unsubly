@@ -8,6 +8,14 @@ const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 export async function logAction({ vaultId, subscriptionId, userId, status, txid, mode, payload }) {
   try {
+    // userId must be a valid UUID for the agent_actions table.
+    // The Railway agent passes vault.user_id which is always a real UUID.
+    // Guard against non-UUID strings (e.g. "openclaw-agent") that would fail Postgres.
+    const isUUID = typeof userId === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId)
+    if (!isUUID) {
+      console.warn(`[log-action] Skipping insert — userId "${userId}" is not a valid UUID`)
+      return
+    }
     const res = await fetch(`${SUPABASE_URL}/rest/v1/agent_actions`, {
       method: "POST",
       headers: {

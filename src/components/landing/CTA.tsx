@@ -1,31 +1,85 @@
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/Button"
 import { RiArrowRightLine } from "@remixicon/react"
 import { Link } from "react-router-dom"
+import { supabase } from "@/integrations/supabase/client"
+import { motion } from "motion/react"
+
+interface SocialProof {
+  vaults: number
+  algoLocked: number
+  payments: number
+}
 
 export function CTA() {
-  const [inView, setInView] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
+  const [proof, setProof] = useState<SocialProof | null>(null)
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setInView(true) },
-      { threshold: 0.2 }
-    )
-    if (ref.current) observer.observe(ref.current)
-    return () => observer.disconnect()
+    const fetchProof = async () => {
+      try {
+        const [vaultsRes, paymentsRes] = await Promise.all([
+          supabase.from("escrow_vaults" as any).select("amount, status"),
+          supabase.from("onchain_payments" as any).select("id", { count: "exact", head: true }),
+        ])
+
+        const vaultRows = (vaultsRes.data as any[]) ?? []
+        const totalVaults = vaultRows.length
+        const algoLocked = vaultRows
+          .filter((v: any) => v.status === "locked")
+          .reduce((sum: number, v: any) => sum + Number(v.amount || 0), 0)
+        const totalPayments = paymentsRes.count ?? 0
+
+        setProof({
+          vaults: totalVaults,
+          algoLocked: Math.round(algoLocked * 100) / 100,
+          payments: totalPayments,
+        })
+      } catch {
+        // Silently fail — social proof is optional
+      }
+    }
+    fetchProof()
   }, [])
 
   return (
-    <section className="py-20 sm:py-24 lg:py-32 border-t border-border overflow-hidden">
-      <div ref={ref} className="mx-auto max-w-5xl px-6 lg:px-8 text-center">
-        <div className={`transition-all duration-1000 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`}>
+    <section id="pricing" className="py-16 sm:py-20 lg:py-24 border-t border-border overflow-hidden">
+      <div className="mx-auto max-w-5xl px-6 lg:px-8 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.8 }}
+        >
+
+          {/* Social proof numbers — only show if meaningful */}
+          {proof && (proof.vaults > 0 || proof.payments > 0) && (
+            <div className="flex flex-wrap items-center justify-center gap-6 mb-10 text-sm text-muted-foreground">
+              {proof.vaults > 0 && (
+                <span className="flex items-center gap-1.5">
+                  <span className="font-medium text-foreground">{proof.vaults}</span> vaults created
+                </span>
+              )}
+              {proof.vaults > 0 && proof.algoLocked > 0 && <span className="size-1 rounded-full bg-border" />}
+              {proof.algoLocked > 0 && (
+                <span className="flex items-center gap-1.5">
+                  <span className="font-medium text-foreground">{proof.algoLocked.toFixed(2)}</span> ALGO locked
+                </span>
+              )}
+              {proof.payments > 0 && <span className="size-1 rounded-full bg-border" />}
+              {proof.payments > 0 && (
+                <span className="flex items-center gap-1.5">
+                  <span className="font-medium text-foreground">{proof.payments}</span> payments released
+                </span>
+              )}
+            </div>
+          )}
+
           <h2 className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-foreground tracking-tight leading-[0.9]">
             TAKE
             <br />
-            <span className="text-muted-foreground/40">CONTROL.</span>
+            <span className="text-muted-foreground/70">CONTROL.</span>
           </h2>
-          <p className="mt-8 text-base sm:text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed">
+          <p className="mt-8 text-base sm:text-lg text-foreground/70 max-w-xl mx-auto leading-relaxed">
             Start tracking subscriptions, locking payments in escrow,
             and building your on-chain financial identity. 100% free.
           </p>
@@ -43,14 +97,39 @@ export function CTA() {
             </Button>
           </div>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-6 text-xs text-muted-foreground">
-            {["No credit card", "Free forever", "Open source"].map((item) => (
+            {["No credit card", "Free forever (10 subs)", "₹349 lifetime Pro"].map((item) => (
               <span key={item} className="flex items-center gap-2">
                 <span className="size-1 rounded-full bg-foreground/30" />
                 {item}
               </span>
             ))}
           </div>
-        </div>
+
+          {/* Free vs Pro comparison */}
+          <div className="mt-8 mx-auto max-w-md grid grid-cols-2 gap-3 text-xs">
+            <div className="rounded-xl border border-border p-4">
+              <p className="font-medium text-foreground mb-2">Free</p>
+              <ul className="space-y-1.5 text-muted-foreground">
+                <li>10 subscriptions</li>
+                <li>Calendar + Analytics</li>
+                <li>Gmail import</li>
+                <li>CSV import/export</li>
+              </ul>
+            </div>
+            <div className="rounded-xl border border-gold/30 bg-gold/5 p-4">
+              <p className="font-medium text-foreground mb-2">Pro <span className="text-gold">₹349</span></p>
+              <ul className="space-y-1.5 text-muted-foreground">
+                <li>Unlimited subs</li>
+                <li>Telegram bot</li>
+                <li>Escrow vaults</li>
+                <li>AI agent + MCP</li>
+              </ul>
+              <p className="mt-2 text-[10px] italic text-muted-foreground/70">
+                We hate subscriptions. So we won't make you subscribe to us.
+              </p>
+            </div>
+          </div>
+        </motion.div>
       </div>
     </section>
   )

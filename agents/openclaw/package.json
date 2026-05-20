@@ -1,17 +1,21 @@
 {
-  "name": "unsubscribely-openclaw-agent",
-  "version": "1.0.0",
-  "description": "Unsubscribely autonomous payment agent — OpenClaw persistent loop",
+  "name": "unsubscribely-agent",
+  "version": "2.0.0",
+  "description": "Unsubscribely autonomous subscription agent with browser cancel",
   "type": "module",
-  "main": "agent-loop.mjs",
+  "main": "agent-entrypoint.mjs",
   "scripts": {
-    "start": "node agent-loop.mjs",
-    "dev": "node --watch agent-loop.mjs"
+    "start": "node agent-entrypoint.mjs",
+    "monitor:vaults": "node monitor-vaults.mjs",
+    "test:mcp": "node test-mcp.mjs",
+    "test:mcp:prod": "node test-mcp.mjs https://unsubscribely-agent-agent-production.up.railway.app"
   },
   "dependencies": {
-    "algosdk": "3.2.0"
+    "algosdk": "3.2.0",
+    "playwright": "1.52.0",
+    "@modelcontextprotocol/sdk": "^1.12.0"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22.19"
   }
 }

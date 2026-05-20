@@ -38,11 +38,16 @@ export async function checkDueVaults() {
 
   console.log(`[check-due-vaults] ${subs.length} subscription(s) due`)
 
-  const subIds = subs.map(s => s.id).join(",")
+  const subIds = subs.map(s => s.id).filter(Boolean)
+
+  if (subIds.length === 0) {
+    console.log(`[check-due-vaults] No valid subscription IDs found`)
+    return []
+  }
 
   // Get locked vaults for those subscriptions
   const vaults = await sbGet(
-    `escrow_vaults?status=eq.locked&subscription_id=in.(${subIds})&select=id,app_id,app_address,subscription_id,user_id,amount,vault_type,asa_id`
+    `escrow_vaults?status=eq.locked&subscription_id=in.(${subIds.join(",")})&select=id,app_id,app_address,escrow_address,subscription_id,user_id,amount,vault_type,asset_id`
   )
 
   if (!Array.isArray(vaults) || vaults.length === 0) {

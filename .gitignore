@@ -71,3 +71,10 @@ demo-script-video.html
 demo-script-video.pdf
 generate-demo-pdf.js
 unsubscribely-demo-script.pdf
+
+# Deployer wallet files — contain mnemonics, never commit
+.deployer.*.json
+
+# Lovable/AI agent metadata
+.agents/
+attached_assets/

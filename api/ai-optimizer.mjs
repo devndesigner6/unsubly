@@ -1,3 +1,3 @@
-import { aiOptimizerHandler } from "../server/handlers.mjs"
+import { chatHandler } from "../server/handlers.mjs"
 export const config = { api: { bodyParser: false } }
-export default aiOptimizerHandler
+export default chatHandler

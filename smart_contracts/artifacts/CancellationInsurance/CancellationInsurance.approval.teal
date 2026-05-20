@@ -1,0 +1,283 @@
+#pragma version 11
+#pragma typetrack false
+
+// algopy.arc4.ARC4Contract.approval_program() -> uint64:
+main:
+    intcblock 0 1 32
+    bytecblock "status" "creator" "recipient" "agent" "billing_date" "proof_hash"
+    // contract.py:22
+    // class CancellationInsuranceVault(ARC4Contract):
+    txn NumAppArgs
+    bz main_bare_routing@12
+    pushbytes 0x24378d3c // method "delete()void"
+    pushbytes 0xb9c21155 // method "kill()void"
+    pushbytes 0xa1c49e46 // method "submit_proof(byte[])void"
+    pushbytes 0x07d3e5a2 // method "release_to_user()void"
+    pushbytes 0x3f8b1c9d // method "release_to_vendor()void"
+    pushbytes 0x8e2a4f71 // method "get_status()uint64"
+    txna ApplicationArgs 0
+    match main_delete_route@2 main_kill_route@3 main_submit_proof_route@4 main_release_to_user_route@5 main_release_to_vendor_route@6 main_get_status_route@7
+    err
+
+main_bare_routing@12:
+    txn OnCompletion
+    !
+    assert
+    txn ApplicationID
+    bz main_create@13
+    err
+
+main_create@13:
+    // contract.py:49
+    // @arc4.abimethod(allow_actions=["NoOp"], create="require")
+    pushbytes 0x4c1a8e3b // method "create(address,address,uint64)void"
+    txna ApplicationArgs 0
+    match create
+    err
+
+main_delete_route@2:
+    txn OnCompletion
+    pushint 5 // DeleteApplication
+    ==
+    txn ApplicationID
+    &&
+    assert
+    callsub delete
+    intc_1 // 1
+    return
+
+main_kill_route@3:
+    txn OnCompletion
+    !
+    assert
+    txn ApplicationID
+    assert
+    callsub kill
+    intc_1 // 1
+    return
+
+main_submit_proof_route@4:
+    txn OnCompletion
+    !
+    assert
+    txn ApplicationID
+    assert
+    callsub submit_proof
+    intc_1 // 1
+    return
+
+main_release_to_user_route@5:
+    txn OnCompletion
+    !
+    assert
+    txn ApplicationID
+    assert
+    callsub release_to_user
+    intc_1 // 1
+    return
+
+main_release_to_vendor_route@6:
+    txn OnCompletion
+    !
+    assert
+    txn ApplicationID
+    assert
+    callsub release_to_vendor
+    intc_1 // 1
+    return
+
+main_get_status_route@7:
+    txn OnCompletion
+    !
+    assert
+    txn ApplicationID
+    assert
+    callsub get_status
+    intc_1 // 1
+    return
+
+// smart_contracts.cancellation_insurance.contract.CancellationInsuranceVault.create() -> void:
+create:
+    txna ApplicationArgs 1
+    app_global_put "recipient"
+    txna ApplicationArgs 2
+    app_global_put "agent"
+    txna ApplicationArgs 3
+    btoi
+    app_global_put "billing_date"
+    txn Sender
+    app_global_put "creator"
+    pushbytes ""
+    app_global_put "proof_hash"
+    intc_0 // 0
+    app_global_put "status"
+    retsub
+
+// smart_contracts.cancellation_insurance.contract.CancellationInsuranceVault.submit_proof() -> void:
+submit_proof:
+    txn Sender
+    bytec_1 // "creator"
+    app_global_get
+    ==
+    assert // Only creator can submit proof
+    bytec_0 // "status"
+    app_global_get
+    intc_0 // 0
+    ==
+    assert // Vault already settled
+    global LatestTimestamp
+    bytec 4 // "billing_date"
+    app_global_get
+    <
+    assert // Billing date has passed
+    txna ApplicationArgs 1
+    app_global_put "proof_hash"
+    retsub
+
+// smart_contracts.cancellation_insurance.contract.CancellationInsuranceVault.release_to_user() -> void:
+release_to_user:
+    txn Sender
+    bytec_1 // "creator"
+    app_global_get
+    ==
+    assert // Only creator can release to self
+    bytec_0 // "status"
+    app_global_get
+    intc_0 // 0
+    ==
+    assert // Vault already settled
+    bytec 5 // "proof_hash"
+    app_global_get
+    len
+    intc_0 // 0
+    >
+    assert // No cancellation proof submitted
+    global CurrentApplicationAddress
+    balance
+    global CurrentApplicationAddress
+    min_balance
+    -
+    itxn_begin
+    pushint 1 // pay
+    itxn_field TypeEnum
+    bytec_1 // "creator"
+    app_global_get
+    itxn_field Receiver
+    itxn_field Amount
+    intc_0 // 0
+    itxn_field Fee
+    itxn_submit
+    intc_1 // 1
+    app_global_put "status"
+    retsub
+
+// smart_contracts.cancellation_insurance.contract.CancellationInsuranceVault.release_to_vendor() -> void:
+release_to_vendor:
+    txn Sender
+    bytec 3 // "agent"
+    app_global_get
+    ==
+    txn Sender
+    bytec_1 // "creator"
+    app_global_get
+    ==
+    ||
+    assert // Only agent or creator can release to vendor
+    bytec_0 // "status"
+    app_global_get
+    intc_0 // 0
+    ==
+    assert // Vault already settled
+    global LatestTimestamp
+    bytec 4 // "billing_date"
+    app_global_get
+    >=
+    assert // Billing date not yet reached
+    global CurrentApplicationAddress
+    balance
+    global CurrentApplicationAddress
+    min_balance
+    -
+    itxn_begin
+    pushint 1 // pay
+    itxn_field TypeEnum
+    bytec_2 // "recipient"
+    app_global_get
+    itxn_field Receiver
+    itxn_field Amount
+    intc_0 // 0
+    itxn_field Fee
+    itxn_submit
+    pushint 2
+    app_global_put "status"
+    retsub
+
+// smart_contracts.cancellation_insurance.contract.CancellationInsuranceVault.kill() -> void:
+kill:
+    txn Sender
+    bytec_1 // "creator"
+    app_global_get
+    ==
+    assert // Only creator can kill
+    bytec_0 // "status"
+    app_global_get
+    intc_0 // 0
+    ==
+    assert // Vault already settled
+    global CurrentApplicationAddress
+    balance
+    global CurrentApplicationAddress
+    min_balance
+    -
+    itxn_begin
+    pushint 1 // pay
+    itxn_field TypeEnum
+    bytec_1 // "creator"
+    app_global_get
+    itxn_field Receiver
+    itxn_field Amount
+    intc_0 // 0
+    itxn_field Fee
+    itxn_submit
+    intc_1 // 1
+    app_global_put "status"
+    retsub
+
+// smart_contracts.cancellation_insurance.contract.CancellationInsuranceVault.get_status() -> uint64:
+get_status:
+    bytec_0 // "status"
+    app_global_get
+    pushbytes 0x151f7c75
+    swap
+    itob
+    concat
+    log
+    retsub
+
+// smart_contracts.cancellation_insurance.contract.CancellationInsuranceVault.delete() -> void:
+delete:
+    txn Sender
+    bytec_1 // "creator"
+    app_global_get
+    ==
+    assert // Only creator can delete
+    bytec_0 // "status"
+    app_global_get
+    intc_0 // 0
+    !=
+    assert // Settle vault before deleting
+    itxn_begin
+    pushint 1 // pay
+    itxn_field TypeEnum
+    bytec_1 // "creator"
+    app_global_get
+    itxn_field Receiver
+    intc_0 // 0
+    itxn_field Amount
+    bytec_1 // "creator"
+    app_global_get
+    itxn_field CloseRemainderTo
+    intc_0 // 0
+    itxn_field Fee
+    itxn_submit
+    retsub

@@ -15,6 +15,7 @@ import {
 import { Monitor, Moon, Sun } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { useTheme } from "next-themes"
+import { usePlan } from "@/hooks/usePlan"
 import * as React from "react"
 
 export type DropdownUserProfileProps = {
@@ -23,20 +24,29 @@ export type DropdownUserProfileProps = {
 }
 
 export function DropdownUserProfile({ children, align = "start" }: DropdownUserProfileProps) {
-  const [mounted, setMounted] = React.useState(false)
   const { theme, setTheme } = useTheme()
   const { user, signOut } = useAuth()
-
-  React.useEffect(() => { setMounted(true) }, [])
-
-  if (!mounted) return null
+  const { isPro, openCheckout } = usePlan()
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
       <DropdownMenuContent align={align} className="sm:!min-w-[calc(var(--radix-dropdown-menu-trigger-width))]">
-        <DropdownMenuLabel>{user?.email || "User"}</DropdownMenuLabel>
+        <DropdownMenuLabel className="flex items-center gap-2">
+          {user?.email || "User"}
+          {isPro && <span className="text-[9px] font-medium text-gold bg-gold/10 px-1.5 py-0.5 rounded-full">PRO</span>}
+        </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        {!isPro && (
+          <>
+            <DropdownMenuGroup>
+              <DropdownMenuItem onClick={openCheckout} className="text-gold">
+                Upgrade to Pro - ₹349
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+          </>
+        )}
         <DropdownMenuGroup>
           <DropdownMenuSubMenu>
             <DropdownMenuSubMenuTrigger>Theme</DropdownMenuSubMenuTrigger>

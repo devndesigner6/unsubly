@@ -5,7 +5,7 @@
   "installCommand": "npm install --legacy-peer-deps",
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/((?!assets/).*)", "destination": "/index.html" }
   ],
   "headers": [
     {
@@ -18,8 +18,9 @@
       "source": "/(.*)",
       "headers": [
         { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.algonode.cloud https://*.supabase.co https://api.groq.com wss://*.supabase.co https://api.telegram.org https://*.perawallet.app wss://*.perawallet.app https://api.exchangerate-api.com https://vercel.live wss://ws.pusher.com https://*.walletconnect.com wss://*.walletconnect.com https://*.walletconnect.org wss://*.walletconnect.org https://gmail.googleapis.com https://*.up.railway.app https://free-api.vestige.fi https://*.analytics.tinyman.org https://generativelanguage.googleapis.com; frame-ancestors 'self'; base-uri 'self'; object-src 'none'" }
       ]
     }
   ]

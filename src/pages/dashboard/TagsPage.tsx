@@ -8,6 +8,7 @@ import {
 } from "@remixicon/react"
 import { toast } from "sonner"
 import { AsciiEmpty } from "@/components/micro/AsciiEmpty"
+import { motion } from "motion/react"
 
 interface Tag {
   id: string
@@ -93,15 +94,19 @@ export default function TagsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl p-4 sm:p-6 lg:p-8">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Tags</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Label your subscriptions with tags</p>
+    <div className="h-[calc(100vh-3.5rem)] bg-background overflow-hidden flex flex-col">
+      <div className="flex-1 flex flex-col p-4 sm:p-6 lg:p-8 min-h-0 overflow-y-auto">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+        <div className="relative overflow-hidden">
+          <span className="ghost-text">TAGS</span>
+          <h1 className="font-display text-3xl sm:text-4xl text-foreground tracking-tight">Tags</h1>
+          <p className="mt-1.5 text-xs text-muted-foreground">Label your subscriptions with tags</p>
         </div>
-        <Button className="w-full sm:w-auto" onClick={() => { setShowForm(true); setEditingId(null); setName(""); setColor(COLORS[0]) }}>
-          <RiAddLine className="mr-1.5 size-4" /> New Tag
-        </Button>
+        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
+          <Button className="w-full sm:w-auto" onClick={() => { setShowForm(true); setEditingId(null); setName(""); setColor(COLORS[0]) }}>
+            <RiAddLine className="mr-1.5 size-4" /> New Tag
+          </Button>
+        </motion.div>
       </div>
 
       {showForm && (
@@ -153,7 +158,7 @@ export default function TagsPage() {
             <div key={t.id} className="group flex items-center gap-2 rounded-full border border-border bg-card py-1.5 pl-3 pr-1.5 transition-colors hover:bg-muted/50">
               <div className="size-3 rounded-full" style={{ backgroundColor: t.color || COLORS[0] }} />
               <span className="text-sm font-medium text-foreground">{t.name}</span>
-              <button onClick={() => startEdit(t)} className="rounded-full p-1 text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-foreground">
+              <button onClick={() => startEdit(t)} className="rounded-full p-1 text-muted-foreground opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 hover:text-foreground transition-opacity">
                 <RiEditLine className="size-3.5" />
               </button>
               {deleteConfirmId === t.id ? (
@@ -162,7 +167,7 @@ export default function TagsPage() {
                   <button onClick={() => setDeleteConfirmId(null)} className="rounded-full px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-muted">×</button>
                 </div>
               ) : (
-                <button onClick={() => setDeleteConfirmId(t.id)} className="rounded-full p-1 text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive">
+                <button onClick={() => setDeleteConfirmId(t.id)} className="rounded-full p-1 text-muted-foreground opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 hover:text-destructive transition-opacity">
                   <RiDeleteBinLine className="size-3.5" />
                 </button>
               )}
@@ -170,6 +175,7 @@ export default function TagsPage() {
           ))
         )}
       </div>
+    </div>
     </div>
   )
 }

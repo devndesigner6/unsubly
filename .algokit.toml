@@ -10,6 +10,10 @@ language = "python"
 contracts = "smart_contracts"
 artifacts = "smart_contracts/artifacts"
 
+[project.run]
+build = { commands = ["python -m smart_contracts"], description = "Compile all contracts to TEAL" }
+deploy = { commands = ["node scripts/deploy.js"], description = "Deploy singletons to testnet" }
+
 [network]
 algod_url = "https://testnet-api.algonode.cloud"
 algod_token = ""

@@ -104,14 +104,3 @@ export async function fetchWithAlgorandX402<T = unknown>(
   return { data, paymentReceipt }
 }
 
-/**
- * Legacy export kept for any existing imports.
- * Returns a fetch wrapper — but for Algorand x402 you should use
- * fetchWithAlgorandX402 directly since it needs wallet context.
- */
-export function getX402Fetch(_walletAccount: unknown): typeof fetch {
-  console.warn(
-    "[x402-client] getX402Fetch is a stub — use fetchWithAlgorandX402 directly for Algorand payments"
-  )
-  return fetch
-}

@@ -43,7 +43,7 @@ export function ConfirmInline({
   return (
     <div
       ref={containerRef}
-      className="relative inline-flex items-stretch overflow-hidden rounded-full bg-zinc-900 text-white shadow-[0_8px_24px_-12px_rgba(0,0,0,0.6)] ring-1 ring-white/5 dark:bg-zinc-950"
+      className="relative inline-flex items-stretch overflow-hidden rounded-full bg-muted dark:bg-white/[0.08] text-muted-foreground shadow-sm ring-1 ring-border/50 dark:ring-white/10 hover:ring-red-300 hover:text-red-500 dark:hover:ring-red-500/30 dark:hover:text-red-400 transition-colors"
     >
       {/* Left compartment: trigger */}
       <button
@@ -51,9 +51,9 @@ export function ConfirmInline({
         onClick={() => setOpen((v) => !v)}
         aria-label={open ? cancelLabel : trashLabel}
         title={open ? cancelLabel : trashLabel}
-        className="flex h-9 w-10 items-center justify-center text-white/80 transition-colors hover:text-white"
+        className="flex h-8 w-9 items-center justify-center transition-colors"
       >
-        {icon ?? <RiDeleteBinLine className="size-[18px]" />}
+        {icon ?? <RiDeleteBinLine className="size-4" />}
       </button>
 
       {/* Animated reveal section */}

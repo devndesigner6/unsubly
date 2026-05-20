@@ -1,5 +1,6 @@
 import { SubscriptionForm } from "@/components/subscriptions/SubscriptionFormVite"
 import { GuardrailsSection } from "@/components/subscriptions/GuardrailsSection"
+import { CredentialsSection } from "@/components/subscriptions/CredentialsSection"
 import { Link, useParams, useNavigate } from "react-router-dom"
 import { useAuth } from "@/lib/auth-context"
 import { fetchSubscriptionById, deleteSubscription, fetchSubscriptionTags } from "@/lib/supabase-queries"
@@ -204,6 +205,15 @@ export default function EditSubscriptionPage() {
       </div>
       <div className="mx-auto max-w-3xl space-y-6 p-3 sm:p-6 lg:p-8">
         <SubscriptionForm key={subscription.id} subscription={subscription} tagIds={tagIds} />
+        <CredentialsSection
+          subscriptionId={subscription.id}
+          subscriptionName={subscription.name}
+          credentialsAlreadySet={!!subscription.credentials_set_at}
+          onSaved={() => {
+            // Reload subscription to update credentials_set_at
+            fetchSubscriptionById(subscription.id).then(setSubscription).catch(() => {})
+          }}
+        />
         <GuardrailsSection
           subscriptionId={subscription.id}
           currency={subscription.currency || "USD"}

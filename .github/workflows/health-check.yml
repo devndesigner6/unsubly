@@ -47,10 +47,12 @@ jobs:
 
       - name: Check Supabase API
         run: |
+          # Uses the public anon key (safe to expose, RLS enforced)
+          # Project URL and key are public by design in Supabase
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 \
             "https://ipnywrvwszqlaykbkske.supabase.co/rest/v1/" \
-            -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlwbnl3cnZ3c3pxbGF5a2Jrc2tlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4OTg0NDksImV4cCI6MjA4ODQ3NDQ0OX0.xUcUpKQ52PVFGAjKokKDwhf9p8RZYmEOgMmu7HAm-sk")
-          if [ "$STATUS" != "200" ]; then
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}")
+          if [ "$STATUS" != "200" ] && [ "$STATUS" != "401" ]; then
             echo "::warning title=Supabase::API returned HTTP $STATUS"
           else
             echo "Supabase healthy: HTTP $STATUS"

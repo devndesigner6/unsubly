@@ -245,17 +245,90 @@ export function withX402(opts, handler) {
       })
     }
 
-    // Verify the txn matched the requirements.
+    // Verify the confirmed txn matched the requirements.
+    // Strategy: query algod for the confirmed transaction details (most reliable),
+    // then fall back to decoding the raw signed bytes if algod response is unusual.
     try {
-      const ptx = await algod.pendingTransactionInformation(txid).do()
-      const txn = ptx?.txn?.txn ?? ptx?.txn
-      const amount = Number(txn?.amt ?? txn?.amount ?? 0)
-      const receiver = algosdk.encodeAddress(
-        typeof txn?.rcv === "string"
-          ? algosdk.decodeAddress(txn.rcv).publicKey
-          : (txn?.rcv instanceof Uint8Array ? txn.rcv : new Uint8Array(32))
-      )
-      if (receiver !== opts.payTo) throw new Error(`receiver mismatch: ${receiver}`)
+      let receiver = null
+      let amount = 0
+
+      // Primary: use the Algorand indexer-style lookup on the confirmed txn
+      try {
+        const txInfo = await algod.pendingTransactionInformation(txid).do()
+        // Handle both algosdk v2 and v3 response shapes
+        if (txInfo?.transaction?.["payment-transaction"]) {
+          // REST API v2 shape
+          const pt = txInfo.transaction["payment-transaction"]
+          receiver = pt.receiver
+          amount = Number(pt.amount || 0)
+        } else {
+          // algosdk internal shape
+          const inner = txInfo?.txn?.txn ?? txInfo?.txn ?? {}
+          const rcv = inner.rcv ?? inner.receiver ?? null
+          if (rcv) {
+            if (typeof rcv === "string") receiver = rcv
+            else if (rcv instanceof Uint8Array) receiver = algosdk.encodeAddress(new Uint8Array(rcv))
+            else if (rcv?.publicKey) receiver = algosdk.encodeAddress(rcv.publicKey)
+          }
+          const amt = inner.amt ?? inner.amount ?? 0
+          amount = typeof amt === "bigint" ? Number(amt) : Number(amt || 0)
+        }
+      } catch (e) {
+        console.warn(`[x402] pendingTransactionInformation failed: ${e.message}`)
+      }
+
+      // Fallback: decode the raw signed bytes
+      if (!receiver || amount === 0) {
+        try {
+          const decoded = algosdk.decodeSignedTransaction(signedBytes)
+          const txnObj = decoded.txn
+          if (!receiver) {
+            const rb = txnObj.receiver ?? txnObj.to ?? null
+            if (rb) {
+              if (typeof rb === "string") receiver = rb
+              else if (rb?.publicKey) receiver = algosdk.encodeAddress(rb.publicKey)
+              else if (rb instanceof Uint8Array) receiver = algosdk.encodeAddress(new Uint8Array(rb))
+            }
+            if (!receiver && typeof txnObj.toEncodingData === "function") {
+              try {
+                const enc = txnObj.toEncodingData()
+                const r = enc.get?.("rcv") ?? enc["rcv"]
+                if (r instanceof Uint8Array) receiver = algosdk.encodeAddress(new Uint8Array(r))
+              } catch {}
+            }
+          }
+          if (amount === 0) {
+            const a = txnObj.amount ?? txnObj.amt
+            if (a !== undefined && a !== null) amount = typeof a === "bigint" ? Number(a) : Number(a)
+            if (amount === 0 && typeof txnObj.toEncodingData === "function") {
+              try {
+                const enc = txnObj.toEncodingData()
+                const v = enc.get?.("amt") ?? enc["amt"] ?? 0
+                amount = typeof v === "bigint" ? Number(v) : Number(v)
+              } catch {}
+            }
+          }
+        } catch {}
+      }
+
+      // Last resort: raw msgpack
+      if (!receiver || amount === 0) {
+        try {
+          const raw = algosdk.msgpackRawDecode ? algosdk.msgpackRawDecode(signedBytes) : null
+          if (raw) {
+            const t = raw.txn ?? raw
+            if (!receiver && t.rcv instanceof Uint8Array) receiver = algosdk.encodeAddress(new Uint8Array(t.rcv))
+            if (amount === 0) { const a = t.amt ?? 0; amount = typeof a === "bigint" ? Number(a) : Number(a) }
+          }
+        } catch {}
+      }
+
+      console.log(`[x402] Verified: receiver=${receiver}, amount=${amount}, required=${opts.priceMicroalgos}`)
+      if (!receiver) throw new Error("Could not extract receiver from confirmed transaction")
+      if (receiver === "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY5HFKQ") {
+        throw new Error("X402_PAY_TO_ADDRESS not configured — set it in Vercel env vars")
+      }
+      if (receiver !== opts.payTo) throw new Error(`receiver mismatch: got ${receiver}, expected ${opts.payTo}`)
       if (amount < opts.priceMicroalgos) throw new Error(`amount ${amount} < required ${opts.priceMicroalgos}`)
     } catch (err) {
       return send402(res, {
@@ -268,7 +341,7 @@ export function withX402(opts, handler) {
     // Success — set receipt header and run the wrapped handler.
     res.setHeader("X-PAYMENT-RESPONSE", JSON.stringify({
       x402Version: X402_VERSION, network: opts.network,
-      txid, payer_to: opts.payTo,
+      txid, pay_to: opts.payTo,
       amount_microalgos: String(opts.priceMicroalgos),
     }))
     return handler(req, res)

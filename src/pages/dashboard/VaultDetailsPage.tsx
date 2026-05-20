@@ -141,7 +141,10 @@ export default function VaultDetailsPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadVault() }, [user, id, network])
 
-  const signTransaction = async (txn: any): Promise<Uint8Array[]> => {
+  const signTransaction = async (txn: algosdk.Transaction | algosdk.Transaction[]): Promise<Uint8Array[]> => {
+    if (Array.isArray(txn)) {
+      return await peraWallet.signTransaction([txn.map(t => ({ txn: t }))])
+    }
     return await peraWallet.signTransaction([[{ txn }]])
   }
 
@@ -409,6 +412,36 @@ export default function VaultDetailsPage() {
 
       {activeTab === "details" && (
       <div className="grid gap-4 lg:grid-cols-2">
+
+        {/* NFT Receipt hero — shown on details tab when vault is released */}
+        {(vault.status === "released" || vault.status === "killed") && (() => {
+          const releaseTx = payments.find(
+            (p: any) => typeof p?.note === "string" && p.note.toLowerCase().includes("release") && p.algorand_txn_id,
+          )
+          if (!releaseTx) return null
+          const asaMatch = typeof releaseTx.note === "string" ? releaseTx.note.match(/ASA\s+(\d+)/i) : null
+          return (
+            <div className="lg:col-span-2">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Payment Receipt
+              </p>
+              <div className="flex justify-center">
+                <NftReceiptCard
+                  amount={Number(releaseTx.amount || vault.amount || 0)}
+                  currency="ALGO"
+                  vendorName={vault.subscription?.name || "Subscription"}
+                  txnId={releaseTx.algorand_txn_id}
+                  explorerUrl={getLoraTransactionUrl(releaseTx.algorand_txn_id, network)}
+                  asaId={asaMatch ? Number(asaMatch[1]) : null}
+                  capturedAt={releaseTx.created_at}
+                />
+              </div>
+              <p className="mt-2 text-center text-[11px] text-muted-foreground">
+                Click the card to flip and see the on-chain transaction ID
+              </p>
+            </div>
+          )
+        })()}
         {/* Database State */}
         <div className="rounded-xl border border-border bg-card p-5">
           <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
@@ -610,6 +643,7 @@ export default function VaultDetailsPage() {
 
       {activeTab === "history" && (
         <>
+          {/* NFT Receipt Card — shown prominently at top of history tab when a release tx exists */}
           {(() => {
             const releaseTx = payments.find(
               (p: any) => typeof p?.note === "string" && p.note.toLowerCase().includes("release") && p.algorand_txn_id,
@@ -617,16 +651,24 @@ export default function VaultDetailsPage() {
             if (!releaseTx) return null
             const asaMatch = typeof releaseTx.note === "string" ? releaseTx.note.match(/ASA\s+(\d+)/i) : null
             return (
-              <div className="mb-4 flex justify-center">
-                <NftReceiptCard
-                  amount={Number(releaseTx.amount || vault.amount || 0)}
-                  currency="ALGO"
-                  vendorName={vault.subscription?.name || "Subscription"}
-                  txnId={releaseTx.algorand_txn_id}
-                  explorerUrl={getLoraTransactionUrl(releaseTx.algorand_txn_id, network)}
-                  asaId={asaMatch ? Number(asaMatch[1]) : null}
-                  capturedAt={releaseTx.created_at}
-                />
+              <div className="mb-6">
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Payment Receipt
+                </p>
+                <div className="flex justify-center">
+                  <NftReceiptCard
+                    amount={Number(releaseTx.amount || vault.amount || 0)}
+                    currency="ALGO"
+                    vendorName={vault.subscription?.name || "Subscription"}
+                    txnId={releaseTx.algorand_txn_id}
+                    explorerUrl={getLoraTransactionUrl(releaseTx.algorand_txn_id, network)}
+                    asaId={asaMatch ? Number(asaMatch[1]) : null}
+                    capturedAt={releaseTx.created_at}
+                  />
+                </div>
+                <p className="mt-2 text-center text-[11px] text-muted-foreground">
+                  Click the card to flip and see the on-chain transaction ID
+                </p>
               </div>
             )
           })()}

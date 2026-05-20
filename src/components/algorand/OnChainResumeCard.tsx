@@ -26,7 +26,10 @@ export function OnChainResumeCard({ payment, network = "testnet" }: Props) {
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-foreground truncate">
+          <span
+            className="text-sm font-medium text-foreground truncate"
+            title={payment.note || undefined}
+          >
             {payment.note || "Payment"}
           </span>
         </div>

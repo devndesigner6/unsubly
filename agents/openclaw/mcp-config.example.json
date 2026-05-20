@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "unsubscribely": {
+      "url": "https://unsubscribely-agent-agent-production.up.railway.app/mcp",
+      "transport": "http",
+      "headers": {
+        "Authorization": "Bearer YOUR_MCP_TOKEN_HERE"
+      },
+      "description": "Unsubscribely subscription management — view subscriptions, check vaults, trigger cancellations, verify on-chain proofs"
+    }
+  }
+}

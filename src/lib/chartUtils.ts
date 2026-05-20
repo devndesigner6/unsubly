@@ -7,7 +7,7 @@ export const chartColors = {
     bg: "bg-blue-500 dark:bg-blue-500",
     stroke: "stroke-blue-500 dark:stroke-blue-500",
     fill: "fill-blue-500 dark:fill-blue-500",
-    text: "text-blue-500 dark:text-blue-500",
+    text: "text-blue-500 dark:text-white/80",
   },
   lightBlue: {
     bg: "bg-blue-300/50 dark:bg-blue-800/50",
@@ -43,7 +43,7 @@ export const chartColors = {
     bg: "bg-gray-400 dark:bg-gray-600",
     stroke: "stroke-gray-400 dark:stroke-gray-600",
     fill: "fill-gray-400 dark:fill-gray-600",
-    text: "text-gray-400 dark:text-gray-600",
+    text: "text-gray-400 dark:text-white/40",
   },
   rose: {
     bg: "bg-rose-600 dark:bg-rose-500",
@@ -88,10 +88,10 @@ export const chartColors = {
     text: "text-red-500 dark:text-red-500",
   },
   lightGray: {
-    bg: "bg-gray-300 dark:bg-gray-700",
+    bg: "bg-gray-300 dark:bg-white/15",
     stroke: "stroke-gray-300 dark:stroke-gray-700",
     fill: "fill-gray-300 dark:fill-gray-700",
-    text: "text-gray-300 dark:text-gray-700",
+    text: "text-gray-300 dark:text-white/70",
   },
 } as const satisfies {
   [color: string]: {

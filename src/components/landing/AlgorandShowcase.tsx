@@ -1,8 +1,14 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, useMemo } from "react"
 
 export function AlgorandShowcase() {
   const [inView, setInView] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+
+  // Fix: compute dot opacities once, not on every re-render
+  const dots = useMemo(
+    () => Array.from({ length: 200 }, () => Math.random() > 0.3),
+    []
+  )
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -14,7 +20,7 @@ export function AlgorandShowcase() {
   }, [])
 
   return (
-    <section id="blockchain" className="py-20 sm:py-24 lg:py-32 border-t border-border overflow-hidden">
+    <section id="blockchain" className="py-16 sm:py-20 lg:py-24 border-t border-border overflow-hidden">
       <div ref={ref} className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
           {/* Left - Text */}
@@ -33,7 +39,7 @@ export function AlgorandShowcase() {
 
           {/* Right - Description */}
           <div className={`transition-all duration-1000 delay-300 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`}>
-            <p className="text-sm text-muted-foreground leading-relaxed">
+            <p className="text-sm text-foreground/70 leading-relaxed">
               The first-of-its-kind decentralized subscription management system that can understand and control payment state across multiple providers using the Algorand blockchain.
             </p>
             <div className="mt-10 space-y-6">
@@ -51,14 +57,14 @@ export function AlgorandShowcase() {
           </div>
         </div>
 
-        {/* Decorative dot matrix */}
+        {/* Decorative dot matrix — opacities computed once in useMemo, not on every render */}
         <div className={`mt-16 flex justify-end transition-all duration-1000 delay-500 ${inView ? "opacity-100" : "opacity-0"}`}>
           <div className="grid gap-1.5 opacity-[0.06]" style={{ gridTemplateColumns: "repeat(20, minmax(0, 1fr))" }}>
-            {Array.from({ length: 200 }).map((_, i) => (
+            {dots.map((visible, i) => (
               <div
                 key={i}
                 className="size-1 rounded-full bg-foreground"
-                style={{ opacity: Math.random() > 0.3 ? 1 : 0 }}
+                style={{ opacity: visible ? 1 : 0 }}
               />
             ))}
           </div>

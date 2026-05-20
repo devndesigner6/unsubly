@@ -16,7 +16,6 @@ import {
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/lib/auth-context"
 import { toast } from "sonner"
-
 interface EscrowVault {
   id: string
   subscription_id: string | null
@@ -36,7 +35,7 @@ interface EscrowVault {
   co_signer_address?: string | null
   arbitrator_address?: string | null
   asset_id?: number | null
-  subscription?: { name: string; logo: string | null } | null
+  subscription?: { name: string; logo: string | null; next_billing_date?: string | null } | null
 }
 
 interface EscrowVaultCardProps {
@@ -67,6 +66,26 @@ function relativeTime(iso: string): string {
   const mo = Math.floor(day / 30)
   if (mo < 12) return `${mo}mo ago`
   return `${Math.floor(mo / 12)}y ago`
+}
+
+function timeUntilRelease(nextBillingDate: string | null | undefined): string | null {
+  if (!nextBillingDate) return null
+  const diff = new Date(nextBillingDate).getTime() - Date.now()
+  if (diff <= 0) return "Due today"
+  const days = Math.floor(diff / 86_400_000)
+  const hours = Math.floor((diff % 86_400_000) / 3_600_000)
+  if (days > 0) return `Releases in ${days}d`
+  if (hours > 0) return `Releases in ${hours}h`
+  return "Releases soon"
+}
+
+function timeLockProgress(createdAt: string, unlockTime: string): number {
+  const start = new Date(createdAt).getTime()
+  const end = new Date(unlockTime).getTime()
+  const now = Date.now()
+  if (now >= end) return 100
+  if (now <= start) return 0
+  return Math.round(((now - start) / (end - start)) * 100)
 }
 
 export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
@@ -102,7 +121,11 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
 
   useEffect(() => { fetchOnChainBalance() }, [fetchOnChainBalance])
 
-  const signTransaction = async (txn: any): Promise<Uint8Array[]> => {
+  const signTransaction = async (txn: algosdk.Transaction | algosdk.Transaction[]): Promise<Uint8Array[]> => {
+    if (Array.isArray(txn)) {
+      // Group signing — send all txns in one Pera popup to avoid 4100 error
+      return await peraWallet.signTransaction([txn.map(t => ({ txn: t }))])
+    }
     return await peraWallet.signTransaction([[{ txn }]])
   }
 
@@ -162,7 +185,9 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
       })
       onUpdate()
     } catch (err: any) {
-      toast.error("Release failed", { description: err?.message || "Transaction failed" })
+      toast.error("Release failed", { description: err?.message?.includes("4100") || err?.message?.toLowerCase().includes("pending")
+        ? "Pera Wallet has a pending request. Open Pera on your phone, reject any pending transaction, then try again."
+        : err?.message || "Transaction failed" })
     } finally { setIsProcessing(false); setAction("") }
   }
 
@@ -254,6 +279,11 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
         <div className="flex size-10 items-center justify-center rounded-full bg-muted overflow-hidden shrink-0">
           {vault.subscription?.logo ? (
             <img src={vault.subscription.logo} alt={vault.subscription.name} className="size-full object-cover" />
+          ) : (vType === "agent" || vType === "agent_v2") ? (
+            <>
+              <img src="/openclaw.svg" alt="OpenClaw Agent" className="size-5 object-contain dark:hidden" />
+              <img src="/openclaw-dark.svg" alt="OpenClaw Agent" className="size-5 object-contain hidden dark:block" />
+            </>
           ) : (
             <TypeIcon className="size-5 text-foreground" />
           )}
@@ -291,6 +321,33 @@ export function EscrowVaultCard({ vault, onUpdate }: EscrowVaultCardProps) {
             </span>
           ))}
         </div>
+
+        {/* Time until next release — only for locked agent vaults with a linked subscription */}
+        {isLocked && (vType === "agent" || vType === "agent_v2") && vault.subscription?.next_billing_date && (
+          <div className="mt-3 flex items-center gap-2">
+            <img src="/openclaw.svg" alt="OpenClaw" className="size-3.5 rounded-sm object-contain dark:hidden" />
+            <img src="/openclaw-dark.svg" alt="OpenClaw" className="size-3.5 rounded-sm object-contain hidden dark:block" />
+            <span className="text-xs font-medium text-foreground">
+              {timeUntilRelease(vault.subscription.next_billing_date)}
+            </span>
+          </div>
+        )}
+
+        {/* Time-lock progress bar */}
+        {isLocked && vType === "time_locked" && vault.unlock_time && (
+          <div className="mt-3 space-y-1">
+            <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+              <span>Lock progress</span>
+              <span>Unlocks {new Date(vault.unlock_time).toLocaleDateString()}</span>
+            </div>
+            <div className="h-1 w-full rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full rounded-full bg-foreground/60 transition-all"
+                style={{ width: `${timeLockProgress(vault.created_at, vault.unlock_time)}%` }}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Spacer to keep footer at bottom even when content is short */}

@@ -8,6 +8,7 @@ import {
 } from "@remixicon/react"
 import { toast } from "sonner"
 import { AsciiEmpty } from "@/components/micro/AsciiEmpty"
+import { motion } from "motion/react"
 
 interface Folder {
   id: string
@@ -100,15 +101,19 @@ export default function FoldersPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl p-4 sm:p-6 lg:p-8">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Folders</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Organize your subscriptions into folders</p>
+    <div className="h-[calc(100vh-3.5rem)] bg-background overflow-hidden flex flex-col">
+      <div className="flex-1 flex flex-col p-4 sm:p-6 lg:p-8 min-h-0 overflow-y-auto">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+        <div className="relative overflow-hidden">
+          <span className="ghost-text">FOLDERS</span>
+          <h1 className="font-display text-3xl sm:text-4xl text-foreground tracking-tight">Folders</h1>
+          <p className="mt-1.5 text-xs text-muted-foreground">Organize your subscriptions into folders</p>
         </div>
-        <Button className="w-full sm:w-auto" onClick={() => { setShowForm(true); setEditingId(null); setName(""); setColor(COLORS[0]) }}>
-          <RiAddLine className="mr-1.5 size-4" /> New Folder
-        </Button>
+        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
+          <Button className="w-full sm:w-auto" onClick={() => { setShowForm(true); setEditingId(null); setName(""); setColor(COLORS[0]) }}>
+            <RiAddLine className="mr-1.5 size-4" /> New Folder
+          </Button>
+        </motion.div>
       </div>
 
       {showForm && (
@@ -192,6 +197,7 @@ export default function FoldersPage() {
           ))
         )}
       </div>
+    </div>
     </div>
   )
 }

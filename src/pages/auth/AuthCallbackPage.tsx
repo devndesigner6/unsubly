@@ -37,11 +37,19 @@ export default function AuthCallbackPage() {
     })
 
     // Also handle the case where the URL contains an error from Supabase
+    // Check both hash and query string (OAuth errors come in query string)
     const hash = window.location.hash
-    if (hash.includes("error=")) {
-      const params = new URLSearchParams(hash.substring(1))
-      const desc = params.get("error_description") || "Authentication failed."
-      setErrorMsg(decodeURIComponent(desc).replace(/\+/g, " "))
+    const search = window.location.search
+    const errorSource = hash.includes("error=") ? hash.substring(1) : search.substring(1)
+    if (hash.includes("error=") || search.includes("error=")) {
+      const params = new URLSearchParams(errorSource)
+      const desc = params.get("error_description") || params.get("error") || "Authentication failed."
+      const errorCode = params.get("error_code") || ""
+      let friendlyMsg = decodeURIComponent(desc).replace(/\+/g, " ")
+      if (errorCode === "bad_oauth_state") {
+        friendlyMsg = "Sign-in session expired. Please try again — this can happen if you took too long or switched browsers."
+      }
+      setErrorMsg(friendlyMsg)
       setStatus("error")
     }
 
@@ -78,11 +86,11 @@ export default function AuthCallbackPage() {
             {errorMsg}
           </div>
           <Link
-            to="/forgot-password"
+            to="/login"
             className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
           >
             <RiArrowLeftLine className="size-3.5" />
-            Request a new reset link
+            Back to sign in
           </Link>
         </div>
       </div>

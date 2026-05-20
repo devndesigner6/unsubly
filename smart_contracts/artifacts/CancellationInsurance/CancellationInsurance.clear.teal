@@ -1,0 +1,5 @@
+#pragma version 11
+
+// Always approve clear state
+pushint 1
+return

@@ -467,3 +467,31 @@ export function findCancelFlow(subscriptionName: string | null | undefined): Can
   }
   return null
 }
+
+/**
+ * Extended findCancelFlow that also checks the 400+ subscription catalog.
+ * Falls back to the original CANCEL_FLOWS list first, then the catalog.
+ */
+export function findCancelFlowExtended(subscriptionName: string | null | undefined): CancelFlow | null {
+  // Try original catalog first (more detailed steps)
+  const original = findCancelFlow(subscriptionName)
+  if (original) return original
+
+  // Try the extended 400+ catalog
+  try {
+    const { findSubscription } = require("./subscriptionCatalog")
+    const entry = findSubscription(subscriptionName)
+    if (entry) {
+      return {
+        name: entry.name,
+        aliases: entry.aliases,
+        cancelUrl: entry.cancelUrl,
+        steps: entry.steps,
+        note: entry.note,
+      }
+    }
+  } catch {
+    // Dynamic require not available — use static import path
+  }
+  return null
+}

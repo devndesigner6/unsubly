@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/Button"
 import { cx, focusRing } from "@/lib/utils"
 import { ChevronsUpDown } from "lucide-react"
@@ -7,8 +7,18 @@ import { fetchProfile } from "@/lib/supabase-queries"
 import { supabase } from "@/integrations/supabase/client"
 import { DropdownUserProfile } from "./DropdownUserProfile"
 
+/** Generate a deterministic pastel background color from a string seed */
+function seedColor(seed: string): string {
+  let hash = 0
+  for (let i = 0; i < seed.length; i++) {
+    hash = seed.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  const h = Math.abs(hash) % 360
+  return `hsl(${h}, 60%, 75%)`
+}
+
 export function UserProfile() {
-  const { user } = useAuth()
+  const { user, isGoogleUser } = useAuth()
   const [profileName, setProfileName] = useState<string | null>(null)
 
   useEffect(() => {
@@ -31,23 +41,40 @@ export function UserProfile() {
     ? profileName.slice(0, 2).toUpperCase()
     : (user?.email?.slice(0, 2).toUpperCase() || "U")
 
+  // Google users get their avatar; email users get a colored initials circle
+  const avatarUrl = isGoogleUser ? user?.user_metadata?.avatar_url : null
+  const bgColor = useMemo(() => seedColor(user?.id || "default"), [user?.id])
+
   return (
     <DropdownUserProfile>
       <Button
         aria-label="User settings"
         variant="ghost"
         className={cx(
-          "group flex w-full items-center justify-between rounded-md px-1 py-2 text-sm font-medium text-gray-900 hover:bg-gray-200/50 data-[state=open]:bg-gray-200/50 hover:dark:bg-gray-800/50 data-[state=open]:dark:bg-gray-900",
+          "group flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-sm font-medium text-foreground hover:bg-muted data-[state=open]:bg-muted",
           focusRing,
         )}
       >
-        <span className="flex items-center gap-3">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-gray-300 bg-white text-xs text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300" aria-hidden="true">
-            {initials}
-          </span>
-          <span className="truncate">{displayName}</span>
+        <span className="flex items-center gap-2.5">
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt=""
+              className="size-7 shrink-0 rounded-full object-cover"
+              referrerPolicy="no-referrer"
+            />
+          ) : (
+            <span
+              className="flex size-7 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-foreground"
+              style={{ backgroundColor: bgColor }}
+              aria-hidden="true"
+            >
+              {initials}
+            </span>
+          )}
+          <span className="truncate text-[13px]">{displayName}</span>
         </span>
-        <ChevronsUpDown className="size-4 shrink-0 text-gray-500 group-hover:text-gray-700 group-hover:dark:text-gray-400" aria-hidden="true" />
+        <ChevronsUpDown className="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
       </Button>
     </DropdownUserProfile>
   )

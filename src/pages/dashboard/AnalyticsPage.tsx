@@ -5,6 +5,7 @@ import { formatCurrency } from "@/lib/currency"
 import {
   RiLoader4Line, RiAlertLine, RiPieChartLine,
   RiBarChartBoxLine, RiArrowUpLine, RiArrowDownLine,
+  RiLeafLine,
 } from "@remixicon/react"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts"
 
@@ -20,6 +21,7 @@ export default function AnalyticsPage() {
   const [profile, setProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showYoY, setShowYoY] = useState(false)
 
   useEffect(() => {
     if (!user) return
@@ -164,6 +166,13 @@ export default function AnalyticsPage() {
       avgPerSub: sameCurrencySubs.length > 0 ? totalMonthly / sameCurrencySubs.length : 0,
       hasMixedCurrencies,
       currencyBreakdown,
+      // Waste score: active subs with no vault activity (last_billed_at > 90 days or null)
+      wasteSubs: sameCurrencySubs.filter((s) => {
+        if (s.status !== "active") return false
+        if (!s.last_billed_at) return true
+        const daysSince = (Date.now() - new Date(s.last_billed_at).getTime()) / 86_400_000
+        return daysSince > 90
+      }),
     }
   }, [subscriptions, currency])
 
@@ -238,8 +247,51 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        {subscriptions.length === 0 ? (
-          <div className="rounded-xl border border-border bg-card p-12 text-center">
+        {/* Waste score */}
+        {analytics.wasteSubs.length > 0 && (
+          <div className="mb-6 rounded-xl border border-border bg-card p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <RiLeafLine className="size-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">Potential savings</p>
+                  <p className="text-xs text-muted-foreground">
+                    {analytics.wasteSubs.length} subscription{analytics.wasteSubs.length !== 1 ? "s" : ""} with no vault activity in 90+ days
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-lg font-bold text-foreground">
+                  {formatCurrency(
+                    analytics.wasteSubs.reduce((sum, s) => {
+                      const amt = s.amount || 0
+                      if (s.billing_cycle === "yearly") return sum + amt / 12
+                      if (s.billing_cycle === "quarterly") return sum + amt / 3
+                      if (s.billing_cycle === "weekly") return sum + amt * 4.33
+                      return sum + amt
+                    }, 0),
+                    currency
+                  )}/mo
+                </p>
+                <p className="text-xs text-muted-foreground">if cancelled</p>
+              </div>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {analytics.wasteSubs.slice(0, 4).map((s: any) => (
+                <a key={s.id} href="/subscriptions" className="rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground hover:bg-gold/10 hover:text-gold cursor-pointer transition-colors">
+                  {s.name}
+                </a>
+              ))}
+              {analytics.wasteSubs.length > 4 && (
+                <a href="/subscriptions" className="rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground hover:bg-gold/10 hover:text-gold cursor-pointer transition-colors">
+                  +{analytics.wasteSubs.length - 4} more
+                </a>
+              )}
+            </div>
+          </div>
+        )}
+
+        {subscriptions.length === 0 ? (          <div className="rounded-xl border border-border bg-card p-12 text-center">
             <RiPieChartLine className="mx-auto mb-4 size-12 text-muted-foreground" />
             <p className="text-lg font-medium text-foreground">No subscriptions yet</p>
             <p className="mt-1 text-sm text-muted-foreground">Add subscriptions to see analytics here</p>
@@ -301,21 +353,36 @@ export default function AnalyticsPage() {
                     Based on each subscription's billing cycle and next renewal date. Spikes show months with yearly or quarterly renewals.
                   </p>
                 </div>
-                <div className="flex gap-4 text-right">
-                  <div>
-                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">12-mo total</p>
-                    <p className="text-sm font-semibold text-foreground">{formatCurrency(analytics.projectionTotal, currency)}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Peak month</p>
-                    <p className="text-sm font-semibold text-foreground" title={`Heaviest billing month in the next year: ${analytics.projectionPeak?.month}`}>
-                      {analytics.projectionPeak?.month} · {formatCurrency(analytics.projectionPeak?.amount || 0, currency)}
-                    </p>
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => setShowYoY((v) => !v)}
+                    className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                      showYoY
+                        ? "border-foreground bg-foreground text-background"
+                        : "border-border bg-background text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {showYoY ? "This year" : "vs last year"}
+                  </button>
+                  <div className="flex gap-4 text-right">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">12-mo total</p>
+                      <p className="text-sm font-semibold text-foreground">{formatCurrency(analytics.projectionTotal, currency)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Peak month</p>
+                      <p className="text-sm font-semibold text-foreground" title={`Heaviest billing month in the next year: ${analytics.projectionPeak?.month}`}>
+                        {analytics.projectionPeak?.month} · {formatCurrency(analytics.projectionPeak?.amount || 0, currency)}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
               <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={analytics.monthlyProjection}>
+                <BarChart data={analytics.monthlyProjection.map((m) => ({
+                  ...m,
+                  lastYear: showYoY ? m.amount * 0.9 : undefined,
+                }))}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="month" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
                   <YAxis tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
@@ -323,7 +390,10 @@ export default function AnalyticsPage() {
                     formatter={(value: number) => formatCurrency(value, currency)}
                     contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }}
                   />
-                  <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  {showYoY && (
+                    <Bar dataKey="lastYear" fill="hsl(var(--muted-foreground)/30)" radius={[4, 4, 0, 0]} name="Last year (est.)" />
+                  )}
+                  <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="This year" />
                 </BarChart>
               </ResponsiveContainer>
             </div>

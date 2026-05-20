@@ -1,8 +1,9 @@
 {
   "name": "Unsubscribely",
   "short_name": "Unsubscribely",
-  "description": "Track all your subscriptions in one organized place. Get alerts before charges and stay in control.",
-  "start_url": "/dashboard",
+  "description": "DeFi-powered subscription management on Algorand. Lock funds in escrow vaults, let an autonomous AI agent pay your subscriptions on-chain.",
+  "start_url": "/",
+  "id": "unsubscribely",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#111827",

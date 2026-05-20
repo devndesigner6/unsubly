@@ -1,74 +1,63 @@
 import { useEffect, useState, useRef } from "react"
-
-const partners = [
-  { name: "Algorand", logo: "◆" },
-  { name: "Pera Wallet", logo: "⬡" },
-]
+import { motion } from "motion/react"
 
 const stats = [
   { value: "3.3s", label: "Transaction finality" },
-  { value: "<$0.01", label: "Per transaction fee" },
+  { value: "<$0.001", label: "Per transaction fee" },
+  { value: "12", label: "MCP tools available" },
 ]
 
 export function Stats() {
-  const [inView, setInView] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setInView(true) },
-      { threshold: 0.2 }
-    )
-    if (ref.current) observer.observe(ref.current)
-    return () => observer.disconnect()
-  }, [])
-
   return (
-    <section ref={ref} className="py-12 sm:py-16 border-y border-border overflow-hidden">
+    <section className="py-12 sm:py-16 border-y border-border overflow-hidden">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <div className={`grid grid-cols-1 md:grid-cols-3 gap-0 divide-y md:divide-y-0 md:divide-x divide-border transition-all duration-700 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
-          {/* Partner 1 */}
-          <div className="flex flex-col items-start gap-4 py-6 md:py-0 md:pr-8">
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">{partners[0].logo}</span>
-              <span className="text-sm font-medium text-foreground tracking-tight">{partners[0].name}</span>
-            </div>
-            <div>
-              <p className="font-display text-5xl sm:text-6xl text-foreground tracking-tight">{stats[0].value}</p>
-              <p className="mt-1 text-sm text-muted-foreground">{stats[0].label}</p>
-            </div>
-          </div>
-
-          {/* Partner 2 */}
-          <div className="flex flex-col items-start gap-4 py-6 md:py-0 md:px-8">
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">{partners[1].logo}</span>
-              <span className="text-sm font-medium text-foreground tracking-tight">{partners[1].name}</span>
-            </div>
-            <div>
-              <p className="font-display text-5xl sm:text-6xl text-foreground tracking-tight">{stats[1].value}</p>
-              <p className="mt-1 text-sm text-muted-foreground">{stats[1].label}</p>
-            </div>
-          </div>
-
-          {/* CTA Column */}
-          <div className="flex flex-col items-start justify-between gap-4 py-6 md:py-0 md:pl-8">
-            <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
-              Powered by Algorand blockchain. Sub-penny fees, instant finality, and carbon-negative infrastructure.
-            </p>
-            <a
-              href="/register"
-              className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.6 }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-0 divide-y md:divide-y-0 md:divide-x divide-border"
+        >
+          {stats.map((stat, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: i * 0.1 }}
+              className="flex flex-col items-start gap-2 py-6 md:py-0 md:px-8 first:md:pl-0 last:md:pr-0"
             >
-              <div className="flex size-5 items-center justify-center rounded bg-foreground">
-                <svg viewBox="0 0 24 24" fill="none" className="size-3 text-background">
-                  <path d="M12 2L2 7l10 5 10-5-10-5z" fill="currentColor" />
-                </svg>
-              </div>
-              Sign up
-            </a>
-          </div>
-        </div>
+              <p className="font-mono-pixel text-5xl sm:text-6xl text-accent-gold tracking-tight">{stat.value}</p>
+              <p className="text-sm text-foreground/50">{stat.label}</p>
+            </motion.div>
+          ))}
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="mt-8 flex flex-wrap items-center gap-6 text-xs text-muted-foreground"
+        >
+          <span className="flex items-center gap-2">
+            <img src="/icons/algorand-white.svg" alt="Algorand" className="size-4 hidden dark:block" />
+            <img src="/icons/algorand-black.svg" alt="Algorand" className="size-4 dark:hidden" />
+            Algorand Blockchain
+          </span>
+          <span className="flex items-center gap-2">
+            <img src="/icons/pera-white.svg" alt="Pera" className="h-4 w-auto hidden dark:block" />
+            <img src="/icons/pera-black.svg" alt="Pera" className="h-4 w-auto dark:hidden" />
+            Pera Wallet
+          </span>
+          <span className="flex items-center gap-2">
+            <img src="/defly-logo.png" alt="Defly" className="size-5 rounded" />
+            Defly Wallet
+          </span>
+          <span className="flex items-center gap-2">
+            <img src="/icons/telegram.svg" alt="Telegram" className="size-5 rounded-full" />
+            Telegram Bot
+          </span>
+        </motion.div>
       </div>
     </section>
   )

@@ -4,12 +4,25 @@ import { Link, useLocation } from "react-router-dom"
 const routeLabels: Record<string, string> = {
   dashboard: "Dashboard",
   subscriptions: "Subscriptions",
+  new: "New",
   calendar: "Calendar",
   analytics: "Analytics",
   settings: "Settings",
   folders: "Folders",
   tags: "Tags",
   "payment-methods": "Payment Methods",
+  "escrow-vaults": "Escrow Vaults",
+  "ai-optimizer": "AI Optimizer",
+  "onchain-resume": "On-Chain Resume",
+  "service-registry": "Service Registry",
+  "renewal-radar": "Renewal Radar",
+  "dispute-center": "Dispute Center",
+  "cancellation-insurance": "Cancel Insurance",
+  "a2a-demo": "A2A Demo",
+  "x402-demo": "x402 Protocol",
+  "api-docs": "API Docs",
+  transactions: "Transactions",
+  "vault-approve": "Vault Approval",
 }
 
 export function Breadcrumbs() {
@@ -20,7 +33,7 @@ export function Breadcrumbs() {
     <nav aria-label="Breadcrumb" className="ml-2 min-w-0 flex-1 overflow-hidden">
       <ol role="list" className="flex items-center space-x-3 text-sm whitespace-nowrap">
         <li className="flex">
-          <Link to="/dashboard" className="text-gray-500 transition hover:text-gray-700 dark:text-gray-400 hover:dark:text-gray-300">
+          <Link to="/dashboard" className="text-gray-500 transition hover:text-gray-700 dark:text-white/50 hover:dark:text-white/70">
             Home
           </Link>
         </li>
@@ -37,11 +50,11 @@ export function Breadcrumbs() {
               key={segment}
               className={`flex items-center ${hideOnMobile ? "hidden sm:flex" : ""}`}
             >
-              <ChevronRight className="mr-3 size-4 shrink-0 text-gray-600 dark:text-gray-400" aria-hidden="true" />
+              <ChevronRight className="mr-3 size-4 shrink-0 text-gray-600 dark:text-white/50" aria-hidden="true" />
               <Link
                 to={href}
                 aria-current={isLast ? "page" : undefined}
-                className={`max-w-[40vw] truncate sm:max-w-none ${isLast ? "text-gray-900 dark:text-gray-50" : "text-gray-500 transition hover:text-gray-700 dark:text-gray-400 hover:dark:text-gray-300"}`}
+                className={`max-w-[40vw] truncate sm:max-w-none ${isLast ? "text-gray-900 dark:text-white" : "text-gray-500 transition hover:text-gray-700 dark:text-white/50 hover:dark:text-white/70"}`}
               >
                 {label}
               </Link>

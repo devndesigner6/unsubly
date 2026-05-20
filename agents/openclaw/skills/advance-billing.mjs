@@ -20,14 +20,17 @@ function advanceDate(dateStr, cycle) {
   return d.toISOString().split("T")[0]
 }
 
-export async function advanceBilling(subscriptionId, billingCycle, currentBillingDate) {
+export async function advanceBilling(subscriptionId, billingCycle, currentBillingDate, userId) {
   if (!subscriptionId) return
 
   const nextDate = advanceDate(currentBillingDate, billingCycle)
 
   try {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/subscriptions?id=eq.${subscriptionId}`,
+    // Always filter by subscription id. userId is optional extra safety guard.
+    let url = `${SUPABASE_URL}/rest/v1/subscriptions?id=eq.${subscriptionId}`
+    if (userId) url += `&user_id=eq.${userId}`
+
+    const res = await fetch(url,
       {
         method: "PATCH",
         headers: {

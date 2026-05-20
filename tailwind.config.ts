@@ -14,6 +14,10 @@ export default {
     extend: {
       colors: {
         gray: { 925: "#050814" },
+        gold: {
+          DEFAULT: "hsl(var(--accent-gold))",
+          hover: "hsl(var(--accent-gold-hover))",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

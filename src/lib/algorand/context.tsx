@@ -139,6 +139,20 @@ function AlgorandBridge({
         const addr = (data as any).algorand_address as string
         setSavedWalletAddress(addr)
         fetchBalance(addr)
+
+        // If a wallet is connected but doesn't match this user's saved address,
+        // disconnect it — prevents wallet leaking between accounts via localStorage.
+        if (activeAddress && activeAddress !== addr && activeWallet) {
+          activeWallet.disconnect().catch(() => {})
+          setBalance(0)
+        }
+      } else {
+        // User has no saved wallet — if one is connected from a previous session
+        // (different user), disconnect it.
+        if (activeAddress && activeWallet) {
+          activeWallet.disconnect().catch(() => {})
+          setBalance(0)
+        }
       }
     }
     loadSaved()
@@ -150,6 +164,28 @@ function AlgorandBridge({
       saveWalletToProfile(activeAddress)
     }
   }, [activeAddress, fetchBalance, saveWalletToProfile])
+
+  // Disconnect wallet when user changes (prevents wallet leaking between accounts)
+  const prevUserIdRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (!user) {
+      // User signed out — disconnect wallet
+      if (prevUserIdRef.current && activeWallet) {
+        activeWallet.disconnect().catch(() => {})
+        setBalance(0)
+      }
+      prevUserIdRef.current = null
+      return
+    }
+    if (prevUserIdRef.current && prevUserIdRef.current !== user.id) {
+      // Different user signed in — disconnect previous wallet
+      if (activeWallet) {
+        activeWallet.disconnect().catch(() => {})
+        setBalance(0)
+      }
+    }
+    prevUserIdRef.current = user.id
+  }, [user])
 
   const connectWallet = useCallback(
     async (walletId?: WalletId) => {
@@ -170,7 +206,22 @@ function AlgorandBridge({
         const cancelled = msg.toLowerCase().includes("cancel") ||
                           msg.toLowerCase().includes("rejected") ||
                           msg.toLowerCase().includes("denied")
-        if (!cancelled) {
+        const sessionConflict = msg.toLowerCase().includes("session") ||
+                                msg.toLowerCase().includes("already connected") ||
+                                msg.toLowerCase().includes("pairing")
+        if (sessionConflict) {
+          // Clear stale WalletConnect session data and retry
+          try {
+            Object.keys(localStorage).forEach(k => {
+              if (k.includes("walletconnect") || k.includes("wc@") || k.includes("txnlab")) {
+                localStorage.removeItem(k)
+              }
+            })
+          } catch {}
+          toast.error("Session conflict cleared", {
+            description: "Stale wallet session removed. Please try connecting again.",
+          })
+        } else if (!cancelled) {
           toast.error("Failed to connect wallet", { description: msg || "Please try again" })
         }
         throw err
@@ -231,6 +282,11 @@ function AlgorandBridge({
   const switchNetwork = useCallback(
     async (net: AlgorandNetwork) => {
       if (net === network) return
+      // Whitelist: only allow known networks
+      if (net !== "testnet" && net !== "mainnet") {
+        toast.error("Unsupported network", { description: `"${net}" is not a supported network.` })
+        return
+      }
       setNetworkSwitching(true)
       try {
         // Disconnect wallet first, wallets may not support cross-network signing

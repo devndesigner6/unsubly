@@ -11,7 +11,5 @@ project_id = "ipnywrvwszqlaykbkske"
     verify_jwt = false
   [functions.public-resume]
     verify_jwt = false
-  [functions.auto-release-vaults]
-    verify_jwt = false
   [functions.send-subscription-alerts]
     verify_jwt = false

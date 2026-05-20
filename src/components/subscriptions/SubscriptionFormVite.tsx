@@ -12,31 +12,10 @@ import {
   RiFileTextLine,
   RiFolderLine,
   RiNotification3Line,
-  RiStoreLine,
 } from "@remixicon/react"
-import RegistryPickerModal, { cycleDaysToBillingCycle, type RegistryService } from "./RegistryPickerModal"
-import { useAlgorand } from "@/lib/algorand/context"
-
-function RegistryPickerButton({ onOpen }: { onOpen: () => void }) {
-  const { network } = useAlgorand()
-  const isMainnet = network === "mainnet"
-  return (
-    <button
-      type="button"
-      onClick={onOpen}
-      disabled={isMainnet}
-      title={isMainnet
-        ? "Service Registry is testnet-only for now. Switch to TestNet in Settings."
-        : "Pick from on-chain Service Registry"}
-      className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-background"
-    >
-      <RiStoreLine className="size-3.5" /> From Registry
-    </button>
-  )
-}
 
 import { useNavigate } from "react-router-dom"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { 
   createSubscription, 
@@ -47,6 +26,7 @@ import {
   setSubscriptionTags,
   fetchProfile
 } from "@/lib/supabase-queries"
+import { searchSubscriptions, findSubscription, getFaviconUrl, type SubscriptionEntry } from "@/data/subscriptionCatalog"
 
 function parseCardName(name: string) {
   try {
@@ -56,15 +36,15 @@ function parseCardName(name: string) {
   return null
 }
 
-function formatPaymentMethodLabel(pm: { name: string }): string {
+function formatPaymentMethodLabel(pm: { name: string; last_four?: string | null; type?: string }): string {
   const card = parseCardName(pm.name)
   if (!card) return pm.name
   const brand = card.brand
     ? card.brand.charAt(0).toUpperCase() + card.brand.slice(1)
     : "Card"
-  const last4 = card.holder ? String(card.holder).slice(-4) : "••••"
-  const suffix = card.nickname ? ` · ${card.nickname}` : ""
-  return `${brand} •••• ${last4}${suffix}`
+  const last4 = pm.last_four || "••••"
+  const holder = card.holder ? ` · ${card.holder}` : ""
+  return `${brand} •••• ${last4}${holder}`
 }
 
 interface SubscriptionFormProps {
@@ -77,13 +57,6 @@ const billingCycles = [
   { value: "monthly", label: "Monthly" },
   { value: "quarterly", label: "Quarterly" },
   { value: "yearly", label: "Yearly" },
-]
-
-const statuses = [
-  { value: "active", label: "Active" },
-  { value: "trial", label: "Trial" },
-  { value: "paused", label: "Paused" },
-  { value: "cancelled", label: "Cancelled" },
 ]
 
 const categories = [
@@ -101,22 +74,17 @@ const currencies = [
   { value: "JPY", label: "JPY (¥)", symbol: "¥" },
 ]
 
-function pickRegistryServiceMapper(s: RegistryService) {
-  const algo = s.price_microalgos / 1_000_000
-  return {
-    name: s.name || s.service_id,
-    amount: algo.toFixed(4),
-    currency: "USD" as const, // local display currency; on-chain price stays in ALGO
-    billingCycle: cycleDaysToBillingCycle(s.cycle_days),
-    notes: `On-chain registry service: ${s.service_id} (${algo.toFixed(4)} ALGO / ${s.cycle_days}d, provider ${s.provider.slice(0, 8)}…)`,
-  }
-}
-
 export function SubscriptionForm({ subscription, tagIds: initialTagIds = [] }: SubscriptionFormProps) {
-  const [showRegistryPicker, setShowRegistryPicker] = useState(false)
   const navigate = useNavigate()
   const { user } = useAuth()
   const isEditing = !!subscription
+
+  // Autocomplete state
+  const [nameSuggestions, setNameSuggestions] = useState<SubscriptionEntry[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [selectedCatalogEntry, setSelectedCatalogEntry] = useState<SubscriptionEntry | null>(null)
+  const nameInputRef = useRef<HTMLInputElement>(null)
+  const suggestionsRef = useRef<HTMLDivElement>(null)
 
   const [formData, setFormData] = useState({
     name: "",
@@ -135,6 +103,7 @@ export function SubscriptionForm({ subscription, tagIds: initialTagIds = [] }: S
     folderId: "",
     paymentMethodId: "",
     tagIds: [] as string[],
+    requireConfirmation: false, // Feature 4: trial guard
   })
 
   const [folders, setFolders] = useState<any[]>([])
@@ -211,6 +180,22 @@ export function SubscriptionForm({ subscription, tagIds: initialTagIds = [] }: S
     setIsLoading(true)
 
     try {
+      // Duplicate check: prevent creating a subscription with the same name
+      // unless it's an edit of the existing one
+      if (!isEditing) {
+        const { supabase } = await import("@/integrations/supabase/client")
+        const { data: existing } = await supabase
+          .from("subscriptions")
+          .select("id, name")
+          .eq("user_id", user.id)
+          .ilike("name", formData.name.trim())
+        if (existing && existing.length > 0) {
+          setError(`You already have "${existing[0].name}" tracked. Edit the existing one or use a different name (e.g. "${formData.name.trim()} - 2nd account").`)
+          setIsLoading(false)
+          return
+        }
+      }
+
       const subscriptionData = {
         name: formData.name,
         description: formData.description || null,
@@ -242,6 +227,16 @@ export function SubscriptionForm({ subscription, tagIds: initialTagIds = [] }: S
       // Update tags
       await setSubscriptionTags(subscriptionId, formData.tagIds)
 
+      // Feature 4: save trial guard setting to subscription_guardrails
+      if (formData.requireConfirmation) {
+        const { supabase } = await import("@/integrations/supabase/client")
+        await (supabase.from("subscription_guardrails" as any) as any).upsert({
+          subscription_id: subscriptionId,
+          require_confirmation: true,
+          is_trial: formData.status === "trial",
+        }, { onConflict: "subscription_id" })
+      }
+
       navigate("/subscriptions")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong")
@@ -251,17 +246,6 @@ export function SubscriptionForm({ subscription, tagIds: initialTagIds = [] }: S
   }
 
   return (
-    <>
-    {showRegistryPicker && (
-      <RegistryPickerModal
-        onClose={() => setShowRegistryPicker(false)}
-        onPick={(s) => {
-          const m = pickRegistryServiceMapper(s)
-          setFormData(prev => ({ ...prev, ...m }))
-          setShowRegistryPicker(false)
-        }}
-      />
-    )}
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-600 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
@@ -269,33 +253,103 @@ export function SubscriptionForm({ subscription, tagIds: initialTagIds = [] }: S
         </div>
       )}
 
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-900/50">
-              <RiFileTextLine className="size-5 text-blue-600 dark:text-blue-400" />
+      <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+        <div className="mb-5 flex items-center gap-3 min-w-0">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-border">
+              <RiFileTextLine className="size-5 text-foreground" />
             </div>
             <div className="min-w-0">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Basic Information</h2>
-              <p className="text-sm text-gray-500">Enter subscription details</p>
+              <h2 className="text-lg font-semibold text-foreground">Basic Information</h2>
+              <p className="text-sm text-muted-foreground">Enter subscription details</p>
             </div>
-          </div>
-          <RegistryPickerButton onOpen={() => setShowRegistryPicker(true)} />
         </div>
 
         <div className="grid gap-5 sm:grid-cols-2">
           <div className="sm:col-span-2">
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Name *</label>
-            <Input
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="e.g., Netflix"
-              required
-            />
+            <label htmlFor="sub-name" className="mb-2 block text-sm font-medium text-foreground">Name *</label>
+            <div className="relative" ref={suggestionsRef}>
+              <div className="flex items-center gap-2">
+                {selectedCatalogEntry && (
+                  <img
+                    src={getFaviconUrl(selectedCatalogEntry.domain)}
+                    alt=""
+                    className="size-6 rounded object-contain bg-white p-0.5 border border-border"
+                  />
+                )}
+                <Input
+                  ref={nameInputRef}
+                  value={formData.name}
+                  onChange={(e) => {
+                    const val = e.target.value
+                    setFormData({ ...formData, name: val })
+                    if (val.length >= 2 && !isEditing) {
+                      const results = searchSubscriptions(val)
+                      setNameSuggestions(results)
+                      setShowSuggestions(results.length > 0)
+                    } else {
+                      setShowSuggestions(false)
+                    }
+                    // Clear selected entry if name changes
+                    if (selectedCatalogEntry && val.toLowerCase() !== selectedCatalogEntry.name.toLowerCase()) {
+                      setSelectedCatalogEntry(null)
+                    }
+                  }}
+                  onFocus={() => {
+                    if (nameSuggestions.length > 0 && !isEditing) setShowSuggestions(true)
+                  }}
+                  onBlur={() => {
+                    // Delay to allow click on suggestion
+                    setTimeout(() => setShowSuggestions(false), 200)
+                  }}
+                  placeholder="e.g., Netflix, Spotify, ChatGPT..."
+                  required
+                  className="flex-1"
+                />
+              </div>
+              {/* Autocomplete dropdown */}
+              {showSuggestions && nameSuggestions.length > 0 && (
+                <div className="absolute z-50 mt-1 w-full rounded-xl border border-border bg-card shadow-lg overflow-hidden">
+                  {nameSuggestions.map((entry) => (
+                    <button
+                      key={entry.name}
+                      type="button"
+                      className="flex w-full items-center gap-3 px-3 py-2.5 text-left hover:bg-muted/50 transition-colors"
+                      onMouseDown={(e) => {
+                        e.preventDefault()
+                        setFormData({
+                          ...formData,
+                          name: entry.name,
+                          category: entry.category || formData.category,
+                        })
+                        setSelectedCatalogEntry(entry)
+                        setShowSuggestions(false)
+                        setNameSuggestions([])
+                      }}
+                    >
+                      <img
+                        src={getFaviconUrl(entry.domain)}
+                        alt=""
+                        className="size-6 rounded object-contain bg-white p-0.5 border border-border shrink-0"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{entry.name}</p>
+                        <p className="text-[11px] text-muted-foreground">{entry.category}</p>
+                      </div>
+                      {entry.autoCancel && (
+                        <span className="shrink-0 rounded bg-emerald-100 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                          Auto-cancel
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Amount *</label>
+            <label htmlFor="sub-amount" className="mb-2 block text-sm font-medium text-foreground">Amount *</label>
             <Input
               type="number"
               step="0.01"
@@ -307,7 +361,7 @@ export function SubscriptionForm({ subscription, tagIds: initialTagIds = [] }: S
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Currency</label>
+            <label className="mb-2 block text-sm font-medium text-foreground">Currency</label>
             <Select value={formData.currency} onValueChange={(v) => setFormData({ ...formData, currency: v })}>
               <SelectTrigger>
                 <SelectValue />
@@ -319,7 +373,7 @@ export function SubscriptionForm({ subscription, tagIds: initialTagIds = [] }: S
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Billing Cycle</label>
+            <label className="mb-2 block text-sm font-medium text-foreground">Billing Cycle</label>
             <Select value={formData.billingCycle} onValueChange={(v) => setFormData({ ...formData, billingCycle: v })}>
               <SelectTrigger>
                 <SelectValue />
@@ -331,7 +385,7 @@ export function SubscriptionForm({ subscription, tagIds: initialTagIds = [] }: S
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Next Billing Date</label>
+            <label htmlFor="sub-next-billing" className="mb-2 block text-sm font-medium text-foreground">Next Billing Date</label>
             <Input
               type="date"
               value={formData.nextBillingDate}
@@ -341,7 +395,7 @@ export function SubscriptionForm({ subscription, tagIds: initialTagIds = [] }: S
           </div>
           
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Category</label>
+            <label className="mb-2 block text-sm font-medium text-foreground">Category</label>
             <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
               <SelectTrigger>
                 <SelectValue placeholder="Select category" />
@@ -353,7 +407,7 @@ export function SubscriptionForm({ subscription, tagIds: initialTagIds = [] }: S
           </div>
 
           <div className="sm:col-span-2">
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
+            <label htmlFor="sub-description" className="mb-2 block text-sm font-medium text-foreground">Description</label>
             <Input
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -363,23 +417,23 @@ export function SubscriptionForm({ subscription, tagIds: initialTagIds = [] }: S
         </div>
       </div>
 
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
         <div className="mb-5 flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-purple-100 dark:bg-purple-900/50">
-            <RiFolderLine className="size-5 text-purple-600 dark:text-purple-400" />
+          <div className="flex size-10 items-center justify-center rounded-xl border border-border">
+            <RiFolderLine className="size-5 text-foreground" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Organization</h2>
-            <p className="text-sm text-gray-500">Folders, tags, and payment methods</p>
+            <h2 className="text-lg font-semibold text-foreground">Organization</h2>
+            <p className="text-sm text-muted-foreground">Folders, tags, and payment methods</p>
           </div>
         </div>
 
         {loadingOptions ? (
-          <div className="flex justify-center py-8"><RiLoader4Line className="animate-spin text-gray-400" /></div>
+          <div className="flex justify-center py-8"><RiLoader4Line className="animate-spin text-muted-foreground" /></div>
         ) : (
           <div className="grid gap-5 sm:grid-cols-2">
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Folder</label>
+              <label className="mb-2 block text-sm font-medium text-foreground">Folder</label>
               <Select value={formData.folderId} onValueChange={(v) => setFormData({ ...formData, folderId: v === "none" ? "" : v })}>
                 <SelectTrigger><SelectValue placeholder="Select folder" /></SelectTrigger>
                 <SelectContent>
@@ -390,7 +444,7 @@ export function SubscriptionForm({ subscription, tagIds: initialTagIds = [] }: S
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Payment Method</label>
+              <label className="mb-2 block text-sm font-medium text-foreground">Payment Method</label>
               <Select value={formData.paymentMethodId} onValueChange={(v) => setFormData({ ...formData, paymentMethodId: v === "none" ? "" : v })}>
                 <SelectTrigger><SelectValue placeholder="Select payment method" /></SelectTrigger>
                 <SelectContent>
@@ -407,28 +461,46 @@ export function SubscriptionForm({ subscription, tagIds: initialTagIds = [] }: S
         )}
       </div>
 
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
         <div className="mb-5 flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-green-100 dark:bg-green-900/50">
-            <RiNotification3Line className="size-5 text-green-600 dark:text-green-400" />
+          <div className="flex size-10 items-center justify-center rounded-xl border border-border">
+            <RiNotification3Line className="size-5 text-foreground" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Reminders</h2>
-            <p className="text-sm text-gray-500">Get notified before this subscription renews</p>
+            <h2 className="text-lg font-semibold text-foreground">Reminders</h2>
+            <p className="text-sm text-muted-foreground">Get notified before this subscription renews</p>
           </div>
         </div>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Renewal Alert</p>
-            <p className="text-xs text-gray-500 mt-0.5">Notify me before this subscription bills</p>
+            <p className="text-sm font-medium text-foreground">Renewal Alert</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Notify me before this subscription bills</p>
           </div>
           <button
             type="button"
             onClick={() => setFormData({ ...formData, alertEnabled: !formData.alertEnabled })}
-            className={`relative h-6 w-11 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${formData.alertEnabled ? "bg-primary" : "bg-gray-200 dark:bg-gray-700"}`}
+            className={`relative h-6 w-11 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${formData.alertEnabled ? "bg-primary" : "bg-muted"}`}
             aria-label="Toggle renewal alert"
           >
-            <span className={`absolute left-0.5 top-0.5 size-5 rounded-full bg-white shadow transition-transform ${formData.alertEnabled ? "translate-x-5" : ""}`} />
+            <span className={`absolute left-0.5 top-0.5 size-5 rounded-full bg-primary-foreground shadow transition-transform ${formData.alertEnabled ? "translate-x-5" : ""}`} />
+          </button>
+        </div>
+
+        {/* Feature 4: Trial-to-paid guard */}
+        <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
+          <div>
+            <p className="text-sm font-medium text-foreground">
+              Ask before paying <span className="ml-1.5 rounded-full bg-foreground/10 px-2 py-0.5 text-[10px] font-semibold text-foreground">OpenClaw</span>
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">Agent will ask you via Telegram before releasing payment. Useful for trials.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setFormData({ ...formData, requireConfirmation: !formData.requireConfirmation })}
+            className={`relative h-6 w-11 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${(formData as any).requireConfirmation ? "bg-primary" : "bg-muted"}`}
+            aria-label="Toggle payment confirmation"
+          >
+            <span className={`absolute left-0.5 top-0.5 size-5 rounded-full bg-primary-foreground shadow transition-transform ${(formData as any).requireConfirmation ? "translate-x-5" : ""}`} />
           </button>
         </div>
       </div>
@@ -441,6 +513,5 @@ export function SubscriptionForm({ subscription, tagIds: initialTagIds = [] }: S
         </Button>
       </div>
     </form>
-    </>
   )
 }
