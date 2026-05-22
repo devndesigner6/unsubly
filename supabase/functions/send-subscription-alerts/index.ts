@@ -13,7 +13,7 @@ const SITE_NAME = 'Unsubscribely'
 // Default points at the live Vercel deployment until a custom domain is purchased.
 // Override by setting the SITE_URL secret in Supabase Edge Function settings once
 // the production domain (e.g. unsubly.app) is live.
-const SITE_URL = Deno.env.get('SITE_URL') || 'https://unsubly2.vercel.app'
+const SITE_URL = Deno.env.get('SITE_URL') || 'https://unsubly.xyz'
 // Default sender uses Resend's shared verified domain so delivery works without
 // owning a custom domain. Limitation: Resend free tier only allows sending to
 // the email address that registered the Resend account. For broader reach, set

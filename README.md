@@ -3,7 +3,7 @@
 
 <!-- PROJECT LOGO -->
 <div align="center">
-  <a href="https://unsubly2.vercel.app">
+  <a href="https://unsubly.xyz">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="screenshots/logo-dark.svg">
       <img src="screenshots/logo.svg" alt="Logo" width="56" height="56">
@@ -17,12 +17,12 @@
 
   <p align="center">
     <br />
-    <a href="https://unsubly2.vercel.app"><strong>Explore the live app >></strong></a>
+    <a href="https://unsubly.xyz"><strong>Explore the live app >></strong></a>
     <br />
     <br />
     <a href="https://youtu.be/9e5BsjqhUyo?si=ulP2jx9IXAdB-Do9"><kbd>View Demo</kbd></a>
     &middot;
-    <a href="https://unsubly2.vercel.app/docs"><kbd>API Docs</kbd></a>
+    <a href="https://unsubly.xyz/docs"><kbd>API Docs</kbd></a>
     &middot;
     <a href="https://github.com/devndesigner6/unsubly/issues/new?labels=bug"><kbd>Report Bug</kbd></a>
     &middot;
@@ -214,7 +214,7 @@ flowchart TD
 
 | Integration | Status | How it's used | Proof |
 |---|---|---|---|
-| **x402 Protocol** | ? Live | HTTP 402 payment gating on AI Optimizer | [x402-demo page](https://unsubly2.vercel.app/x402-demo) |
+| **x402 Protocol** | ? Live | HTTP 402 payment gating on AI Optimizer | [x402-demo page](https://unsubly.xyz/x402-demo) |
 | **Pera SDK** | ? Live | Wallet connection, transaction signing, vault deployment | [Agent wallet txns](https://lora.algokit.io/testnet/account/RVHOYLPY4L47JYCYEMCP7EMEC2AZ3HV53YHSL2ZISX6PSO5EQ6H5YVAE5U) |
 | **Tinyman SDK/Router** | ? Live | Swap any ASA ? ALGO to fund vaults (deep-link + analytics API) | [Tinyman pool](https://testnet.tinyman.org/#/swap?asset_in=0) |
 | **Gora Oracle** | ? Live | ALGO/USD price feed on vault cards (on-chain contract read + Vestige fallback) | App ID `159512493` |
@@ -376,7 +376,7 @@ To get a local copy up and running, follow these steps.
 <!-- USAGE -->
 ## Usage
 
-1. Sign up at [unsubly2.vercel.app](https://unsubly2.vercel.app)  - free, no credit card.
+1. Sign up at [unsubly.xyz](https://unsubly.xyz)  - free, no credit card.
 2. Add subscriptions manually, import CSV, or sign in with Google for auto-detection.
 3. Connect Pera/Defly wallet ? create an escrow vault ? fund it with ALGO.
 4. Connect Telegram (@unsublyybot) in Settings for renewal alerts and voice commands.
@@ -492,4 +492,4 @@ Hemanth Peddada  - [@hemanttbuilds](https://x.com/hemanttbuilds) · [peddadaheman
 [Railway-shield]: https://img.shields.io/badge/Railway-0B0D0E?style=for-the-badge&logo=railway&logoColor=white
 [Railway-url]: https://railway.app
 [Vercel-shield]: https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white
-[Vercel-url]: https://unsubly2.vercel.app
+[Vercel-url]: https://unsubly.xyz

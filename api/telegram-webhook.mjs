@@ -491,7 +491,7 @@ async function executeAction(action, sb, chatId, botToken, context) {
 
     case "suggest_vault": {
       await sendTelegram(botToken, chatId,
-        `💰 Want to protect ${subName} with a vault?\n\nCreate one here: https://unsubly2.vercel.app/vaults?sub=${subId}`
+        `💰 Want to protect ${subName} with a vault?\n\nCreate one here: https://unsubly.xyz/vaults?sub=${subId}`
       )
       break
     }
@@ -844,7 +844,7 @@ export async function telegramWebhookHandler(req, res) {
     // Build prompt even without context (for general chat / unconnected users)
     const systemPrompt = context
       ? buildSystemPrompt(context)
-      : `You are the Unsubscribely AI assistant on Telegram. The user hasn't connected their account yet. Help them understand the platform: lock ALGO in escrow vaults, autonomous agent pays on billing day, cancel via Telegram. Tell them to connect at https://unsubly2.vercel.app/settings. Be concise and friendly. Return JSON: {"reply": "your message", "action": null}`
+      : `You are the Unsubscribely AI assistant on Telegram. The user hasn't connected their account yet. Help them understand the platform: lock ALGO in escrow vaults, autonomous agent pays on billing day, cancel via Telegram. Tell them to connect at https://unsubly.xyz/settings. Be concise and friendly. Return JSON: {"reply": "your message", "action": null}`
 
     const aiResponse = await callCerebras(systemPrompt, text)
     console.log(`[webhook] cerebras response: ${aiResponse ? "got reply" : "null/failed"}`)
@@ -881,7 +881,7 @@ async function handleDoneCommand(sb, chatId, botToken, nameHint) {
   const { data: profiles } = await sb.from("profiles").select("id").eq("telegram_chat_id", chatId).limit(1)
   const userId = profiles?.[0]?.id
   if (!userId) {
-    await sendTelegram(botToken, chatId, "Connect your account first at https://unsubly2.vercel.app/settings")
+    await sendTelegram(botToken, chatId, "Connect your account first at https://unsubly.xyz/settings")
     return
   }
 
@@ -1004,7 +1004,7 @@ async function handleCancelCommand(sb, chatId, botToken, searchName) {
   const { data: profiles } = await sb.from("profiles").select("id").eq("telegram_chat_id", chatId).limit(1)
   const userId = profiles?.[0]?.id
   if (!userId) {
-    await sendTelegram(botToken, chatId, "Connect your account first at https://unsubly2.vercel.app/settings")
+    await sendTelegram(botToken, chatId, "Connect your account first at https://unsubly.xyz/settings")
     return
   }
 

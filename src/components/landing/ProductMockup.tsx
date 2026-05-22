@@ -177,7 +177,7 @@ export function ProductMockup() {
               <div className="flex-1 flex justify-center mx-4">
                 <div className="flex items-center gap-1.5 rounded-md bg-black/[0.04] dark:bg-white/[0.05] px-3 py-1 w-full max-w-sm">
                   <svg className="size-2.5 text-muted-foreground/40 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>
-                  <span className="text-[10px] text-muted-foreground/50 font-mono truncate select-none">unsubly2.vercel.app/subscriptions</span>
+                  <span className="text-[10px] text-muted-foreground/50 font-mono truncate select-none">unsubly.xyz/subscriptions</span>
                 </div>
               </div>
 

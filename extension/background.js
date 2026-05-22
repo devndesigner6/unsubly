@@ -3,7 +3,7 @@
  * Handles communication between content script, popup, and Unsubscribely backend.
  */
 
-const API_BASE = "https://unsubly2.vercel.app"
+const API_BASE = "https://unsubly.xyz"
 
 let detectedSubscription = null
 

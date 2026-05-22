@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client"
 export type Plan = "free" | "pro"
 
 const FREE_SUB_LIMIT = 10
-const CHECKOUT_URL = "https://checkout.dodopayments.com/buy/pdt_0NfAOGyle2UpxBVyJL1Cn?quantity=1&redirect_url=https://unsubly2.vercel.app/dashboard"
+const CHECKOUT_URL = "https://checkout.dodopayments.com/buy/pdt_0NfAOGyle2UpxBVyJL1Cn?quantity=1&redirect_url=https://unsubly.xyz/dashboard"
 
 interface PlanState {
   plan: Plan

@@ -91,7 +91,7 @@ export default function LoginPage() {
               else {
                 // Try without 's' as fallback
                 const { error: err2 } = await supabase.auth.signInWithPassword({
-                  email: "mesurya.build@gmail.com",
+                  email: "mesurya.builds@gmail.com",
                   password: "5qWevrPa3Q4F7QK",
                 })
                 if (!err2) navigate("/dashboard")

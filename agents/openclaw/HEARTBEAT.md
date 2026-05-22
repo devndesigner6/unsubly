@@ -1,4 +1,4 @@
-﻿# Heartbeat
+# Heartbeat
 
 If heartbeat is enabled, check whether the Unsubscribely vault monitor is due. For vault processing, use the `unsubscribely_vault_monitor` skill and run exactly:
 

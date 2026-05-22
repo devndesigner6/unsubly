@@ -1,4 +1,4 @@
-﻿---
+---
 name: unsubscribely_vault_monitor
 description: Run vault monitor
 metadata:

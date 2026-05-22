@@ -189,7 +189,7 @@ export async function guidedCancel(subscriptionId, chatId) {
     // wallet signature and must be done from the app. Marking it killed here would
     // show the user their ALGO is returned when it isn't yet.
     // Instead, send a clear message telling them to kill it from the app.
-    const appUrl = process.env.APP_URL || "https://unsubly2.vercel.app"
+    const appUrl = process.env.APP_URL || "https://unsubly.xyz"
     vaultMsg = `⚠️ You have a locked vault for ${amountStr}.\nTo get your ALGO back, open the app and click Kill Switch:\n${appUrl}/escrow-vaults\n\n`
   }
 

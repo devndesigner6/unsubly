@@ -1,4 +1,4 @@
-﻿import { checkDueVaults } from "./skills/check-due-vaults.mjs"
+import { checkDueVaults } from "./skills/check-due-vaults.mjs"
 import { checkGuardrails } from "./skills/check-guardrails.mjs"
 import { releaseVault, checkAgentBalance, killVaultOnChain } from "./skills/release-vault.mjs"
 import { logAction } from "./skills/log-action.mjs"
@@ -121,7 +121,7 @@ async function checkTrialDecision(vault, subName) {
   })
 
   if (chatId && process.env.TELEGRAM_BOT_TOKEN) {
-    // Don't send the old PAY/CANCEL message — the renewal alert system handles this now
+    // Don't send the old PAY/CANCEL message � the renewal alert system handles this now
     console.log(`[monitor] ${subName}: require_confirmation set, waiting for renewal alert decision`)
   }
 
@@ -140,8 +140,8 @@ export async function runVaultMonitor() {
   const { address, balance } = await checkAgentBalance()
   console.log(`[monitor] OpenClaw worker wallet ${address} balance ${balance.toFixed(6)} ALGO`)
   if (balance < LOW_BALANCE_ALGO) {
-    const message = `⚠️ Agent wallet balance low (${balance.toFixed(4)} ALGO). Vault releases paused.\n\nFund at: https://bank.testnet.algorand.network/\nWallet: ${address}`
-    await notifyUser(message, null, null, true) // urgent — always send low balance alerts
+    const message = `?? Agent wallet balance low (${balance.toFixed(4)} ALGO). Vault releases paused.\n\nFund at: https://bank.testnet.algorand.network/\nWallet: ${address}`
+    await notifyUser(message, null, null, true) // urgent � always send low balance alerts
     summary.errors.push(message)
     return summary
   }
@@ -234,7 +234,7 @@ export async function runVaultMonitor() {
 
         // ServiceRegistry verification: if recipient is NOT a registered service, warn user
         if (vault.escrow_address && !serviceInfo) {
-          console.log(`[monitor] ${subName}: recipient ${vault.escrow_address?.slice(0, 8)}... NOT in ServiceRegistry — proceeding with caution`)
+          console.log(`[monitor] ${subName}: recipient ${vault.escrow_address?.slice(0, 8)}... NOT in ServiceRegistry � proceeding with caution`)
           await logAction({
             vaultId: vault.id,
             subscriptionId: vault.subscription_id,
@@ -247,10 +247,10 @@ export async function runVaultMonitor() {
           console.log(`[monitor] ${subName}: recipient verified in ServiceRegistry as "${serviceInfo.name}" (${serviceInfo.service_id})`)
         }
 
-        // Check if user has a renewal alert — don't release if:
-        // - user_decision is null (waiting for reply) — BUT auto-release after 24h
+        // Check if user has a renewal alert � don't release if:
+        // - user_decision is null (waiting for reply) � BUT auto-release after 24h
         // - user_decision is 'cancel' (user wants to cancel, waiting for DONE)
-        // - NO alert exists → create one and wait (never release without asking first)
+        // - NO alert exists ? create one and wait (never release without asking first)
         try {
           const alerts = await sbFetch(`agent_renewal_alerts?subscription_id=eq.${vault.subscription_id}&select=id,user_decision,alert_sent_at&order=created_at.desc&limit=1`)
           if (Array.isArray(alerts) && alerts.length > 0) {
@@ -261,25 +261,25 @@ export async function runVaultMonitor() {
             if (alertDecision === null) {
               if (hoursSinceAlert > 24) {
                 // Auto-release after 24h of no response
-                console.log(`[monitor] ${subName}: no reply after ${Math.round(hoursSinceAlert)}h — auto-releasing`)
+                console.log(`[monitor] ${subName}: no reply after ${Math.round(hoursSinceAlert)}h � auto-releasing`)
                 await notifyUser(`${subName}: No reply received in 24h. Releasing vault payment automatically.`, null, vault.user_id, true)
               } else {
-                console.log(`[monitor] ${subName}: waiting for user decision (${Math.round(hoursSinceAlert)}h ago) — skipping`)
+                console.log(`[monitor] ${subName}: waiting for user decision (${Math.round(hoursSinceAlert)}h ago) � skipping`)
                 summary.skipped++
                 await releaseLock(vault.id, billingDate)
                 continue
               }
             } else if (alertDecision === "cancel") {
-              console.log(`[monitor] ${subName}: user chose cancel, waiting for DONE — skipping`)
+              console.log(`[monitor] ${subName}: user chose cancel, waiting for DONE � skipping`)
               summary.skipped++
               await releaseLock(vault.id, billingDate)
               continue
             }
-            // decision === "keep" or "done" → proceed with release
+            // decision === "keep" or "done" ? proceed with release
           } else {
-            // NO alert exists for this subscription — create one and WAIT
+            // NO alert exists for this subscription � create one and WAIT
             // Never release without asking the user first
-            console.log(`[monitor] ${subName}: no renewal alert exists — creating one and waiting`)
+            console.log(`[monitor] ${subName}: no renewal alert exists � creating one and waiting`)
             const profiles = await sbFetch(`profiles?id=eq.${vault.user_id}&select=telegram_chat_id`).catch(() => [])
             const chatId = profiles?.[0]?.telegram_chat_id || process.env.TELEGRAM_CHAT_ID
 
@@ -304,7 +304,7 @@ export async function runVaultMonitor() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                   chat_id: chatId,
-                  text: `🚨 Due TODAY\n\n${subName} is due TODAY (${amountStr}).\n\nReply "keep ${subName.toLowerCase()}" to pay and continue\nReply "cancel ${subName.toLowerCase()}" to cancel and get ALGO back`,
+                  text: `?? Due TODAY\n\n${subName} is due TODAY (${amountStr}).\n\nReply "keep ${subName.toLowerCase()}" to pay and continue\nReply "cancel ${subName.toLowerCase()}" to cancel and get ALGO back`,
                   disable_web_page_preview: true,
                 }),
               }).catch(() => {})
@@ -357,18 +357,18 @@ export async function runVaultMonitor() {
         let fixPlan = ""
         const errMsg = err.message.toLowerCase()
         if (errMsg.includes("balance") || errMsg.includes("insufficient") || errMsg.includes("underflow")) {
-          fixPlan = "\n\n🔧 Fix: Agent wallet has insufficient ALGO. Fund it with testnet ALGO at https://bank.testnet.algorand.network/"
+          fixPlan = "\n\n?? Fix: Agent wallet has insufficient ALGO. Fund it with testnet ALGO at https://bank.testnet.algorand.network/"
         } else if (errMsg.includes("app_id") || errMsg.includes("application")) {
-          fixPlan = "\n\n🔧 Fix: The vault's smart contract may have been deleted or is invalid. Try creating a new vault."
+          fixPlan = "\n\n?? Fix: The vault's smart contract may have been deleted or is invalid. Try creating a new vault."
         } else if (errMsg.includes("unauthorized") || errMsg.includes("not authorized")) {
-          fixPlan = "\n\n🔧 Fix: The agent wallet is not authorized on this vault. Ensure the vault was created with the agent address."
+          fixPlan = "\n\n?? Fix: The agent wallet is not authorized on this vault. Ensure the vault was created with the agent address."
         } else if (errMsg.includes("network") || errMsg.includes("timeout") || errMsg.includes("ECONNREFUSED")) {
-          fixPlan = "\n\n🔧 Fix: Network issue connecting to Algorand. Will retry on next tick (30 min)."
+          fixPlan = "\n\n?? Fix: Network issue connecting to Algorand. Will retry on next tick (30 min)."
         } else {
-          fixPlan = "\n\n🔧 The agent will retry on the next tick. If this persists, check the vault in the app."
+          fixPlan = "\n\n?? The agent will retry on the next tick. If this persists, check the vault in the app."
         }
         if (fixPlan) {
-          await notifyUser(`🩺 Self-diagnosis for ${subName}:${fixPlan}`, null, vault.user_id, false)
+          await notifyUser(`?? Self-diagnosis for ${subName}:${fixPlan}`, null, vault.user_id, false)
         }
         await releaseLock(vault.id, billingDate)
       }
@@ -377,7 +377,7 @@ export async function runVaultMonitor() {
     // Always run renewal checks regardless of vault processing errors (#17 fix)
     await checkUpcomingRenewals().catch((err) => console.warn(`[monitor] upcoming renewal check failed: ${err.message}`))
 
-    // Process cancelled vaults — kill them on-chain and return ALGO to user
+    // Process cancelled vaults � kill them on-chain and return ALGO to user
     await processCancelledVaults().catch((err) => console.warn(`[monitor] kill cancelled vaults failed: ${err.message}`))
   }
   console.log(`[monitor] completed in ${((Date.now() - startedAt) / 1000).toFixed(1)}s`)
@@ -422,8 +422,8 @@ async function processCancelledVaults() {
     for (const vault of vaults) {
       try {
         if (!vault.app_id || Number(vault.app_id) <= 0) {
-          // No on-chain contract — just mark as done in DB (vault was DB-only)
-          console.log(`[monitor] vault ${vault.id} has no app_id — marking as done (no on-chain kill needed)`)
+          // No on-chain contract � just mark as done in DB (vault was DB-only)
+          console.log(`[monitor] vault ${vault.id} has no app_id � marking as done (no on-chain kill needed)`)
           await sbFetch(`escrow_vaults?id=eq.${vault.id}`, {
             method: "PATCH",
             headers: { Prefer: "return=minimal" },
@@ -431,7 +431,7 @@ async function processCancelledVaults() {
           })
           const subs = await sbFetch(`subscriptions?id=eq.${vault.subscription_id}&select=name&limit=1`)
           const subName = Array.isArray(subs) && subs[0] ? subs[0].name : "Subscription"
-          await notifyUser(`✅ ${subName} vault closed. No on-chain contract was deployed — nothing to return.`, null, vault.user_id, false)
+          await notifyUser(`? ${subName} vault closed. No on-chain contract was deployed � nothing to return.`, null, vault.user_id, false)
           continue
         }
 
@@ -449,7 +449,7 @@ async function processCancelledVaults() {
         const amountStr = sub?.amount ? `${sub.currency || "USD"} ${Number(sub.amount).toFixed(2)}` : `${vault.amount} ALGO`
 
         await notifyUser(
-          `✅ ${subName} vault killed on-chain! ${amountStr} returned to your wallet.\n\n💰 You saved ${amountStr}/month.\n\nTx: ${txid}`,
+          `? ${subName} vault killed on-chain! ${amountStr} returned to your wallet.\n\n?? You saved ${amountStr}/month.\n\nTx: ${txid}`,
           txid, vault.user_id, true
         )
 
@@ -463,7 +463,7 @@ async function processCancelledVaults() {
           payload: { subscription_name: subName, action: "kill_vault", runtime: "openclaw" },
         })
 
-        console.log(`[monitor] ✓ Killed vault ${vault.id} on-chain, txid: ${txid}`)
+        console.log(`[monitor] ? Killed vault ${vault.id} on-chain, txid: ${txid}`)
 
         // Write cancellation proof on-chain
         try {
@@ -473,9 +473,9 @@ async function processCancelledVaults() {
             method: "guided",
             userId: vault.user_id,
           })
-          console.log(`[monitor] ✓ Cancellation proof written: txid=${proofResult.txid}`)
+          console.log(`[monitor] ? Cancellation proof written: txid=${proofResult.txid}`)
           await notifyUser(
-            `🔗 Cancellation proof recorded on Algorand.\nTx: ${proofResult.txid}\n\nThis is immutable proof that ${subName} was cancelled on ${new Date().toLocaleDateString()}.`,
+            `?? Cancellation proof recorded on Algorand.\nTx: ${proofResult.txid}\n\nThis is immutable proof that ${subName} was cancelled on ${new Date().toLocaleDateString()}.`,
             proofResult.txid, vault.user_id, false
           )
         } catch (proofErr) {
@@ -483,10 +483,10 @@ async function processCancelledVaults() {
         }
       } catch (err) {
         // If agent is not authorized (only creator can kill), mark as processed anyway
-        // The user already initiated the kill from the UI — the on-chain state may already be killed
+        // The user already initiated the kill from the UI � the on-chain state may already be killed
         const errMsg = err.message.toLowerCase()
         if (errMsg.includes("not authorized") || errMsg.includes("only creator") || errMsg.includes("assert")) {
-          console.warn(`[monitor] Agent not authorized to kill vault ${vault.id} on-chain (expected — user kills from UI). Marking as processed.`)
+          console.warn(`[monitor] Agent not authorized to kill vault ${vault.id} on-chain (expected � user kills from UI). Marking as processed.`)
           await sbFetch(`escrow_vaults?id=eq.${vault.id}`, {
             method: "PATCH",
             headers: { Prefer: "return=minimal" },

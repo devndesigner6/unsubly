@@ -573,7 +573,7 @@ export async function mintNFTReceipt(
   // `#arc3` fragment + a stable identifier. Domain is env-driven so we never
   // bake an unowned URL into immutable on-chain receipts.
   const receiptDomain =
-    (import.meta.env.VITE_RECEIPT_DOMAIN as string | undefined) || "unsubly2.vercel.app"
+    (import.meta.env.VITE_RECEIPT_DOMAIN as string | undefined) || "unsubly.xyz"
   const assetUrl = `https://${receiptDomain}/r/${vaultAppId}#arc3`
 
   const txn = algosdk.makeAssetCreateTxnWithSuggestedParamsFromObject({
