@@ -28,9 +28,10 @@ function ProCard() {
       onMouseLeave={() => setHovered(false)}
       animate={shaken && hovered ? { x: [0, -3, 3, -3, 3, 0] } : { x: 0 }}
       transition={{ duration: 0.4, ease: "easeInOut" }}
-      className="rounded-xl border border-gold/30 bg-gold/5 p-4 cursor-default"
+      onClick={() => window.open("https://checkout.dodopayments.com/buy/pdt_0NfAOGyle2UpxBVyJL1Cn?quantity=1&redirect_url=https://unsubly.xyz/dashboard", "_blank")}
+      className="rounded-xl border border-indigo-400/30 bg-indigo-400/5 p-4 cursor-pointer hover:border-indigo-400/50 transition-colors"
     >
-      <p className="font-medium text-foreground mb-2">Pro <span className="text-gold">₹349</span></p>
+      <p className="font-medium text-foreground mb-2">Pro <span className="text-indigo-400">₹349</span></p>
       <ul className="space-y-1.5 text-muted-foreground">
         <li>Unlimited subs</li>
         <li>Telegram bot</li>
@@ -46,7 +47,7 @@ function ProCard() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="mt-1 text-[9px] text-gold/70"
+            className="mt-1 text-[9px] text-indigo-400/70"
           >
             One payment to stop all payments. The irony writes itself.
           </motion.p>

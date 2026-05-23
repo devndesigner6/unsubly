@@ -276,12 +276,13 @@ export function ProductMockup() {
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="mt-4 text-center py-3 rounded-xl border border-indigo-400/30 bg-indigo-400/[0.04]"
+                  className="mt-4 text-center py-4 rounded-xl border border-indigo-400/30 bg-indigo-400/[0.04]"
                 >
-                  <p className="text-xs font-mono-pixel text-indigo-400">
-                    🔒 ALL VAULTS LOCKED · $0.00/mo
+                  <p className="text-sm font-mono-pixel text-indigo-400">
+                    ⛓ ALL VAULTS LOCKED · $0.00/mo
                   </p>
-                  <p className="text-[9px] text-muted-foreground mt-1">you just saved ${TOTAL_USD.toFixed(2)}/mo in 10 seconds</p>
+                  <p className="text-[10px] text-muted-foreground mt-1.5">you just saved ${TOTAL_USD.toFixed(2)}/mo in 10 seconds</p>
+                  <p className="text-[9px] text-muted-foreground/50 mt-1">every cancellation is an on-chain proof on Algorand</p>
                 </motion.div>
               )}
             </AnimatePresence>

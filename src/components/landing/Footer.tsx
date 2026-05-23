@@ -1,149 +1,223 @@
 import { Link } from "react-router-dom"
 import { useEffect, useState, useRef } from "react"
-import { motion, useInView } from "motion/react"
-import { RiTwitterXLine, RiGithubLine, RiTelegramLine } from "@remixicon/react"
+import { useInView } from "motion/react"
+import { RiTwitterXLine, RiGithubLine, RiLinkedinLine, RiTelegramLine } from "@remixicon/react"
+
+const RECEIPT_LINES = [
+  "      ╔═══════════════════════╗",
+  "      ║    UNSUBSCRIBELY      ║",
+  "      ╚═══════════════════════╝",
+  "",
+  "  DATE: 23-MAY-2026  14:32:07",
+  "  TERMINAL: algorand-testnet",
+  "  CASHIER: openclaw-agent v2.1",
+  "",
+  "  ─────────────────────────────",
+  "  ITEM                     QTY",
+  "  ─────────────────────────────",
+  "  Subscriptions tracked     13",
+  "  Escrow vaults locked       4",
+  "  Agent runs (24h)          48",
+  "  Cancellations proven       7",
+  "  ARC-3 NFT receipts        7",
+  "  MCP tools available       12",
+  "  ─────────────────────────────",
+  "",
+  "  TOTAL SAVED:        $247.00",
+  "  CHAIN:             Algorand",
+  "  FINALITY:              3.3s",
+  "  FEE:              < $0.001",
+  "  STATUS:        ✓ VERIFIED",
+  "",
+  "  ─────────────────────────────",
+  "  \"Your subscriptions called.",
+  "   We hung up.\"",
+  "  ─────────────────────────────",
+  "",
+  "      THANK YOU COME AGAIN",
+  "       keep your money ♠",
+]
+
+const navigation = {
+  product: [
+    { name: "Features", href: "#features" },
+    { name: "How It Works", href: "#how-it-works" },
+    { name: "Blockchain", href: "#blockchain" },
+    { name: "Pricing", href: "#pricing" },
+  ],
+  resources: [
+    { name: "Documentation", href: "/docs", internal: true },
+    { name: "Telegram Bot", href: "https://t.me/unsublyybot" },
+    { name: "GitHub", href: "https://github.com/devndesigner6/unsubly" },
+    { name: "GTM Plan", href: "/Unsubscribely-GTM-Plan.pdf" },
+  ],
+  legal: [
+    { name: "Privacy Policy", href: "/privacy", internal: true },
+    { name: "Terms of Service", href: "/terms", internal: true },
+    { name: "Contact", href: "mailto:peddadahemanth6@gmail.com" },
+  ],
+}
+
+const social = [
+  { name: "Twitter", href: "https://x.com/hemanttbuilds", icon: RiTwitterXLine },
+  { name: "GitHub", href: "https://github.com/devndesigner6", icon: RiGithubLine },
+  { name: "LinkedIn", href: "https://www.linkedin.com/in/hemanthp15gr6", icon: RiLinkedinLine },
+  { name: "Telegram", href: "https://t.me/unsublyybot", icon: RiTelegramLine },
+]
 
 export function Footer() {
-  const [agentRuns, setAgentRuns] = useState(48)
-  const [saved, setSaved] = useState(247)
   const ref = useRef<HTMLDivElement>(null)
-  const isInView = useInView(ref, { once: true, amount: 0.2 })
-  const [visibleLines, setVisibleLines] = useState(0)
+  const isInView = useInView(ref, { once: true, amount: 0.1 })
+  const [displayedText, setDisplayedText] = useState("")
+  const [typing, setTyping] = useState(false)
+  const [done, setDone] = useState(false)
 
-  // Slowly tick up the numbers for liveness
+  // Character-by-character typing like a real receipt printer
   useEffect(() => {
-    const interval = setInterval(() => {
-      setAgentRuns((n) => n + 1)
-      if (Math.random() > 0.6) setSaved((n) => n + Math.floor(Math.random() * 12 + 3))
-    }, 8000)
-    return () => clearInterval(interval)
-  }, [])
+    if (!isInView || typing) return
+    setTyping(true)
 
-  // Typewriter reveal when scrolled into view
-  useEffect(() => {
-    if (!isInView) return
-    const totalLines = 14
-    let current = 0
+    const fullText = RECEIPT_LINES.join("\n")
+    let i = 0
+
     const interval = setInterval(() => {
-      current++
-      setVisibleLines(current)
-      if (current >= totalLines) clearInterval(interval)
-    }, 120)
+      // Type 2 chars at a time for speed
+      i += 2
+      if (i >= fullText.length) i = fullText.length
+      setDisplayedText(fullText.slice(0, i))
+      if (i >= fullText.length) {
+        clearInterval(interval)
+        setDone(true)
+      }
+    }, 12)
+
     return () => clearInterval(interval)
-  }, [isInView])
+  }, [isInView, typing])
 
   return (
     <footer className="border-t border-border py-12 sm:py-16">
-      <div ref={ref} className="mx-auto max-w-sm px-6">
-        {/* Zig-zag torn edge */}
-        <div
-          className="h-3 -mt-12 mb-8 opacity-15"
-          style={{
-            background: `repeating-linear-gradient(90deg, hsl(var(--foreground)) 0px, hsl(var(--foreground)) 2px, transparent 2px, transparent 6px)`,
-            maskImage: "linear-gradient(to bottom, transparent 0%, black 40%, black 60%, transparent 100%)",
-            WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 40%, black 60%, transparent 100%)",
-          }}
-        />
+      <div ref={ref} className="mx-auto max-w-7xl px-6 lg:px-8">
+        {/* Two column layout: receipt on left, links on right */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.5fr] gap-12 lg:gap-16">
 
-        {/* Receipt content — typewriter reveal */}
-        <div className="font-mono-pixel text-[11px] text-foreground/70 leading-[1.8] text-center">
-          <motion.div style={{ opacity: visibleLines >= 1 ? 1 : 0 }} className="transition-opacity duration-150">
-            <p className="text-foreground font-medium text-xs tracking-wider mb-1">UNSUBSCRIBELY</p>
-          </motion.div>
-          <motion.div style={{ opacity: visibleLines >= 2 ? 1 : 0 }} className="transition-opacity duration-150">
-            <p className="text-muted-foreground/40 text-[10px]">─────────────────────────────</p>
-          </motion.div>
+          {/* Left — Receipt */}
+          <div className="mx-auto lg:mx-0 max-w-[320px] w-full">
+            {/* Torn paper edge */}
+            <div
+              className="h-2 mb-4 opacity-10"
+              style={{
+                background: `repeating-linear-gradient(90deg, hsl(var(--foreground)) 0px, hsl(var(--foreground)) 2px, transparent 2px, transparent 5px)`,
+              }}
+            />
 
-          <div className="text-left mt-3 space-y-0.5">
-            <motion.div style={{ opacity: visibleLines >= 3 ? 1 : 0 }} className="flex justify-between transition-opacity duration-150">
-              <span>Subscriptions tracked</span>
-              <span className="text-foreground">13</span>
-            </motion.div>
-            <motion.div style={{ opacity: visibleLines >= 4 ? 1 : 0 }} className="flex justify-between transition-opacity duration-150">
-              <span>Vaults locked</span>
-              <span className="text-foreground">4</span>
-            </motion.div>
-            <motion.div style={{ opacity: visibleLines >= 5 ? 1 : 0 }} className="flex justify-between transition-opacity duration-150">
-              <span>Agent runs today</span>
-              <span className="text-foreground">{agentRuns}</span>
-            </motion.div>
-            <motion.div style={{ opacity: visibleLines >= 6 ? 1 : 0 }} className="flex justify-between transition-opacity duration-150">
-              <span>Money saved (testnet)</span>
-              <span className="text-indigo-400">${saved}.00</span>
-            </motion.div>
-          </div>
-
-          <motion.div style={{ opacity: visibleLines >= 7 ? 1 : 0 }} className="transition-opacity duration-150">
-            <p className="text-muted-foreground/40 text-[10px] mt-3">─────────────────────────────</p>
-          </motion.div>
-
-          <div className="text-left mt-2 space-y-0.5">
-            <motion.div style={{ opacity: visibleLines >= 8 ? 1 : 0 }} className="flex justify-between transition-opacity duration-150">
-              <span>SUBTOTAL:</span>
-              <span className="text-foreground italic">you're welcome</span>
-            </motion.div>
-            <motion.div style={{ opacity: visibleLines >= 9 ? 1 : 0 }} className="flex justify-between transition-opacity duration-150">
-              <span>TAX:</span>
-              <span>$0</span>
-            </motion.div>
-            <motion.div style={{ opacity: visibleLines >= 10 ? 1 : 0 }} className="flex justify-between transition-opacity duration-150">
-              <span>TIP:</span>
-              <a href="https://github.com/devndesigner6/unsubly" target="_blank" rel="noopener noreferrer" className="text-foreground hover:text-indigo-400 transition-colors underline underline-offset-2">star us on github</a>
-            </motion.div>
-          </div>
-
-          <motion.div style={{ opacity: visibleLines >= 11 ? 1 : 0 }} className="transition-opacity duration-150">
-            <p className="text-muted-foreground/40 text-[10px] mt-3">─────────────────────────────</p>
-
-            {/* Links */}
-            <div className="flex items-center justify-center gap-3 mt-4">
-              <a href="https://github.com/devndesigner6/unsubly" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
-                <RiGithubLine className="size-3.5" />
-              </a>
-              <a href="https://x.com/hemanttbuilds" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
-                <RiTwitterXLine className="size-3.5" />
-              </a>
-              <a href="https://t.me/unsublyybot" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
-                <RiTelegramLine className="size-3.5" />
-              </a>
-              <Link to="/docs" className="text-[10px] text-muted-foreground hover:text-foreground transition-colors">Docs</Link>
-              <Link to="/privacy" className="text-[10px] text-muted-foreground hover:text-foreground transition-colors">Privacy</Link>
-              <Link to="/terms" className="text-[10px] text-muted-foreground hover:text-foreground transition-colors">Terms</Link>
+            {/* Receipt body — typed character by character */}
+            <div className="font-mono-pixel text-[10px] text-foreground/70 leading-[1.7] whitespace-pre-wrap min-h-[280px]">
+              {displayedText}
+              {!done && <span className="inline-block w-[5px] h-[10px] bg-foreground/50 animate-pulse ml-[1px] align-middle" />}
             </div>
-          </motion.div>
 
-          <motion.div style={{ opacity: visibleLines >= 12 ? 1 : 0 }} className="transition-opacity duration-150">
-            <p className="text-muted-foreground/40 text-[10px] mt-4">─────────────────────────────</p>
-            <div className="mt-3 space-y-1">
-              <p className="text-[9px] text-muted-foreground/50">
-                Built on Algorand · Apache-2.0 · © {new Date().getFullYear()}
-              </p>
-              <p className="text-[9px] text-muted-foreground/40">
-                @hemanttbuilds · AlgoBharat 2026
-              </p>
-            </div>
-          </motion.div>
-
-          <motion.div style={{ opacity: visibleLines >= 13 ? 1 : 0 }} className="transition-opacity duration-150">
-            <p className="text-muted-foreground/40 text-[10px] mt-3">─────────────────────────────</p>
-            <p className="mt-2 text-[10px] text-muted-foreground/50 tracking-widest">THANK YOU COME AGAIN</p>
-          </motion.div>
-
-          <motion.div style={{ opacity: visibleLines >= 14 ? 1 : 0 }} className="transition-opacity duration-150">
-            {/* Barcode */}
-            <div className="mt-3 flex items-center justify-center gap-[1px]">
-              {Array.from({ length: 40 }, (_, i) => (
+            {/* Barcode — appears after typing */}
+            <div className={`mt-3 flex items-center justify-center gap-[1px] transition-opacity duration-500 ${done ? "opacity-100" : "opacity-0"}`}>
+              {Array.from({ length: 48 }, (_, i) => (
                 <div
                   key={i}
-                  className="bg-foreground/30"
+                  className="bg-foreground/20"
                   style={{
-                    width: Math.random() > 0.5 ? "2px" : "1px",
-                    height: "18px",
+                    width: [1, 2, 1, 2, 1, 1, 2, 1][i % 8] + "px",
+                    height: "22px",
                   }}
                 />
               ))}
             </div>
-          </motion.div>
+          </div>
+
+          {/* Right — Navigation links */}
+          <div className={`transition-opacity duration-700 ${done ? "opacity-100" : "opacity-0"}`}>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-8">
+              <div>
+                <h3 className="text-xs font-medium tracking-widest uppercase text-muted-foreground">Product</h3>
+                <ul className="mt-4 space-y-3">
+                  {navigation.product.map((item) => (
+                    <li key={item.name}>
+                      <a href={item.href} className="text-sm text-foreground/70 transition-colors hover:text-foreground">
+                        {item.name}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="text-xs font-medium tracking-widest uppercase text-muted-foreground">Resources</h3>
+                <ul className="mt-4 space-y-3">
+                  {navigation.resources.map((item) => (
+                    <li key={item.name}>
+                      {item.internal ? (
+                        <Link to={item.href} className="text-sm text-foreground/70 transition-colors hover:text-foreground">
+                          {item.name}
+                        </Link>
+                      ) : (
+                        <a href={item.href} target="_blank" rel="noopener noreferrer" className="text-sm text-foreground/70 transition-colors hover:text-foreground">
+                          {item.name}
+                        </a>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="text-xs font-medium tracking-widest uppercase text-muted-foreground">Legal</h3>
+                <ul className="mt-4 space-y-3">
+                  {navigation.legal.map((item) => (
+                    <li key={item.name}>
+                      {item.internal ? (
+                        <Link to={item.href} className="text-sm text-foreground/70 transition-colors hover:text-foreground">
+                          {item.name}
+                        </Link>
+                      ) : (
+                        <a href={item.href} className="text-sm text-foreground/70 transition-colors hover:text-foreground">
+                          {item.name}
+                        </a>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            {/* Social icons */}
+            <div className="mt-8 flex gap-2">
+              {social.map((item) => (
+                <a
+                  key={item.name}
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={item.name}
+                  className="flex size-9 items-center justify-center rounded-full border border-border text-muted-foreground transition-all hover:border-foreground/30 hover:text-foreground"
+                >
+                  <item.icon className="size-4" />
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom bar */}
+        <div className={`mt-12 flex flex-col items-center justify-between gap-4 border-t border-border pt-8 sm:flex-row transition-opacity duration-700 ${done ? "opacity-100" : "opacity-0"}`}>
+          <p className="text-xs text-muted-foreground">
+            Built by{" "}
+            <a href="https://me.in" target="_blank" rel="noopener noreferrer" className="text-foreground/70 hover:text-foreground underline underline-offset-2 transition-colors">Hemanth</a>
+            {" "}♠ Open Source
+          </p>
+          <div className="flex items-center gap-3">
+            <span className="inline-flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground border border-border dark:border-white/10 rounded-full px-2.5 py-1">
+              <img src="/icons/algorand-black.svg" alt="" className="size-3 dark:hidden" />
+              <img src="/icons/algorand-white.svg" alt="" className="size-3 hidden dark:block" />
+              AlgoBharat 2026
+            </span>
+          </div>
         </div>
       </div>
     </footer>
