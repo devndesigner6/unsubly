@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useRef, useCallback } from "react"
 import { motion, AnimatePresence } from "motion/react"
 
 const KONAMI = ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"]
@@ -13,97 +13,102 @@ const TERMINAL_LINES = [
 ]
 
 export function KonamiVault() {
-  const [sequence, setSequence] = useState<string[]>([])
   const [active, setActive] = useState(false)
   const [lines, setLines] = useState<string[]>([])
   const [waitingInput, setWaitingInput] = useState(false)
   const [response, setResponse] = useState<string | null>(null)
   const [lockMode, setLockMode] = useState(false)
+  const sequenceRef = useRef<string[]>([])
+  const activeRef = useRef(false)
+  const waitingRef = useRef(false)
 
-  // Listen for Konami sequence
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (active && waitingInput) {
-        if (e.key.toLowerCase() === "y") {
-          setResponse("y")
-          setWaitingInput(false)
-          setLockMode(true)
-          // Close after 4s
-          setTimeout(() => {
-            setActive(false)
-            setLockMode(false)
-            setLines([])
-            setResponse(null)
-            setSequence([])
-          }, 4000)
-        } else if (e.key.toLowerCase() === "n") {
-          setResponse("n")
-          setWaitingInput(false)
-          // Close after 3s
-          setTimeout(() => {
-            setActive(false)
-            setLines([])
-            setResponse(null)
-            setSequence([])
-          }, 3000)
-        }
-        return
+  // Keep refs in sync
+  useEffect(() => { activeRef.current = active }, [active])
+  useEffect(() => { waitingRef.current = waitingInput }, [waitingInput])
+
+  const handleKey = useCallback((e: KeyboardEvent) => {
+    // Handle Y/N input when terminal is waiting
+    if (activeRef.current && waitingRef.current) {
+      if (e.key.toLowerCase() === "y") {
+        setResponse("y")
+        setWaitingInput(false)
+        setLockMode(true)
+        setTimeout(() => {
+          setActive(false)
+          setLockMode(false)
+          setLines([])
+          setResponse(null)
+          sequenceRef.current = []
+        }, 4000)
+      } else if (e.key.toLowerCase() === "n") {
+        setResponse("n")
+        setWaitingInput(false)
+        setTimeout(() => {
+          setActive(false)
+          setLines([])
+          setResponse(null)
+          sequenceRef.current = []
+        }, 3000)
       }
-
-      if (active) return
-
-      const newSeq = [...sequence, e.key].slice(-10)
-      setSequence(newSeq)
-
-      if (newSeq.length === 10 && newSeq.every((k, i) => k === KONAMI[i])) {
-        setActive(true)
-        setSequence([])
-      }
+      return
     }
 
+    if (activeRef.current) return
+
+    // Track sequence with ref (no re-renders on each keypress)
+    sequenceRef.current = [...sequenceRef.current, e.key].slice(-10)
+
+    if (
+      sequenceRef.current.length === 10 &&
+      sequenceRef.current.every((k, i) => k === KONAMI[i])
+    ) {
+      setActive(true)
+      sequenceRef.current = []
+    }
+  }, [])
+
+  // Single event listener — never re-registers
+  useEffect(() => {
     window.addEventListener("keydown", handleKey)
     return () => window.removeEventListener("keydown", handleKey)
-  }, [sequence, active, waitingInput])
+  }, [handleKey])
 
   // Type out terminal lines when active
   useEffect(() => {
     if (!active) return
 
+    const timeouts: ReturnType<typeof setTimeout>[] = []
     TERMINAL_LINES.forEach(({ text, delay }) => {
-      setTimeout(() => {
+      const t = setTimeout(() => {
         setLines((prev) => [...prev, text])
         if (text.includes("[Y/N]")) {
           setTimeout(() => setWaitingInput(true), 400)
         }
       }, delay)
+      timeouts.push(t)
     })
+
+    return () => timeouts.forEach(clearTimeout)
   }, [active])
 
-  // Add padlocks to page elements when lockMode is active
+  // Add padlocks when lockMode
   useEffect(() => {
     if (!lockMode) return
-    const elements = document.querySelectorAll("h1, h2, h3, button, a, img")
-    const originals: { el: Element; text: string }[] = []
+    const elements = document.querySelectorAll("h1, h2, h3, button, a")
+    const originals: { el: HTMLElement; text: string }[] = []
 
     elements.forEach((el) => {
       if (el.closest("[data-konami-overlay]")) return
       const htmlEl = el as HTMLElement
-      originals.push({ el, text: htmlEl.innerText })
-      if (htmlEl.tagName === "IMG") {
-        htmlEl.style.opacity = "0.3"
-      } else if (htmlEl.innerText && htmlEl.innerText.length < 100) {
+      if (htmlEl.innerText && htmlEl.innerText.length < 80) {
+        originals.push({ el: htmlEl, text: htmlEl.innerText })
         htmlEl.innerText = "🔒 " + htmlEl.innerText
       }
     })
 
     return () => {
       originals.forEach(({ el, text }) => {
-        const htmlEl = el as HTMLElement
-        if (htmlEl.tagName === "IMG") {
-          htmlEl.style.opacity = ""
-        } else if (text) {
-          htmlEl.innerText = text
-        }
+        el.innerText = text
       })
     }
   }, [lockMode])
@@ -147,7 +152,6 @@ export function KonamiVault() {
                 </motion.div>
               ))}
 
-              {/* User response */}
               {response === "y" && (
                 <motion.div
                   initial={{ opacity: 0 }}
@@ -171,7 +175,6 @@ export function KonamiVault() {
                 </motion.div>
               )}
 
-              {/* Blinking cursor */}
               {!response && (
                 <span className="inline-block w-2 h-4 bg-white/70 animate-pulse mt-2" />
               )}
