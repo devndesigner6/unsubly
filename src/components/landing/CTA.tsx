@@ -3,12 +3,57 @@ import { Button } from "@/components/Button"
 import { RiArrowRightLine } from "@remixicon/react"
 import { Link } from "react-router-dom"
 import { supabase } from "@/integrations/supabase/client"
-import { motion } from "motion/react"
+import { motion, AnimatePresence } from "motion/react"
 
 interface SocialProof {
   vaults: number
   algoLocked: number
   payments: number
+}
+
+function ProCard() {
+  const [hovered, setHovered] = useState(false)
+  const [shaken, setShaken] = useState(false)
+
+  const handleMouseEnter = () => {
+    setHovered(true)
+    if (!shaken) {
+      setShaken(true)
+    }
+  }
+
+  return (
+    <motion.div
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={() => setHovered(false)}
+      animate={shaken && hovered ? { x: [0, -3, 3, -3, 3, 0] } : { x: 0 }}
+      transition={{ duration: 0.4, ease: "easeInOut" }}
+      className="rounded-xl border border-gold/30 bg-gold/5 p-4 cursor-default"
+    >
+      <p className="font-medium text-foreground mb-2">Pro <span className="text-gold">₹349</span></p>
+      <ul className="space-y-1.5 text-muted-foreground">
+        <li>Unlimited subs</li>
+        <li>Telegram bot</li>
+        <li>Escrow vaults</li>
+        <li>AI agent + MCP</li>
+      </ul>
+      <p className="mt-2 text-[10px] italic text-muted-foreground/70">
+        We hate subscriptions. So we won't make you subscribe to us.
+      </p>
+      <AnimatePresence>
+        {hovered && (
+          <motion.p
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mt-1 text-[9px] text-gold/70"
+          >
+            Still ₹349. We're not Spotify.
+          </motion.p>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  )
 }
 
 export function CTA() {
@@ -84,14 +129,18 @@ export function CTA() {
             and building your on-chain financial identity. 100% free.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button asChild className="rounded-full bg-foreground text-background hover:bg-foreground/90 px-8 py-6 text-sm font-medium gap-2 group w-full sm:w-auto">
-              <Link to="/register">
-                <div className="flex size-6 items-center justify-center rounded-md bg-background/20">
-                  <RiArrowRightLine className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-                </div>
-                Get Started Free
-              </Link>
-            </Button>
+            <div className="relative group w-full sm:w-auto">
+              {/* Shimmer border loop */}
+              <div className="absolute -inset-[2px] rounded-full bg-gradient-to-r from-transparent via-gold/40 to-transparent bg-[length:200%_auto] animate-[shimmer_3s_ease-in-out_infinite]" />
+              <Button asChild className="relative rounded-full bg-foreground text-background hover:bg-foreground/90 px-8 py-6 text-sm font-medium gap-2 group/btn w-full sm:w-auto">
+                <Link to="/register">
+                  <div className="flex size-6 items-center justify-center rounded-md bg-background/20">
+                    <RiArrowRightLine className="size-3.5 transition-transform group-hover/btn:translate-x-0.5" />
+                  </div>
+                  Get Started Free
+                </Link>
+              </Button>
+            </div>
             <Button variant="ghost" asChild className="rounded-full px-8 py-6 text-sm text-muted-foreground hover:text-foreground w-full sm:w-auto">
               <a href="#how-it-works">See How It Works</a>
             </Button>
@@ -116,18 +165,7 @@ export function CTA() {
                 <li>CSV import/export</li>
               </ul>
             </div>
-            <div className="rounded-xl border border-gold/30 bg-gold/5 p-4">
-              <p className="font-medium text-foreground mb-2">Pro <span className="text-gold">₹349</span></p>
-              <ul className="space-y-1.5 text-muted-foreground">
-                <li>Unlimited subs</li>
-                <li>Telegram bot</li>
-                <li>Escrow vaults</li>
-                <li>AI agent + MCP</li>
-              </ul>
-              <p className="mt-2 text-[10px] italic text-muted-foreground/70">
-                We hate subscriptions. So we won't make you subscribe to us.
-              </p>
-            </div>
+            <ProCard />
           </div>
         </motion.div>
       </div>

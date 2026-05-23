@@ -130,9 +130,9 @@ export function Hero() {
           transition={{ duration: 0.7, delay: 0.45 }}
           className="mt-6 sm:mt-8 font-display text-lg sm:text-xl text-foreground/60 max-w-lg mx-auto leading-relaxed"
         >
-          Unsubscribely helps you manage every subscription in one place.
+          Lock funds in Algorand escrow vaults. An autonomous AI agent
           <br className="hidden sm:block" />
-          Track spending, get alerts, and take back control of your money.
+          pays, cancels, and proves every transaction on-chain.
         </motion.p>
 
         <motion.div
@@ -141,14 +141,18 @@ export function Hero() {
           transition={{ duration: 0.6, delay: 0.6 }}
           className="mt-8 flex flex-col items-center gap-4"
         >
-          <Button asChild className="rounded-full bg-foreground text-background hover:bg-foreground/90 px-7 py-6 text-sm font-medium gap-2 group">
-            <Link to="/register">
-              <div className="flex size-6 items-center justify-center rounded-md bg-background/20">
-                <RiArrowRightLine className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-              </div>
-              Get Started Free
-            </Link>
-          </Button>
+          <div className="relative group">
+            {/* Shimmer border loop */}
+            <div className="absolute -inset-[2px] rounded-full bg-gradient-to-r from-transparent via-gold/50 to-transparent bg-[length:200%_auto] animate-[shimmer_3s_ease-in-out_infinite] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <Button asChild className="relative rounded-full bg-foreground text-background hover:bg-foreground/90 px-7 py-6 text-sm font-medium gap-2 group/btn">
+              <Link to="/register">
+                <div className="flex size-6 items-center justify-center rounded-md bg-background/20">
+                  <RiArrowRightLine className="size-3.5 transition-transform group-hover/btn:translate-x-0.5" />
+                </div>
+                Get Started Free
+              </Link>
+            </Button>
+          </div>
         </motion.div>
       </div>
     </section>
