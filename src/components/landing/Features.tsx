@@ -149,23 +149,20 @@ export function Features() {
         </motion.div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-          {features.map((feature, index) => (
-            <motion.div
-              key={feature.title}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.2 }}
-              transition={{ duration: 0.5, delay: index * 0.08 }}
-              className={`group/card relative cursor-pointer ${
-                index < 2 ? "sm:col-span-1 lg:col-span-1" : ""
-              }`}
-              style={{ perspective: "800px" }}
-            >
-              <div className="relative w-full h-full transition-transform duration-500 group-hover/card:[transform:rotateY(180deg)] preserve-3d">
-                {/* Front face */}
-                <div className={`rounded-2xl border border-border bg-background p-6 sm:p-7 shadow-sm backface-hidden ${
-                  index < 2 ? "bg-muted/20 dark:bg-white/[0.02]" : ""
-                }`}>
+          {features.map((feature, index) => {
+            const isAgentCard = feature.title === "Autonomous Agent"
+
+            // Agent card doesn't flip — it has the terminal as its interaction
+            if (isAgentCard) {
+              return (
+                <motion.div
+                  key={feature.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.2 }}
+                  transition={{ duration: 0.5, delay: index * 0.08 }}
+                  className="rounded-2xl border border-border bg-background p-6 sm:p-7 shadow-sm"
+                >
                   <div className={`flex size-12 items-center justify-center rounded-2xl mb-4 ${feature.iconBg}`}>
                     {feature.iconDark ? (
                       <>
@@ -177,28 +174,58 @@ export function Features() {
                     )}
                   </div>
                   <h3 className="text-base font-medium text-foreground tracking-tight">{feature.title}</h3>
-                  <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
-                  {feature.example && (
-                    <p className="mt-2 text-xs italic text-muted-foreground/70">{feature.example}</p>
-                  )}
-                  {feature.title === "Autonomous Agent" && <AgentTerminal />}
-                </div>
+                  <p className="mt-1 text-xs text-muted-foreground leading-relaxed">{feature.description}</p>
+                  <AgentTerminal />
+                </motion.div>
+              )
+            }
 
-                {/* Back face - tech detail */}
-                <div className="absolute inset-0 rounded-2xl border border-gold/30 bg-[#0a0a0a] p-6 sm:p-7 backface-hidden rotate-y-180 flex flex-col justify-between">
-                  <div>
-                    <p className="text-[10px] uppercase tracking-widest text-gold/70 mb-3">Technical Spec</p>
-                    <h3 className="text-base font-medium text-white tracking-tight mb-3">{feature.title}</h3>
-                    <p className="text-xs text-white/60 font-mono leading-relaxed">{feature.techDetail}</p>
+            return (
+              <motion.div
+                key={feature.title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.2 }}
+                transition={{ duration: 0.5, delay: index * 0.08 }}
+                className="group/card relative cursor-pointer"
+                style={{ perspective: "800px" }}
+              >
+                <div className="relative w-full h-full transition-transform duration-500 group-hover/card:[transform:rotateY(180deg)] preserve-3d">
+                  {/* Front face */}
+                  <div className="rounded-2xl border border-border bg-background p-6 sm:p-7 shadow-sm backface-hidden">
+                    <div className={`flex size-12 items-center justify-center rounded-2xl mb-4 ${feature.iconBg}`}>
+                      {feature.iconDark ? (
+                        <>
+                          <img src={feature.icon} alt="" className="h-6 w-auto dark:hidden" />
+                          <img src={feature.iconDark} alt="" className="h-6 w-auto hidden dark:block" />
+                        </>
+                      ) : (
+                        <img src={feature.icon} alt="" className="size-6 rounded-sm" />
+                      )}
+                    </div>
+                    <h3 className="text-base font-medium text-foreground tracking-tight">{feature.title}</h3>
+                    <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
+                    {feature.example && (
+                      <p className="mt-2 text-xs italic text-muted-foreground/70">{feature.example}</p>
+                    )}
                   </div>
-                  <div className="flex items-center gap-2 mt-4">
-                    <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    <span className="text-[9px] text-white/40">Live on Algorand Testnet</span>
+
+                  {/* Back face - tech detail */}
+                  <div className="absolute inset-0 rounded-2xl border border-gold/30 bg-[#0a0a0a] p-6 sm:p-7 backface-hidden rotate-y-180 flex flex-col justify-between">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-widest text-gold/70 mb-3">Technical Spec</p>
+                      <h3 className="text-base font-medium text-white tracking-tight mb-3">{feature.title}</h3>
+                      <p className="text-xs text-white/60 font-mono leading-relaxed">{feature.techDetail}</p>
+                    </div>
+                    <div className="flex items-center gap-2 mt-4">
+                      <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      <span className="text-[9px] text-white/40">Live on Algorand Testnet</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            )
+          })}
         </div>
       </div>
     </section>

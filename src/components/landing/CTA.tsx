@@ -48,7 +48,7 @@ function ProCard() {
             exit={{ opacity: 0, height: 0 }}
             className="mt-1 text-[9px] text-gold/70"
           >
-            Still ₹349. We're not Spotify.
+            One payment to stop all payments. The irony writes itself.
           </motion.p>
         )}
       </AnimatePresence>

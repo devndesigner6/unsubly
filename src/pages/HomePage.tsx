@@ -7,6 +7,7 @@ import { AlgorandShowcase } from "@/components/landing/AlgorandShowcase"
 import { HowItWorks } from "@/components/landing/HowItWorks"
 import { IndiaSection } from "@/components/landing/IndiaSection"
 import { CTA } from "@/components/landing/CTA"
+import { KonamiVault } from "@/components/landing/KonamiVault"
 import { useAuth } from "@/lib/auth-context"
 
 export default function HomePage() {
@@ -18,6 +19,7 @@ export default function HomePage() {
 
   return (
     <>
+      <KonamiVault />
       <Hero />
       <ProductMockup />
       <Features />

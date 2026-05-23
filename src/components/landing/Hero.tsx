@@ -130,9 +130,9 @@ export function Hero() {
           transition={{ duration: 0.7, delay: 0.45 }}
           className="mt-6 sm:mt-8 font-display text-lg sm:text-xl text-foreground/60 max-w-lg mx-auto leading-relaxed"
         >
-          Lock funds in Algorand escrow vaults. An autonomous AI agent
+          Unsubscribely helps you manage every subscription in one place.
           <br className="hidden sm:block" />
-          pays, cancels, and proves every transaction on-chain.
+          Track spending, get alerts, and take back control of your money.
         </motion.p>
 
         <motion.div
