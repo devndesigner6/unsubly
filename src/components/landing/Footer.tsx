@@ -39,36 +39,6 @@ const RECEIPT_LINES = [
   "     keep your money ♠",
 ]
 
-// Terminal commands with clickable links
-const TERMINAL_COMMANDS = [
-  { cmd: "$ ls ./pages", delay: 0 },
-  { cmd: "  features  how-it-works  blockchain  pricing", delay: 600, links: [
-    { text: "features", href: "#features" },
-    { text: "how-it-works", href: "#how-it-works" },
-    { text: "blockchain", href: "#blockchain" },
-    { text: "pricing", href: "#pricing" },
-  ]},
-  { cmd: "$ ls ./resources", delay: 1400 },
-  { cmd: "  docs  telegram-bot  github  gtm-plan", delay: 2000, links: [
-    { text: "docs", href: "/docs", internal: true },
-    { text: "telegram-bot", href: "https://t.me/unsublyybot" },
-    { text: "github", href: "https://github.com/devndesigner6/unsubly" },
-    { text: "gtm-plan", href: "/Unsubscribely-GTM-Plan.pdf" },
-  ]},
-  { cmd: "$ ls ./legal", delay: 2800 },
-  { cmd: "  privacy  terms  contact", delay: 3400, links: [
-    { text: "privacy", href: "/privacy", internal: true },
-    { text: "terms", href: "/terms", internal: true },
-    { text: "contact", href: "mailto:peddadahemanth6@gmail.com" },
-  ]},
-  { cmd: "$ whoami", delay: 4200 },
-  { cmd: "  @hemanttbuilds", delay: 4800, links: [
-    { text: "@hemanttbuilds", href: "https://x.com/hemanttbuilds" },
-  ]},
-  { cmd: "$ echo $STATUS", delay: 5400 },
-  { cmd: "  open-source ♠ algorand", delay: 6000 },
-]
-
 const social = [
   { name: "Twitter", href: "https://x.com/hemanttbuilds", icon: RiTwitterXLine },
   { name: "GitHub", href: "https://github.com/devndesigner6", icon: RiGithubLine },
@@ -76,22 +46,202 @@ const social = [
   { name: "Telegram", href: "https://t.me/unsublyybot", icon: RiTelegramLine },
 ]
 
-function TerminalLink({ text, href, internal }: { text: string; href: string; internal?: boolean }) {
+// Terminal navigation links
+const NAV_LINKS = [
+  { label: "features", href: "#features" },
+  { label: "how-it-works", href: "#how-it-works" },
+  { label: "blockchain", href: "#blockchain" },
+  { label: "pricing", href: "#pricing" },
+  { label: "docs", href: "/docs", internal: true },
+  { label: "telegram-bot", href: "https://t.me/unsublyybot" },
+  { label: "github", href: "https://github.com/devndesigner6/unsubly" },
+  { label: "gtm-plan", href: "/Unsubscribely-GTM-Plan.pdf" },
+  { label: "privacy", href: "/privacy", internal: true },
+  { label: "terms", href: "/terms", internal: true },
+  { label: "contact", href: "mailto:peddadahemanth6@gmail.com" },
+]
+
+// Challenge questions
+const QUESTIONS = [
+  { q: "How many seconds for Algorand finality?", accept: ["3.3", "3.3s"] },
+  { q: "What does the agent do every 30 minutes?", accept: ["vault", "check", "release", "pay", "monitor"] },
+  { q: "What's the opposite of subscribing?", accept: ["unsub", "cancel", "unsubscribe", "unsubscribely"] },
+]
+
+function TerminalLink({ label, href, internal }: { label: string; href: string; internal?: boolean }) {
   const cls = "text-[#33ff33] hover:text-[#80ffb0] hover:underline underline-offset-2 transition-colors cursor-pointer"
-  if (internal) {
-    return <Link to={href} className={cls}>{text}</Link>
+  if (internal) return <Link to={href} className={cls}>{label}</Link>
+  return <a href={href} target={href.startsWith("http") || href.startsWith("mailto:") ? "_blank" : undefined} rel={href.startsWith("http") ? "noopener noreferrer" : undefined} className={cls}>{label}</a>
+}
+
+function InteractiveTerminal({ started }: { started: boolean }) {
+  const [phase, setPhase] = useState<"typing" | "challenge" | "done">("typing")
+  const [typedLines, setTypedLines] = useState(0)
+  const [questionIdx, setQuestionIdx] = useState(0)
+  const [input, setInput] = useState("")
+  const [history, setHistory] = useState<string[]>([])
+  const [wrong, setWrong] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const bodyRef = useRef<HTMLDivElement>(null)
+
+  // Type out initial lines
+  useEffect(() => {
+    if (!started) return
+    // 7 lines to type: header note, ls pages, results, ls resources, results, ls legal, results
+    const totalLines = 7
+    let i = 0
+    const interval = setInterval(() => {
+      i++
+      setTypedLines(i)
+      if (i >= totalLines) { clearInterval(interval); setTimeout(() => setPhase("challenge"), 600) }
+    }, 500)
+    return () => clearInterval(interval)
+  }, [started])
+
+  // Auto-scroll terminal body
+  useEffect(() => {
+    if (bodyRef.current) bodyRef.current.scrollTop = bodyRef.current.scrollHeight
+  }, [typedLines, history, questionIdx, phase])
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!input.trim()) return
+
+    const q = QUESTIONS[questionIdx]
+    const answer = input.trim().toLowerCase()
+    const correct = q.accept.some((a) => answer.includes(a))
+
+    if (correct) {
+      setHistory((h) => [...h, `$ ${input}`, "  ✓ correct"])
+      setWrong(false)
+      setInput("")
+      if (questionIdx >= QUESTIONS.length - 1) {
+        setHistory((h) => [...h, "", "  ━━━━━━━━━━━━━━━━━━━━━━━━", "  ACCESS GRANTED.", "  Redirecting to Pro..."])
+        setPhase("done")
+        setTimeout(() => {
+          window.open("https://checkout.dodopayments.com/buy/pdt_0NfAOGyle2UpxBVyJL1Cn?quantity=1&redirect_url=https://unsubly.xyz/dashboard", "_blank")
+        }, 1500)
+      } else {
+        setQuestionIdx((i) => i + 1)
+      }
+    } else {
+      setHistory((h) => [...h, `$ ${input}`, "  ✗ nope. try again."])
+      setWrong(true)
+      setInput("")
+    }
   }
-  return <a href={href} target={href.startsWith("http") || href.startsWith("mailto:") ? "_blank" : undefined} rel={href.startsWith("http") ? "noopener noreferrer" : undefined} className={cls}>{text}</a>
+
+  return (
+    <div className="rounded-xl border border-[#1a1a1a] dark:border-[#2a2a2a] bg-[#0d0d0d] overflow-hidden flex flex-col h-full">
+      {/* Terminal chrome */}
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-[#1a1a1a] bg-[#141414] shrink-0">
+        <span className="size-[8px] rounded-full bg-[#FF5F57]" />
+        <span className="size-[8px] rounded-full bg-[#FEBC2E]" />
+        <span className="size-[8px] rounded-full bg-[#28C840]" />
+        <span className="ml-2 text-[9px] text-[#555] font-mono">visitor@unsubly ~ %</span>
+      </div>
+
+      {/* Terminal body */}
+      <div ref={bodyRef} className="p-4 font-mono text-[10px] leading-[1.8] flex-1 overflow-y-auto scrollbar-hide" style={{ textShadow: "0 0 4px #00ff6630" }}>
+        {/* Header note */}
+        {typedLines >= 1 && (
+          <div className="text-[#555] text-[9px] mb-2">
+            ┌ clickable links below — these are real pages
+          </div>
+        )}
+
+        {/* Navigation commands */}
+        {typedLines >= 2 && <div className="text-[#33ff33]">$ ls ./pages</div>}
+        {typedLines >= 3 && (
+          <div className="text-[#33ff33]/70 ml-2 flex flex-wrap gap-x-2">
+            {NAV_LINKS.slice(0, 4).map((l) => <TerminalLink key={l.label} {...l} />)}
+          </div>
+        )}
+        {typedLines >= 4 && <div className="text-[#33ff33] mt-1">$ ls ./resources</div>}
+        {typedLines >= 5 && (
+          <div className="text-[#33ff33]/70 ml-2 flex flex-wrap gap-x-2">
+            {NAV_LINKS.slice(4, 8).map((l) => <TerminalLink key={l.label} {...l} />)}
+          </div>
+        )}
+        {typedLines >= 6 && <div className="text-[#33ff33] mt-1">$ ls ./legal</div>}
+        {typedLines >= 7 && (
+          <div className="text-[#33ff33]/70 ml-2 flex flex-wrap gap-x-2">
+            {NAV_LINKS.slice(8).map((l) => <TerminalLink key={l.label} {...l} />)}
+          </div>
+        )}
+
+        {/* whoami + status */}
+        {phase !== "typing" && (
+          <>
+            <div className="text-[#33ff33] mt-2">$ whoami</div>
+            <div className="text-[#33ff33]/70 ml-2">
+              <a href="https://x.com/hemanttbuilds" target="_blank" rel="noopener noreferrer" className="text-[#33ff33] hover:text-[#80ffb0] hover:underline underline-offset-2 transition-colors">@hemanttbuilds</a>
+            </div>
+            <div className="text-[#33ff33] mt-1">$ echo $STATUS</div>
+            <div className="text-[#33ff33]/70 ml-2">open-source ♠ algorand</div>
+          </>
+        )}
+
+        {/* Challenge */}
+        {phase === "challenge" && (
+          <>
+            <div className="text-[#555] mt-3 text-[9px]">─── CHALLENGE MODE ───────────────</div>
+            <div className="text-[#555] text-[9px]">Answer 3 to unlock Pro.</div>
+            <div className="mt-2" />
+
+            {/* History of answers */}
+            {history.map((line, i) => (
+              <div key={i} className={`${line.includes("✓") ? "text-[#28C840]" : line.includes("✗") ? "text-[#FF5F57]" : "text-[#33ff33]/70"}`}>
+                {line}
+              </div>
+            ))}
+
+            {/* Current question */}
+            {questionIdx < QUESTIONS.length && (
+              <div className="text-[#33ff33] mt-1">
+                [{questionIdx + 1}/3] {QUESTIONS[questionIdx].q}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Done state */}
+        {phase === "done" && (
+          <>
+            {history.map((line, i) => (
+              <div key={i} className={`${line.includes("✓") ? "text-[#28C840]" : line.includes("✗") ? "text-[#FF5F57]" : line.includes("ACCESS") ? "text-[#33ff33] font-bold" : "text-[#33ff33]/70"}`}>
+                {line}
+              </div>
+            ))}
+          </>
+        )}
+      </div>
+
+      {/* Input area */}
+      {phase === "challenge" && questionIdx < QUESTIONS.length && (
+        <form onSubmit={handleSubmit} className="flex items-center gap-1 px-4 py-2 border-t border-[#1a1a1a] bg-[#0a0a0a]">
+          <span className="text-[#33ff33] text-[10px] font-mono">$</span>
+          <input
+            ref={inputRef}
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            autoFocus
+            className="flex-1 bg-transparent text-[#33ff33] text-[10px] font-mono outline-none placeholder:text-[#333] caret-[#33ff33]"
+            placeholder="type your answer..."
+          />
+        </form>
+      )}
+    </div>
+  )
 }
 
 export function Footer() {
   const ref = useRef<HTMLDivElement>(null)
   const [receiptText, setReceiptText] = useState("")
   const [receiptDone, setReceiptDone] = useState(false)
-  const [terminalLines, setTerminalLines] = useState<number>(0)
   const [started, setStarted] = useState(false)
 
-  // Intersection observer
   useEffect(() => {
     if (!ref.current) return
     const observer = new IntersectionObserver(
@@ -116,31 +266,23 @@ export function Footer() {
     return () => clearInterval(interval)
   }, [started])
 
-  // Terminal lines appear one by one
-  useEffect(() => {
-    if (!started) return
-    TERMINAL_COMMANDS.forEach((_, idx) => {
-      setTimeout(() => setTerminalLines(idx + 1), TERMINAL_COMMANDS[idx].delay + 500)
-    })
-  }, [started])
-
   return (
     <footer className="border-t border-border py-10 sm:py-14">
       <div ref={ref} className="mx-auto max-w-5xl px-6 lg:px-8">
 
         {/* Two columns — same height */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch" style={{ minHeight: "420px" }}>
 
           {/* LEFT — Receipt */}
-          <div className="rounded-xl border border-border/40 bg-[#fafaf8] dark:bg-[#0d0d0d] p-4 flex flex-col">
+          <div className="rounded-xl border border-border/40 bg-[#fafaf8] dark:bg-[#0d0d0d] p-5 flex flex-col items-center">
             {/* Torn edge */}
-            <div className="h-[2px] mb-3 opacity-15" style={{ background: `repeating-linear-gradient(90deg, hsl(var(--foreground)) 0px, hsl(var(--foreground)) 2px, transparent 2px, transparent 5px)` }} />
-            {/* Receipt text */}
-            <div className="font-mono-pixel text-[9px] text-foreground/70 leading-[1.6] whitespace-pre-wrap flex-1">
+            <div className="w-full h-[2px] mb-3 opacity-15" style={{ background: `repeating-linear-gradient(90deg, hsl(var(--foreground)) 0px, hsl(var(--foreground)) 2px, transparent 2px, transparent 5px)` }} />
+            {/* Receipt text — centered */}
+            <div className="font-mono-pixel text-[9px] text-foreground/70 leading-[1.6] whitespace-pre-wrap flex-1 w-full max-w-[260px]">
               {receiptText}
               {!receiptDone && <span className="inline-block w-[4px] h-[8px] bg-foreground/50 animate-pulse ml-[1px] align-middle" />}
             </div>
-            {/* Barcode */}
+            {/* Barcode — centered */}
             <div className={`mt-3 flex items-center justify-center gap-[0.5px] transition-opacity duration-300 ${receiptDone ? "opacity-100" : "opacity-0"}`}>
               {Array.from({ length: 50 }, (_, i) => (
                 <div key={i} className="bg-foreground/20 dark:bg-foreground/15" style={{ width: [1, 2, 1, 1, 2, 1, 2, 1, 1, 2][i % 10] + "px", height: "18px" }} />
@@ -148,63 +290,22 @@ export function Footer() {
             </div>
           </div>
 
-          {/* RIGHT — Terminal */}
-          <div className="rounded-xl border border-[#1a1a1a] dark:border-[#2a2a2a] bg-[#0d0d0d] overflow-hidden flex flex-col">
-            {/* Terminal chrome */}
-            <div className="flex items-center gap-2 px-3 py-2 border-b border-[#1a1a1a] bg-[#141414]">
-              <span className="size-[8px] rounded-full bg-[#FF5F57]" />
-              <span className="size-[8px] rounded-full bg-[#FEBC2E]" />
-              <span className="size-[8px] rounded-full bg-[#28C840]" />
-              <span className="ml-2 text-[9px] text-[#555] font-mono">visitor@unsubly ~ %</span>
-            </div>
-            {/* Terminal body */}
-            <div className="p-4 font-mono text-[10px] leading-[1.8] flex-1" style={{ textShadow: "0 0 4px #00ff6640" }}>
-              {TERMINAL_COMMANDS.slice(0, terminalLines).map((line, idx) => (
-                <div key={idx}>
-                  {line.links ? (
-                    <span className="text-[#33ff33]/70">
-                      {"  "}
-                      {line.links.map((link, li) => (
-                        <span key={li}>
-                          <TerminalLink text={link.text} href={link.href} internal={link.internal} />
-                          {li < line.links!.length - 1 && "  "}
-                        </span>
-                      ))}
-                    </span>
-                  ) : (
-                    <span className={line.cmd.startsWith("$") ? "text-[#33ff33]" : "text-[#33ff33]/70"}>
-                      {line.cmd}
-                    </span>
-                  )}
-                </div>
-              ))}
-              {/* Blinking cursor */}
-              {terminalLines < TERMINAL_COMMANDS.length && (
-                <span className="inline-block w-[6px] h-[11px] bg-[#33ff33] animate-pulse mt-1" />
-              )}
-              {terminalLines >= TERMINAL_COMMANDS.length && (
-                <div className="mt-1">
-                  <span className="text-[#33ff33]">$ </span>
-                  <span className="inline-block w-[6px] h-[11px] bg-[#33ff33]/70 animate-pulse" />
-                </div>
-              )}
-            </div>
-          </div>
+          {/* RIGHT — Interactive Terminal */}
+          <InteractiveTerminal started={started} />
         </div>
 
         {/* Bottom bar */}
         <div className={`mt-8 flex flex-col items-center justify-between gap-3 border-t border-border/40 pt-5 sm:flex-row transition-opacity duration-500 ${started ? "opacity-100" : "opacity-0"}`}>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <p className="text-[11px] text-muted-foreground">
               Built by{" "}
               <a href="https://me.in" target="_blank" rel="noopener noreferrer" className="text-red-500 hover:text-red-400 font-medium transition-colors">Hemanth</a>
               {" "}♠ Open Source
             </p>
-            {/* Social inline */}
-            <div className="flex gap-1.5">
+            <div className="flex gap-2">
               {social.map((item) => (
-                <a key={item.name} href={item.href} target="_blank" rel="noopener noreferrer" aria-label={item.name} className="text-muted-foreground/50 hover:text-foreground transition-colors">
-                  <item.icon className="size-3" />
+                <a key={item.name} href={item.href} target="_blank" rel="noopener noreferrer" aria-label={item.name} className="text-muted-foreground hover:text-foreground transition-colors">
+                  <item.icon className="size-4" />
                 </a>
               ))}
             </div>
