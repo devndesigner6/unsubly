@@ -52,7 +52,7 @@ export function HowItWorks() {
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.2 }}
-                transition={{ duration: 0.5, delay: index * 0.15 }}
+                transition={{ duration: 0.5, delay: index * 0.25 }}
                 className="py-10 md:py-0 md:px-8 first:pl-0 last:pr-0"
               >
                 <div className="flex items-start gap-3">

@@ -211,21 +211,25 @@ export function Features() {
                   </div>
 
                   {/* Back face - tech detail */}
-                  <div className="absolute inset-0 rounded-2xl border border-gold/30 bg-[#0a0a0a] p-6 sm:p-7 backface-hidden rotate-y-180 flex flex-col justify-between">
+                  <div className="absolute inset-0 rounded-2xl border border-indigo-400/30 bg-[#0a0a0a] p-6 sm:p-7 backface-hidden rotate-y-180 flex flex-col justify-between">
                     <div>
-                      <p className="text-[10px] uppercase tracking-widest text-gold/70 mb-3">Technical Spec</p>
+                      <p className="text-[10px] uppercase tracking-widest text-indigo-400/70 mb-3">Technical Spec</p>
                       <h3 className="text-base font-medium text-white tracking-tight mb-3">{feature.title}</h3>
                       <p className="text-xs text-white/60 font-mono leading-relaxed">{feature.techDetail}</p>
-                    </div>
-                    <div className="flex items-center gap-2 mt-4">
-                      <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                      <span className="text-[9px] text-white/40">Live on Algorand Testnet</span>
                     </div>
                   </div>
                 </div>
               </motion.div>
             )
           })}
+        </div>
+
+        {/* Single testnet badge */}
+        <div className="mt-8 flex justify-center">
+          <span className="inline-flex items-center gap-2 text-[10px] text-muted-foreground/60">
+            <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            All features live on Algorand Testnet
+          </span>
         </div>
       </div>
     </section>

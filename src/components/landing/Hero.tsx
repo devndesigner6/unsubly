@@ -112,7 +112,7 @@ export function Hero() {
           </span>{" "}
           <span
             key={phraseIdx + "-italic"}
-            className={`italic text-muted-foreground/50 inline-block ${fading ? "animate-fade-out" : "animate-fade-in"}`}
+            className={`italic text-muted-foreground/70 inline-block ${fading ? "animate-fade-out" : "animate-fade-in"}`}
           >
             {phrase.italic}
           </span>{" "}

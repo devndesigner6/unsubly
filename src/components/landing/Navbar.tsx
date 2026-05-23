@@ -38,7 +38,7 @@ export function Navbar() {
       className="fixed inset-x-0 top-0 z-50 flex justify-center pt-4 px-4"
     >
       {/* Floating pill navbar */}
-      <nav className="flex items-center gap-1 rounded-full border border-border/60 bg-background/80 backdrop-blur-xl shadow-[0_2px_20px_-4px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_20px_-4px_rgba(0,0,0,0.3)] px-2 py-1.5 max-w-fit">
+      <nav className="flex items-center gap-1 rounded-full border border-border/60 bg-background/80 backdrop-blur-xl shadow-[0_1px_3px_0_rgba(0,0,0,0.04)] dark:shadow-[0_2px_20px_-4px_rgba(0,0,0,0.3)] px-2 py-1.5 max-w-fit">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 pl-2 pr-3 group">
           <div className="flex size-7 items-center justify-center rounded-lg bg-foreground transition-transform group-hover:scale-105">

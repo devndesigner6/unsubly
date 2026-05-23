@@ -169,12 +169,12 @@ export function ProductMockup() {
           className="relative w-full mx-auto rounded-xl border border-black/[0.08] dark:border-white/[0.08] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.6)] overflow-hidden bg-[#f6f6f6] dark:bg-[#1c1c1e]"
         >
           {/* Safari toolbar */}
-          <div className="flex items-center h-11 px-3.5 bg-[#e8e8e8] dark:bg-[#2c2c2e] border-b border-black/[0.06] dark:border-white/[0.06]">
+          <div className="flex items-center h-10 sm:h-11 px-3 sm:px-3.5 bg-[#e8e8e8] dark:bg-[#2c2c2e] border-b border-black/[0.06] dark:border-white/[0.06]">
             {/* Traffic lights */}
-            <div className="flex items-center gap-[6px]">
-              <span className="size-[11px] rounded-full bg-[#FF5F57] border border-[#E0443E]/60" />
-              <span className="size-[11px] rounded-full bg-[#FEBC2E] border border-[#DEA123]/60" />
-              <span className="size-[11px] rounded-full bg-[#28C840] border border-[#1AAB29]/60" />
+            <div className="flex items-center gap-[5px] sm:gap-[6px]">
+              <span className="size-[9px] sm:size-[11px] rounded-full bg-[#FF5F57] border border-[#E0443E]/60" />
+              <span className="size-[9px] sm:size-[11px] rounded-full bg-[#FEBC2E] border border-[#DEA123]/60" />
+              <span className="size-[9px] sm:size-[11px] rounded-full bg-[#28C840] border border-[#1AAB29]/60" />
             </div>
 
             {/* Navigation arrows */}

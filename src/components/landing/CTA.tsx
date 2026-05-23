@@ -29,7 +29,7 @@ function ProCard() {
       animate={shaken && hovered ? { x: [0, -3, 3, -3, 3, 0] } : { x: 0 }}
       transition={{ duration: 0.4, ease: "easeInOut" }}
       onClick={() => window.open("https://checkout.dodopayments.com/buy/pdt_0NfAOGyle2UpxBVyJL1Cn?quantity=1&redirect_url=https://unsubly.xyz/dashboard", "_blank")}
-      className="rounded-xl border border-indigo-400/30 bg-indigo-400/5 p-4 cursor-pointer hover:border-indigo-400/50 transition-colors"
+      className="rounded-xl border-2 border-indigo-400/50 bg-indigo-400/5 p-4 sm:p-5 cursor-pointer hover:border-indigo-400/70 transition-colors"
     >
       <p className="font-medium text-foreground mb-2">Pro <span className="text-indigo-400">₹349</span></p>
       <ul className="space-y-1.5 text-muted-foreground">
@@ -157,7 +157,7 @@ export function CTA() {
 
           {/* Free vs Pro comparison */}
           <div className="mt-8 mx-auto max-w-md grid grid-cols-2 gap-3 text-xs">
-            <div className="rounded-xl border border-border p-4">
+            <div className="rounded-xl border border-border p-4 sm:p-5">
               <p className="font-medium text-foreground mb-2">Free</p>
               <ul className="space-y-1.5 text-muted-foreground">
                 <li>10 subscriptions</li>

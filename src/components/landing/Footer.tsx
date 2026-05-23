@@ -270,8 +270,8 @@ export function Footer() {
     <footer className="border-t border-border py-10 sm:py-14">
       <div ref={ref} className="mx-auto max-w-5xl px-6 lg:px-8">
 
-        {/* Two columns — same height */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch" style={{ minHeight: "420px" }}>
+        {/* Two columns — same height, stack on mobile */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch" style={{ minHeight: "380px" }}>
 
           {/* LEFT — Receipt */}
           <div className="rounded-xl border border-border/40 bg-[#fafaf8] dark:bg-[#0d0d0d] p-5 flex flex-col items-center">
