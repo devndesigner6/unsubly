@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom"
 import { useEffect, useState, useRef } from "react"
-import { useInView } from "motion/react"
 import { RiTwitterXLine, RiGithubLine, RiLinkedinLine, RiTelegramLine } from "@remixicon/react"
 
 const RECEIPT_LINES = [
@@ -67,32 +66,44 @@ const social = [
 
 export function Footer() {
   const ref = useRef<HTMLDivElement>(null)
-  const isInView = useInView(ref, { once: true, amount: 0.1 })
   const [displayedText, setDisplayedText] = useState("")
-  const [typing, setTyping] = useState(false)
   const [done, setDone] = useState(false)
+  const [started, setStarted] = useState(false)
 
-  // Character-by-character typing like a real receipt printer
+  // Use IntersectionObserver directly — more reliable than motion's useInView
   useEffect(() => {
-    if (!isInView || typing) return
-    setTyping(true)
+    if (!ref.current) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !started) {
+          setStarted(true)
+        }
+      },
+      { threshold: 0.05 }
+    )
+    observer.observe(ref.current)
+    return () => observer.disconnect()
+  }, [started])
+
+  // Character-by-character typing
+  useEffect(() => {
+    if (!started) return
 
     const fullText = RECEIPT_LINES.join("\n")
     let i = 0
 
     const interval = setInterval(() => {
-      // Type 2 chars at a time for speed
-      i += 2
+      i += 3
       if (i >= fullText.length) i = fullText.length
       setDisplayedText(fullText.slice(0, i))
       if (i >= fullText.length) {
         clearInterval(interval)
         setDone(true)
       }
-    }, 12)
+    }, 8)
 
     return () => clearInterval(interval)
-  }, [isInView, typing])
+  }, [started])
 
   return (
     <footer className="border-t border-border py-12 sm:py-16">
@@ -132,7 +143,7 @@ export function Footer() {
           </div>
 
           {/* Right — Navigation links */}
-          <div className={`transition-opacity duration-700 ${done ? "opacity-100" : "opacity-0"}`}>
+          <div className={`transition-opacity duration-700 ${started ? "opacity-100" : "opacity-0"}`}>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-8">
               <div>
                 <h3 className="text-xs font-medium tracking-widest uppercase text-muted-foreground">Product</h3>
@@ -205,7 +216,7 @@ export function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className={`mt-12 flex flex-col items-center justify-between gap-4 border-t border-border pt-8 sm:flex-row transition-opacity duration-700 ${done ? "opacity-100" : "opacity-0"}`}>
+        <div className={`mt-12 flex flex-col items-center justify-between gap-4 border-t border-border pt-8 sm:flex-row transition-opacity duration-700 ${started ? "opacity-100" : "opacity-0"}`}>
           <p className="text-xs text-muted-foreground">
             Built by{" "}
             <a href="https://me.in" target="_blank" rel="noopener noreferrer" className="text-foreground/70 hover:text-foreground underline underline-offset-2 transition-colors">Hemanth</a>

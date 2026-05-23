@@ -122,10 +122,13 @@ export function ProductMockup() {
       const next = new Set(prev)
       if (next.has(index)) {
         next.delete(index)
+        // Remove from kill feed on deselect
+        const sub = MOCK_SUBS[index]
+        setKillFeed((f) => f.filter((line) => !line.startsWith(sub.name)))
       } else {
         next.add(index)
         const sub = MOCK_SUBS[index]
-        setKillFeed((f) => [...f.slice(-3), `${sub.name} — saved ${sub.currency}${sub.price.toFixed(0)}/mo`])
+        setKillFeed((f) => [...f.slice(-4), `${sub.name} — saved ${sub.currency}${sub.price.toFixed(0)}/mo`])
       }
       startTime.current = Date.now()
       return next
@@ -235,8 +238,14 @@ export function ProductMockup() {
               </div>
             )}
 
-            {/* Grid — 3 cols matching real app */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {/* Grid — 3 cols matching real app, last row fades */}
+            <div
+              className="grid grid-cols-1 sm:grid-cols-3 gap-3"
+              style={{
+                maskImage: "linear-gradient(to bottom, black 55%, transparent 100%)",
+                WebkitMaskImage: "linear-gradient(to bottom, black 55%, transparent 100%)",
+              }}
+            >
               {MOCK_SUBS.map((sub, i) => (
                 <SubCard
                   key={sub.name}
