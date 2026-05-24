@@ -20,7 +20,7 @@
     <a href="https://unsubly.xyz"><strong>Explore the live app >></strong></a>
     <br />
     <br />
-    <a href="https://youtu.be/9e5BsjqhUyo?si=ulP2jx9IXAdB-Do9"><kbd>View Demo</kbd></a>
+    <a href="https://youtu.be/0MkApCNN5p0"><kbd>View Demo</kbd></a>
     &middot;
     <a href="https://unsubly.xyz/docs"><kbd>API Docs</kbd></a>
     &middot;
@@ -139,22 +139,22 @@ flowchart TD
         CHROME[?? Chrome Extension]
     end
 
-    subgraph APP_LAYER["Application Layer · Vercel"]
-        FRONTEND[React Dashboard<br/>14 pages · Vite · Tailwind]
-        API[Serverless APIs<br/>gmail-scan · mcp-token · x402]
+    subgraph APP_LAYER["Application Layer ï¿½ Vercel"]
+        FRONTEND[React Dashboard<br/>14 pages ï¿½ Vite ï¿½ Tailwind]
+        API[Serverless APIs<br/>gmail-scan ï¿½ mcp-token ï¿½ x402]
     end
 
-    subgraph AGENT_LAYER["Agent Layer · Railway"]
-        AGENT[? Autonomous Agent<br/>14 skills · 30-min cron]
-        MCP[MCP Server<br/>12 tools · Bearer auth · JSON-RPC]
+    subgraph AGENT_LAYER["Agent Layer ï¿½ Railway"]
+        AGENT[? Autonomous Agent<br/>14 skills ï¿½ 30-min cron]
+        MCP[MCP Server<br/>12 tools ï¿½ Bearer auth ï¿½ JSON-RPC]
     end
 
     subgraph BLOCKCHAIN["? Algorand TestNet"]
-        VAULTS[Escrow Vaults<br/>8 contract types · TEAL v11]
-        REGISTRY[ServiceRegistry<br/>A2A discovery · BoxMap]
+        VAULTS[Escrow Vaults<br/>8 contract types ï¿½ TEAL v11]
+        REGISTRY[ServiceRegistry<br/>A2A discovery ï¿½ BoxMap]
         PROOFS[Cancellation Proofs<br/>immutable on-chain notes]
-        ORACLE[Gora Oracle · ALGO/USD]
-        DEX[Tinyman DEX · ASA swap]
+        ORACLE[Gora Oracle ï¿½ ALGO/USD]
+        DEX[Tinyman DEX ï¿½ ASA swap]
     end
 
     subgraph AI_AGENTS["AI Agents"]
@@ -179,7 +179,7 @@ flowchart TD
     TG -->|commands| API
     CHROME -->|detect subs| API
 
-    AGENT -->|release · kill| VAULTS
+    AGENT -->|release ï¿½ kill| VAULTS
     AGENT -->|write| PROOFS
     AGENT -->|lookup| REGISTRY
     AGENT -->|notify| TG
@@ -214,14 +214,14 @@ flowchart TD
 
 | Integration | Status | How it's used | Proof |
 |---|---|---|---|
-| **x402 Protocol** | ? Live | HTTP 402 payment gating on AI Optimizer | [x402-demo page](https://unsubly.xyz/x402-demo) |
-| **Pera SDK** | ? Live | Wallet connection, transaction signing, vault deployment | [Agent wallet txns](https://lora.algokit.io/testnet/account/RVHOYLPY4L47JYCYEMCP7EMEC2AZ3HV53YHSL2ZISX6PSO5EQ6H5YVAE5U) |
-| **Tinyman SDK/Router** | ? Live | Swap any ASA ? ALGO to fund vaults (deep-link + analytics API) | [Tinyman pool](https://testnet.tinyman.org/#/swap?asset_in=0) |
-| **Gora Oracle** | ? Live | ALGO/USD price feed on vault cards (on-chain contract read + Vestige fallback) | App ID `159512493` |
-| **NFDomains (DID)** | ? Live | .algo name resolution on dashboard wallet card | [nf.domains](https://nf.domains) |
-| **Pera Connect** | ? Live | WalletConnect v2 for Pera/Defly/Lute mobile wallets | [Pera SDK](https://github.com/perawallet/connect) |
-| **ServiceRegistry** | ? Deployed | On-chain A2A service discovery (5 services seeded) | [App 759205676](https://lora.algokit.io/testnet/application/759205676) |
-| **AgentEscrowVaultV2** | ? Deployed | Box Storage billing history, autonomous release | [App 759205677](https://lora.algokit.io/testnet/application/759205677) |
+| **x402 Protocol** | âœ… Live | HTTP 402 payment gating on AI Optimizer | [x402-demo page](https://unsubly.xyz/x402-demo) |
+| **Pera SDK** | âœ… Live | Wallet connection, transaction signing, vault deployment | [Agent wallet txns](https://lora.algokit.io/testnet/account/RVHOYLPY4L47JYCYEMCP7EMEC2AZ3HV53YHSL2ZISX6PSO5EQ6H5YVAE5U) |
+| **Tinyman SDK/Router** | âœ… Live | Swap any ASA â†’ ALGO to fund vaults (deep-link + analytics API) | [Tinyman pool](https://testnet.tinyman.org/#/swap?asset_in=0) |
+| **Gora Oracle** | âœ… Live | ALGO/USD price feed on vault cards (on-chain contract read + Vestige fallback) | App ID `159512493` |
+| **NFDomains (DID)** | âœ… Live | .algo name resolution on dashboard wallet card | [nf.domains](https://nf.domains) |
+| **Pera Connect** | âœ… Live | WalletConnect v2 for Pera/Defly/Lute mobile wallets | [Pera SDK](https://github.com/perawallet/connect) |
+| **ServiceRegistry** | ðŸš€ Deployed | On-chain A2A service discovery (5 services seeded) | [App 759205676](https://lora.algokit.io/testnet/application/759205676) |
+| **AgentEscrowVaultV2** | ðŸš€ Deployed | Box Storage billing history, autonomous release | [App 759205677](https://lora.algokit.io/testnet/application/759205677) |
 
 ---
 ## Getting Started
@@ -289,7 +289,7 @@ To get a local copy up and running, follow these steps.
    npm run start
    ```
 
-<details>
+<details open>
   <summary>Running the real OpenClaw agent locally</summary>
 
   The production agent is a real OpenClaw Gateway workspace, separate from the web app. OpenClaw owns the runtime and cron schedule; the existing Unsubscribely vault code is exposed through the `unsubscribely_vault_monitor` workspace skill.
@@ -321,7 +321,7 @@ To get a local copy up and running, follow these steps.
   ```
 </details>
 
-<details>
+<details open>
   <summary>Optional: recompile smart contracts or deploy to testnet</summary>
 
   Recompile contracts (pre-compiled artifacts are already included):
@@ -342,7 +342,7 @@ To get a local copy up and running, follow these steps.
   ```
 </details>
 
-<details>
+<details open>
   <summary>Troubleshooting</summary>
 
   | Problem | Fix |
@@ -399,7 +399,7 @@ To get a local copy up and running, follow these steps.
 
 **Target users:** Indian developers and freelancers (25-35) managing 8-12 SaaS tools (Notion, GitHub, Cursor, Figma) totaling $50-150/month in USD, losing 5-7% to forex fees per transaction.
 
-**Why Algorand:** <samp>3.3s finality</samp> · <samp>sub-penny fees</samp> · ARC-4 ABI for clean contract interfaces · Box Storage for on-chain history · instant settlement without L2 complexity.
+**Why Algorand:** <samp>3.3s finality</samp> ï¿½ <samp>sub-penny fees</samp> ï¿½ ARC-4 ABI for clean contract interfaces ï¿½ Box Storage for on-chain history ï¿½ instant settlement without L2 complexity.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -456,19 +456,19 @@ Apache 2.0  - see [`LICENSE`](LICENSE).
 
 ## Contact
 
-Hemanth Peddada  - [@hemanttbuilds](https://x.com/hemanttbuilds) · [peddadahemanth6@gmail.com](mailto:peddadahemanth6@gmail.com) · [hemanthme.in](https://hemanthme.in)
+Hemanth Peddada  - [@hemanttbuilds](https://x.com/hemanttbuilds) ï¿½ [peddadahemanth6@gmail.com](mailto:peddadahemanth6@gmail.com) ï¿½ [hemanthme.in](https://hemanthme.in)
 
 ---
 
 <!-- ACKNOWLEDGMENTS -->
 ## Acknowledgments
 
-* [Algorand Foundation](https://algorand.foundation) · [AlgoKit](https://github.com/algorandfoundation/algokit-cli) · [Pera Wallet](https://perawallet.app)
-* [x402 Protocol](https://x402.org) · [OpenClaw](https://openclaw.im) · [Model Context Protocol](https://modelcontextprotocol.io)
-* [Tinyman DEX](https://tinyman.org) · [Gora Oracle](https://gora.io) · [NFDomains](https://nf.domains)
-* [Supabase](https://supabase.com) · [Railway](https://railway.app) · [Vercel](https://vercel.com)
-* [Cerebras](https://cerebras.ai) · [Telegram Bot API](https://core.telegram.org/bots)
-* [shadcn/ui](https://ui.shadcn.com) · [Remix Icons](https://remixicon.com) · [Vitest](https://vitest.dev)
+* [Algorand Foundation](https://algorand.foundation) ï¿½ [AlgoKit](https://github.com/algorandfoundation/algokit-cli) ï¿½ [Pera Wallet](https://perawallet.app)
+* [x402 Protocol](https://x402.org) ï¿½ [OpenClaw](https://openclaw.im) ï¿½ [Model Context Protocol](https://modelcontextprotocol.io)
+* [Tinyman DEX](https://tinyman.org) ï¿½ [Gora Oracle](https://gora.io) ï¿½ [NFDomains](https://nf.domains)
+* [Supabase](https://supabase.com) ï¿½ [Railway](https://railway.app) ï¿½ [Vercel](https://vercel.com)
+* [Cerebras](https://cerebras.ai) ï¿½ [Telegram Bot API](https://core.telegram.org/bots)
+* [shadcn/ui](https://ui.shadcn.com) ï¿½ [Remix Icons](https://remixicon.com) ï¿½ [Vitest](https://vitest.dev)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

@@ -282,8 +282,8 @@ export function Footer() {
               {receiptText}
               {!receiptDone && <span className="inline-block w-[4px] h-[8px] bg-foreground/50 animate-pulse ml-[1px] align-middle" />}
             </div>
-            {/* Barcode — centered */}
-            <div className={`mt-3 flex items-center justify-center gap-[0.5px] transition-opacity duration-300 ${receiptDone ? "opacity-100" : "opacity-0"}`}>
+            {/* Barcode — centered under receipt */}
+            <div className={`mt-3 w-full max-w-[260px] flex items-center justify-center gap-[0.5px] transition-opacity duration-300 ${receiptDone ? "opacity-100" : "opacity-0"}`}>
               {Array.from({ length: 50 }, (_, i) => (
                 <div key={i} className="bg-foreground/20 dark:bg-foreground/15" style={{ width: [1, 2, 1, 1, 2, 1, 2, 1, 1, 2][i % 10] + "px", height: "18px" }} />
               ))}
@@ -299,7 +299,7 @@ export function Footer() {
           <div className="flex items-center gap-4">
             <p className="text-[11px] text-muted-foreground">
               Built by{" "}
-              <a href="https://me.in" target="_blank" rel="noopener noreferrer" className="text-red-500 hover:text-red-400 font-medium transition-colors">Hemanth</a>
+              <a href="https://hemanthme.in" target="_blank" rel="noopener noreferrer" className="text-red-500 hover:text-red-400 font-medium transition-colors">Hemanth</a>
               {" "}♠ Open Source
             </p>
             <div className="flex gap-2">
