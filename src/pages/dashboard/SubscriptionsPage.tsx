@@ -12,11 +12,12 @@ import {
   RiSearchLine, RiAlertLine, RiFileListLine,
   RiPlayCircleLine, RiPauseCircleLine, RiCloseCircleLine, RiTimerFlashLine,
   RiDownloadLine, RiUploadLine, RiSparklingLine,
-  RiGlobalLine,
+  RiGlobalLine, RiSmartphoneLine,
 } from "@remixicon/react"
 import { useState, useEffect, useMemo, useRef } from "react"
 import { ConfirmInline } from "@/components/micro/ConfirmInline"
 import { SmartImportModal } from "@/components/subscriptions/SmartImportModal"
+import { SmsImportModal } from "@/components/subscriptions/SmsImportModal"
 import { getGuardrails, assessRenewalRisk, type SubscriptionGuardrails } from "@/lib/budget"
 import { supabase } from "@/integrations/supabase/client"
 import { usePageTitle } from "@/hooks/usePageTitle"
@@ -63,6 +64,7 @@ export default function SubscriptionsPage() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const [subscriptions, setSubscriptions] = useState<any[]>([])
   const [showSmartImport, setShowSmartImport] = useState(false)
+  const [showSmsImport, setShowSmsImport] = useState(false)
   const [currency, setCurrency] = useState("USD")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -323,6 +325,14 @@ export default function SubscriptionsPage() {
               </Button>
               <Button
                 variant="secondary"
+                onClick={() => setShowSmsImport(true)}
+                title="Detect subscriptions from Indian bank SMS messages"
+              >
+                <RiSmartphoneLine className="size-4 sm:mr-2" />
+                <span className="hidden sm:inline">SMS import</span>
+              </Button>
+              <Button
+                variant="secondary"
                 onClick={handleExport}
                 disabled={subscriptions.length === 0}
                 title="Export subscriptions as CSV"
@@ -515,6 +525,11 @@ export default function SubscriptionsPage() {
       <SmartImportModal
         open={showSmartImport}
         onClose={() => setShowSmartImport(false)}
+        onImported={loadData}
+      />
+      <SmsImportModal
+        open={showSmsImport}
+        onClose={() => setShowSmsImport(false)}
         onImported={loadData}
       />
       <UpgradeModal

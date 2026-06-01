@@ -44,6 +44,7 @@ const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"))
 const PrivacyPage = lazy(() => import("@/pages/PrivacyPage"))
 const TermsPage = lazy(() => import("@/pages/TermsPage"))
 const DocsPage = lazy(() => import("@/pages/DocsPage"))
+const TelegramAppPage = lazy(() => import("@/pages/TelegramAppPage"))
 
 // Fetch live exchange rates once at startup, fire and forget, falls back to static rates
 initExchangeRates()
@@ -98,6 +99,7 @@ export default function App() {
               {/* Public / no-auth routes */}
               <Route path="/auth/callback" element={<AuthCallbackPage />} />
               <Route path="/vault-approve/:vaultId" element={<CoSignerApprovalPage />} />
+              <Route path="/telegram-app" element={<TelegramAppPage />} />
 
               {/* Auth */}
               <Route element={<AuthLayout />}>

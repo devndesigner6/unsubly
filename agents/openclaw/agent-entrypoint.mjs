@@ -7,6 +7,7 @@ import { startFallbackCron } from "./fallback-cron.mjs"
 import { guidedCancel } from "./skills/guided-cancel.mjs"
 import { verifyCancellationProof } from "./skills/cancellation-proof.mjs"
 import { handleMCPRequest, handleMCPHTTP } from "./mcp-server.mjs"
+import { x402CancelHandler } from "./skills/x402-cancel-agent.mjs"
 
 console.log("=== Unsubscribely Agent System ===")
 console.log(`Time: ${new Date().toISOString()}`)
@@ -17,7 +18,7 @@ console.log(`AGENT_WALLET_MNEMONIC: ${process.env.AGENT_WALLET_MNEMONIC ? "set" 
 console.log(`SUBSCRIPTION_CREDS_KEY: ${process.env.SUBSCRIPTION_CREDS_KEY ? "set" : "NOT SET"}`)
 console.log("==================================")
 
-// Start Nanobot — runs monitor immediately, then every 30m
+  // Start Nanobot — runs monitor immediately, then every 30m
 startNanobot()
 
 // Start Fallback Cron — runs 15m after startup, then every 30m
@@ -74,6 +75,23 @@ const server = createServer(async (req, res) => {
         res.writeHead(404, { "Content-Type": "application/json" })
         res.end(JSON.stringify({ verified: false, error: "Proof not found or invalid" }))
       }
+    } catch (err) {
+      res.writeHead(500, { "Content-Type": "application/json" })
+      res.end(JSON.stringify({ error: err.message }))
+    }
+  } else if (req.url === "/api/x402-cancel" && req.method === "POST") {
+    // x402-gated cancellation endpoint — agent-to-agent commerce
+    // In production, this would be wrapped by x402 middleware.
+    // For now, verify auth token and execute.
+    const authHeader = req.headers.authorization
+    const expectedToken = process.env.OPENCLAW_GATEWAY_TOKEN
+    if (expectedToken && authHeader !== `Bearer ${expectedToken}`) {
+      res.writeHead(401, { "Content-Type": "application/json" })
+      res.end(JSON.stringify({ error: "Unauthorized" }))
+      return
+    }
+    try {
+      await x402CancelHandler(req, res, { txid: req.headers["x-payment-txid"] || "direct-call" })
     } catch (err) {
       res.writeHead(500, { "Content-Type": "application/json" })
       res.end(JSON.stringify({ error: err.message }))
