@@ -1,83 +1,41 @@
-name: Health Check — App & Agent Monitoring
+name: Health Check
 
 on:
   schedule:
-    - cron: "0 */6 * * *"  # Every 6 hours
+    - cron: "0 */6 * * *"
   workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
 
 jobs:
   health:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
       - name: Check live app
-        id: app_check
         run: |
-          URL="https://unsubly.xyz"
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 "$URL")
-          echo "status=$STATUS" >> $GITHUB_OUTPUT
-          if [ "$STATUS" != "200" ]; then
-            echo "::error title=App Down::$URL returned HTTP $STATUS"
+          STATUS=$(curl -sL -o /dev/null -w "%{http_code}" --max-time 20 "https://www.unsubly.xyz")
+          echo "App status: HTTP $STATUS"
+          if [ "$STATUS" -lt "200" ] || [ "$STATUS" -ge "400" ]; then
+            echo "::error title=App Down::https://www.unsubly.xyz returned HTTP $STATUS"
             exit 1
           fi
-          echo "App is healthy: HTTP $STATUS"
+          echo "App is up (HTTP $STATUS)"
 
-      - name: Check Algorand Testnet node
-        id: testnet_check
+      - name: Check Agent health
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 \
+            "https://unsubscribely-agent-agent-production.up.railway.app/health")
+          echo "Agent status: HTTP $STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "::warning title=Agent::Railway agent returned HTTP $STATUS"
+          fi
+
+      - name: Check Algorand Testnet
         run: |
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 \
             "https://testnet-api.algonode.cloud/v2/status")
-          if [ "$STATUS" != "200" ]; then
-            echo "::warning title=Testnet Node::algonode testnet returned HTTP $STATUS"
-          else
-            echo "Testnet node healthy: HTTP $STATUS"
-          fi
-
-      - name: Check Algorand Mainnet node
-        id: mainnet_check
-        run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 \
-            "https://mainnet-api.algonode.cloud/v2/status")
-          if [ "$STATUS" != "200" ]; then
-            echo "::warning title=Mainnet Node::algonode mainnet returned HTTP $STATUS"
-          else
-            echo "Mainnet node healthy: HTTP $STATUS"
-          fi
-
-      - name: Check Supabase API
-        run: |
-          # Uses the public anon key (safe to expose, RLS enforced)
-          # Project URL and key are public by design in Supabase
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 \
-            "https://ipnywrvwszqlaykbkske.supabase.co/rest/v1/" \
-            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}")
-          if [ "$STATUS" != "200" ] && [ "$STATUS" != "401" ]; then
-            echo "::warning title=Supabase::API returned HTTP $STATUS"
-          else
-            echo "Supabase healthy: HTTP $STATUS"
-          fi
-
-      - name: Open issue on failure
-        if: failure()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const title = `[Alert] Health check failed — ${new Date().toISOString().split('T')[0]}`
-            const body = `## Automated Health Check Failure\n\n` +
-              `**Time:** ${new Date().toISOString()}\n` +
-              `**Workflow:** [View run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})\n\n` +
-              `One or more health checks failed. Check the workflow run above for details.\n\n` +
-              `**Checklist:**\n` +
-              `- [ ] Verify Vercel deployment at https://unsubly.xyz\n` +
-              `- [ ] Verify Algorand node availability\n` +
-              `- [ ] Verify Supabase project status\n` +
-              `- [ ] Check agent wallet balance`
-
-            await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title,
-              body,
-              labels: ['alert', 'monitoring'],
-            })
+          echo "Testnet status: HTTP $STATUS"

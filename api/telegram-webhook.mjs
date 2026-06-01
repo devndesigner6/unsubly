@@ -949,7 +949,8 @@ async function handleDoneCommand(sb, chatId, botToken, nameHint) {
     .eq("subscription_id", targetSub.id)
     .is("user_decision", null)
 
-  // Release/kill vault
+  // Mark vault as pending-kill in DB so agent stops trying to release it
+  // User will use Kill Switch in the app to get ALGO back on-chain
   const { data: vaults } = await sb.from("escrow_vaults")
     .select("id, app_id, vault_type, amount")
     .eq("subscription_id", targetSub.id)
@@ -957,36 +958,18 @@ async function handleDoneCommand(sb, chatId, botToken, nameHint) {
     .limit(1)
 
   let vaultMsg = ""
-  let txid = null
   if (vaults && vaults.length > 0) {
-    const vault = vaults[0]
+    // Just mark in DB — user does the on-chain kill from the app
     await sb.from("escrow_vaults")
       .update({ status: "killed", killed_at: new Date().toISOString() })
-      .eq("id", vault.id)
-
-    // Try on-chain release (returns ALGO to creator)
-    try {
-      txid = await releaseVaultOnChainInline(vault)
-      const explorerUrl = `https://testnet.explorer.perawallet.app/tx/${txid}`
-      vaultMsg = `\n\n🔓 Vault released! ALGO returned to your wallet.\n🔗 ${explorerUrl}`
-    } catch (err) {
-      console.warn(`[webhook] On-chain release failed: ${err.message}`)
-      // Try kill as fallback
-      try {
-        txid = await killVaultOnChainInline(vault)
-        const explorerUrl = `https://testnet.explorer.perawallet.app/tx/${txid}`
-        vaultMsg = `\n\n🔓 Vault killed! ALGO returned.\n🔗 ${explorerUrl}`
-      } catch (killErr) {
-        console.warn(`[webhook] On-chain kill also failed: ${killErr.message}`)
-        vaultMsg = `\n\n🔓 Vault marked as killed in DB. On-chain release pending (use Kill Switch in app).`
-      }
-    }
+      .eq("id", vaults[0].id)
+    vaultMsg = `\n\n🔓 Vault marked for release. Use the Kill Switch in the app to get your ALGO back.`
   }
 
   const savingsMsg = amountStr ? `\n\n💰 You saved ${amountStr}/month!` : ""
   await sendTelegram(botToken, chatId, `✅ ${targetSub.name} cancelled!${savingsMsg}${vaultMsg}`)
 
-  // Write on-chain cancellation proof (zero-ALGO self-transfer with structured note)
+  // Write on-chain cancellation proof
   try {
     const proofTxid = await writeCancellationProofInline(targetSub.name, targetSub.id)
     if (proofTxid) {
@@ -997,7 +980,7 @@ async function handleDoneCommand(sb, chatId, botToken, nameHint) {
     console.warn(`[webhook] Cancellation proof failed (non-blocking): ${proofErr.message}`)
   }
 
-  console.log(`[webhook] Done: ${targetSub.name} cancelled, txid: ${txid || "none"}`)
+  console.log(`[webhook] Done: ${targetSub.name} cancelled`)
 }
 
 async function handleCancelCommand(sb, chatId, botToken, searchName) {

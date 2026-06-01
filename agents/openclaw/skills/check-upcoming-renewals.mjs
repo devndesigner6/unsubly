@@ -61,11 +61,10 @@ export async function checkUpcomingRenewals() {
 
 /**
  * Check for subscriptions that are OVERDUE (next_billing_date < today).
- * These were missed by previous checks. Send urgent alert.
+ * Only alert for subscriptions that have a LOCKED vault.
  */
 async function checkOverdueSubscriptions() {
   const today = new Date().toISOString().split("T")[0]
-  const todayStart = today + "T00:00:00.000Z"
 
   const subsRes = await sbFetch(
     `/subscriptions?next_billing_date=lt.${today}&status=eq.active&select=id,name,amount,currency,billing_cycle,user_id,next_billing_date`
@@ -74,11 +73,16 @@ async function checkOverdueSubscriptions() {
   const subs = await subsRes.json()
   if (!subs || subs.length === 0) return
 
-  console.log(`[renewals] ${subs.length} OVERDUE subscription(s) found`)
+  console.log(`[renewals] ${subs.length} overdue subscription(s) found, checking for vaults...`)
 
   for (const sub of subs) {
     try {
-      // Check if alert already sent
+      // Only alert if subscription has a locked vault
+      const vaultRes = await sbFetch(`/escrow_vaults?subscription_id=eq.${sub.id}&status=eq.locked&select=id&limit=1`)
+      const vaults = vaultRes.ok ? await vaultRes.json() : []
+      if (!vaults || vaults.length === 0) continue // No vault = no alert
+
+      // Check if alert already sent (ever, for overdue type)
       const alertCheckRes = await sbFetch(
         `/agent_renewal_alerts?subscription_id=eq.${sub.id}&alert_type=eq.overdue&select=id&limit=1`
       )
@@ -146,6 +150,14 @@ async function checkRenewalWindow(daysAhead, isUrgent) {
 
   for (const sub of subs) {
     try {
+      // Only alert subscriptions that have a locked vault
+      const vaultRes = await sbFetch(
+        `/escrow_vaults?subscription_id=eq.${sub.id}&status=eq.locked&select=id&limit=1`
+      )
+      const vaults = vaultRes.ok ? await vaultRes.json() : []
+      if (!vaults || vaults.length === 0) continue // No vault = no alert
+      const vaultId = vaults[0].id
+
       // Check if an alert of this type was already sent today
       const alertCheckRes = await sbFetch(
         `/agent_renewal_alerts?subscription_id=eq.${sub.id}&alert_sent_at=gte.${todayStart}&select=id,alert_type&limit=5`
@@ -165,13 +177,6 @@ async function checkRenewalWindow(daysAhead, isUrgent) {
       )
       const profiles = profileRes.ok ? await profileRes.json() : []
       const chatId = profiles?.[0]?.telegram_chat_id || process.env.TELEGRAM_CHAT_ID
-
-      // Look up vault for this subscription (if any)
-      const vaultRes = await sbFetch(
-        `/escrow_vaults?subscription_id=eq.${sub.id}&status=eq.locked&select=id&limit=1`
-      )
-      const vaults = vaultRes.ok ? await vaultRes.json() : []
-      const vaultId = vaults?.[0]?.id || null
 
       // Insert alert record (use upsert-style: skip if same type already exists today)
       const insertRes = await sbFetch("/agent_renewal_alerts", {

@@ -4,7 +4,13 @@ import { supabase } from "@/integrations/supabase/client"
 export async function fetchSubscriptions(userId: string) {
   const { data, error } = await supabase.from("subscriptions").select("*").eq("user_id", userId).order("next_billing_date", { ascending: true })
   if (error) throw error
-  return data || []
+  // Hide cancelled subscriptions older than 24 hours
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+  return (data || []).filter((sub: any) => {
+    if (sub.status !== "cancelled") return true
+    // Keep cancelled subs for 1 day so user can see them
+    return sub.cancelled_at && sub.cancelled_at > oneDayAgo
+  })
 }
 
 export async function fetchSubscriptionById(id: string) {
